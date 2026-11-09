@@ -93,9 +93,9 @@ export default function MenuForm({ restaurantId, categories, menu, busy, error, 
       name_en: text(form, "name_en").trim() || null,
       price: Number(form.get("price")), unit: text(form, "unit").trim() || "จาน",
       cost_price: Number(form.get("cost_price") || 0), description: text(form, "description").trim() || null,
-      track_stock: form.get("track_stock") === "on", stock_quantity: wholeCount(form.get("stock_quantity")),
+      track_stock: form.get("track_stock") === "on", stock_quantity: Number(form.get("stock_quantity") || 0),
       stock_barcode: text(form, "stock_barcode").trim() || null,
-      low_alert_limit: wholeCount(form.get("low_alert_limit")), image_url: imageUrl.trim() || null,
+      low_alert_limit: Number(form.get("low_alert_limit") || 0), image_url: imageUrl.trim() || null,
       available,
     });
   }
@@ -115,8 +115,8 @@ export default function MenuForm({ restaurantId, categories, menu, busy, error, 
     <div className="grid gap-3 sm:grid-cols-3"><Field label="ชื่อเมนู (ไทย)"><input name="name" defaultValue={menu?.name ?? ""} className={input} /></Field><Field label="ຊື່ເມນູ (ລາວ)"><input name="name_lo" defaultValue={menu?.name_lo ?? ""} className={input} /></Field><Field label="Menu name (English)"><input name="name_en" defaultValue={menu?.name_en ?? ""} className={input} /></Field></div>
     <div className="grid gap-3 sm:grid-cols-3"><Field label="หมวดหมู่"><select name="category_id" defaultValue={menu?.category_id ?? ""} className={input}><option value="">ไม่ระบุ</option>{categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}</select></Field><Field label="ราคา *"><input required min="0" step="any" type="number" name="price" defaultValue={menu?.price ?? 0} className={input} /></Field><Field label="หน่วย"><input maxLength={40} name="unit" defaultValue={menu?.unit ?? "จาน"} className={input} /></Field></div>
     <Field label="รายละเอียด"><textarea rows={3} name="description" defaultValue={menu?.description ?? ""} className={input} /></Field>
-    <div className="grid gap-3 sm:grid-cols-3"><Field label="ต้นทุน"><input min="0" step="any" type="number" name="cost_price" defaultValue={menu?.cost_price ?? 0} className={input} /></Field><Field label="บาร์โค้ดสต็อก"><input name="stock_barcode" defaultValue={menu?.stock_barcode ?? ""} className={input} /></Field><Field label="เตือนเมื่อสต็อกเหลือ"><input min="0" step="1" type="number" name="low_alert_limit" defaultValue={wholeCount(menu?.low_alert_limit)} className={input} /></Field></div>
-    <div className="grid gap-3 sm:grid-cols-2"><Field label="จำนวนสต็อกเมนู"><input min="0" step="1" type="number" name="stock_quantity" defaultValue={wholeCount(menu?.stock_quantity)} className={input} /></Field><label className="flex items-center gap-2 self-end rounded-lg border border-slate-200 p-3 text-sm font-semibold"><input type="checkbox" name="track_stock" defaultChecked={menu?.track_stock ?? false} />ติดตามสต็อกเมนูนี้</label></div>
+    <div className="grid gap-3 sm:grid-cols-3"><Field label="ต้นทุน"><input min="0" step="any" type="number" name="cost_price" defaultValue={menu?.cost_price ?? 0} className={input} /></Field><Field label="บาร์โค้ดสต็อก"><input name="stock_barcode" defaultValue={menu?.stock_barcode ?? ""} className={input} /></Field><Field label="เตือนเมื่อสต็อกเหลือ"><input min="0" step="any" type="number" name="low_alert_limit" defaultValue={menu?.low_alert_limit ?? 0} className={input} /></Field></div>
+    <div className="grid gap-3 sm:grid-cols-2"><Field label="จำนวนสต็อกเมนู"><input min="0" step="any" type="number" name="stock_quantity" defaultValue={menu?.stock_quantity ?? 0} className={input} /></Field><label className="flex items-center gap-2 self-end rounded-lg border border-slate-200 p-3 text-sm font-semibold"><input type="checkbox" name="track_stock" defaultChecked={menu?.track_stock ?? false} />ติดตามสต็อกเมนูนี้</label></div>
     <label className="flex items-center justify-between rounded-lg border border-slate-200 p-3 text-sm font-semibold"><span>พร้อมขาย (Available for ordering)</span><input type="checkbox" checked={available} onChange={(event) => setAvailable(event.target.checked)} /></label>
     <div className="space-y-2"><label className="block text-sm font-semibold">รูปเมนู</label><div className="flex flex-wrap items-center gap-3">{imageUrl && <img src={imageUrl} alt="ตัวอย่างรูปเมนู" className="h-16 w-16 rounded-lg object-cover" />}<input type="url" value={imageUrl} onChange={(event) => setImageUrl(event.target.value)} placeholder="URL รูปภาพ" className={input + " min-w-52 flex-1"} /><label className="cursor-pointer rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold">{uploading ? "กำลังอัปโหลด…" : "เลือกรูป"}<input hidden type="file" accept="image/jpeg,image/png,image/webp,image/gif,image/svg+xml" onChange={(event) => void upload(event.target.files?.[0])} /></label></div></div>
     {(error || imageError) && <p role="alert" className="rounded-lg bg-rose-50 p-3 text-sm text-rose-700">{error || imageError}</p>}
@@ -125,10 +125,6 @@ export default function MenuForm({ restaurantId, categories, menu, busy, error, 
 }
 
 function normalizeHeader(value: string) { return value.replace(/^\uFEFF/, "").trim().toLowerCase().replace(/[\s-]+/g, "_"); }
-function wholeCount(value: unknown) {
-  const number = Number(value);
-  return Number.isFinite(number) ? Math.max(0, Math.trunc(number)) : 0;
-}
 
 function Field({ label, children }: { label: string; children: ReactNode }) { return <label className="block space-y-1.5 text-sm font-semibold text-slate-700">{label}{children}</label>; }
 function text(form: FormData, key: string) { return String(form.get(key) ?? ""); }
