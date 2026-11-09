@@ -1,0 +1,10 @@
+const fs = require('node:fs');
+const path = require('node:path');
+const file = path.join(__dirname, '../../../dist/assets/MenuPage-N38LKJ6t.js');
+let text = fs.readFileSync(file, 'utf8');
+const oldClass = 'className:"line-clamp-2 text-xs leading-relaxed text-muted"';
+const newClass = 'className:"menu-item-description line-clamp-2 text-xs leading-relaxed text-muted"';
+if (!text.includes(oldClass)) throw new Error('Description layout anchor not found');
+text = text.replace(oldClass, newClass);
+fs.writeFileSync(file, text);
+console.log('Menu description layout class added.');

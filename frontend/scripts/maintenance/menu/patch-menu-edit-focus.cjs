@@ -1,0 +1,14 @@
+const fs = require('node:fs');
+const path = require('node:path');
+const file = path.join(__dirname, '../../../dist/assets/MenuPage-N38LKJ6t.js');
+let text = fs.readFileSync(file, 'utf8');
+const start = text.indexOf('function et(');
+const end = text.indexOf('function Ee(', start);
+if (start < 0 || end < 0) throw new Error('Edit form boundaries not found');
+let section = text.slice(start, end);
+const nestedField = 'const Field=({label,children})=>e.jsxs("label",{className:"block space-y-1",children:[e.jsx("span",{className:"text-sm font-medium text-ink",children:label}),children]});';
+if (!section.includes(nestedField)) throw new Error('Nested field component not found');
+section = section.replace(nestedField, '').replaceAll('e.jsx(Field,', 'e.jsx($,');
+text = text.slice(0, start) + section + text.slice(end);
+fs.writeFileSync(file, text);
+console.log('Edit form focus behavior fixed.');

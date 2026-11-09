@@ -1,0 +1,10 @@
+const fs = require('node:fs');
+const path = require('node:path');
+const file = path.join(__dirname, '../../../dist/assets/MenuPage-N38LKJ6t.js');
+let text = fs.readFileSync(file, 'utf8');
+const oldClass = 'className:"w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl bg-surface shadow-pop"';
+const newClass = 'className:"menu-edit-form w-full max-h-[90vh] overflow-y-auto rounded-2xl bg-surface shadow-pop"';
+if (!text.includes(oldClass)) throw new Error('Edit form size anchor not found');
+text = text.replace(oldClass, newClass);
+fs.writeFileSync(file, text);
+console.log('Menu edit form size class added.');

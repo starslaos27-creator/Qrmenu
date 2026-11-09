@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+
+# Local and production credentials
+.env
+.env.*
+!.env.example
+!.env.production.example
+**/.env
+**/.env.*
+!**/.env.example
+!**/.env.production.example
+
+# Local databases, uploads, and generated output
+.local/
+**/uploads/
+frontend/dist/
+admin/dist/
+backend/build/
+
+# Logs and temporary files
+*.log
+*.tmp
+*.bak
+*.bak-*

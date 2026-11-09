@@ -1,0 +1,14 @@
+const fs = require('fs');
+const path = require('path');
+const root = path.join(__dirname, '../../../dist');
+const file = path.join(root, 'assets/MenuPage-N38LKJ6t.js');
+let source = fs.readFileSync(file, 'utf8');
+const start = source.indexOf('r.track_stock?e.jsxs("span",{className:"menu-stock-statuses"');
+const end = source.indexOf(',e.jsx("span",{className:"text-line-vertical', start);
+if (start < 0 || end < 0) throw Error('Status block not found');
+const backup = path.join(__dirname, '../../../../.local/menu-visibility-before-' + Date.now());
+fs.mkdirSync(backup, { recursive: true });
+fs.copyFileSync(file, path.join(backup, path.basename(file)));
+source = source.slice(0, start) + 'e.jsxs("span",{className:"menu-stock-statuses",children:[e.jsx("span",{className:"menu-stock-badge",children:"คงเหลือ "+(Number(r.stock_quantity)||0)}),e.jsx("span",{className:"menu-stock-near-alert",children:"สินค้าใกล้หมด "+(Number(r.low_alert_limit)||0)}),(Number(r.stock_quantity)||0)<=0?e.jsx("span",{className:"menu-stock-alert",children:"สินค้าหมด"}):null]})' + source.slice(end);
+fs.writeFileSync(file, source);
+console.log('Stock labels now render without the tracking flag.');

@@ -1,0 +1,50 @@
+.manager-navigation summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  list-style: none;
+  border-radius: 8px;
+}
+.manager-navigation summary::-webkit-details-marker {
+  display: none;
+}
+.manager-navigation summary::marker {
+  content: '';
+}
+.manager-navigation-arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 20px;
+  font-size: 21px;
+  font-weight: 400;
+  transition: transform 150ms ease;
+}
+.manager-navigation details[open] > summary .manager-navigation-arrow {
+  transform: rotate(90deg);
+}
+.manager-navigation summary:hover,
+.manager-navigation button:hover {
+  background-color: #f4e4bd1f !important;
+}
+.manager-navigation summary:focus-visible,
+.manager-navigation button:focus-visible {
+  outline: 2px solid #f4e4bd;
+  outline-offset: -2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .manager-navigation-arrow { transition: none; }
+}
+
+/* Keep sidebar rows compact while preserving a clear click target. */
+.manager-navigation > button { padding: 3px 10px !important; line-height: 18px !important; }
+.manager-navigation details > summary { padding: 3px 10px !important; line-height: 18px !important; }
+.manager-navigation details > button { padding: 2px 10px 2px 42px !important; line-height: 18px !important; }
+.manager-navigation-group > button[aria-expanded] { padding: 3px 10px !important; line-height: 18px !important; }
+.manager-navigation-group > button:not([aria-expanded]) { padding: 2px 10px 2px 42px !important; line-height: 18px !important; }
+
+.manager-nav-badge { display:inline-flex; min-width:18px; height:18px; align-items:center; justify-content:center; padding:0 5px; border-radius:999px; background:#ef4444; color:#fff; font-size:11px; font-weight:700; line-height:1; font-variant-numeric:tabular-nums; }
+
+
+.manager-navigation-icon { display:inline-flex; width:18px; flex:0 0 18px; align-items:center; justify-content:center; font-size:14px; line-height:1; }

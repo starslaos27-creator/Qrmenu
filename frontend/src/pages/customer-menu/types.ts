@@ -1,0 +1,6 @@
+export interface PublicMenuItem { id: string; category_id: string | null; name: string; name_lo: string | null; name_en: string | null; price: string | number; description: string | null; image_url: string | null; available: boolean; bundles: unknown[] }
+export interface PublicCategory { id: string; name: string; name_lo: string | null; name_en: string | null; sort_order: number }
+export interface PublicPromotion { id: string; title: string; description: string | null; image_url: string | null }
+export interface CustomerOrder { id: string; items: Array<{ menu_id?: string; name?: string; qty?: number; price?: number; note?: string | null }>; status: string; total: string | number; paid: boolean; paid_at: string | null; payment_method: string | null; created_at: string }
+export interface CustomerMenuData { restaurant: { id: string; name: string; currency_code: "LAK" | "THB" | "USD"; accepting_orders: boolean; open_time: string | null; close_time: string | null; service_charge_pct: number | string; vat_pct: number | string; payment_qr_url: string | null }; table: { id: string; short_code: string; table_number: string; is_open: boolean }; zone: { name: string } | null; menus: PublicMenuItem[]; categories: PublicCategory[]; promotions: PublicPromotion[] }
+export interface CartLine { menu: PublicMenuItem; qty: number; note: string }

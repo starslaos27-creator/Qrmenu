@@ -1,0 +1,10 @@
+const fs = require('node:fs');
+const path = require('node:path');
+const file = path.join(__dirname, '../../../dist/assets/MenuPage-N38LKJ6t.js');
+let text = fs.readFileSync(file, 'utf8');
+const oldText = 'className:`rounded-full px-2 py-0.5 text-[11px] font-semibold ${Number(r.stock_quantity)<=Number(r.low_alert_limit)?"bg-red-100 text-red-700":"bg-emerald-50 text-emerald-700"}`';
+const newText = 'className:`menu-stock-badge rounded-full px-2 py-0.5 text-[11px] font-semibold ${Number(r.stock_quantity)<=Number(r.low_alert_limit)?"menu-stock-low bg-red-100 text-red-700":"bg-emerald-50 text-emerald-700"}`';
+if (!text.includes(oldText)) throw new Error('Stock badge anchor not found');
+text = text.replace(oldText, newText);
+fs.writeFileSync(file, text);
+console.log('Menu stock badge classes added.');

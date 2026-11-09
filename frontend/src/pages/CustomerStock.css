@@ -1,0 +1,23 @@
+.customer-stock{box-sizing:border-box;min-height:100vh;padding:28px clamp(16px,3vw,40px) 48px;background:#f5f7f5;color:#17372f;font-family:inherit}
+.customer-stock>h2,.customer-stock h3{color:#123b32}
+.customer-stock>h2{margin:0;font-size:clamp(24px,3vw,32px)}
+.customer-stock>p{margin:6px 0 22px;color:#70817a;font-size:14px}
+.customer-stock .stock-dashboard{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:0 0 18px}
+.customer-stock .stock-card{border:1px solid #e0e8e2;border-radius:14px;background:#fff;padding:15px 18px;box-shadow:0 5px 18px #193c2a08}
+.customer-stock .stock-card span{display:block;color:#74827c;font-size:13px}
+.customer-stock .stock-card h2{margin:5px 0 0;color:#164b3e;font-size:25px;font-weight:750}
+.customer-stock .stock-menu{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 18px}
+.customer-stock .stock-menu button,.customer-stock .stock-form button,.customer-stock .stock-table button{border:1px solid #145d4d;border-radius:9px;background:#145d4d;color:#fff;padding:9px 13px;font:inherit;font-size:13px;font-weight:700;cursor:pointer}
+.customer-stock .stock-menu button:hover,.customer-stock .stock-form button:hover,.customer-stock .stock-table button:hover{background:#0e493d}
+.customer-stock .stock-form{display:grid;gap:11px;max-width:460px;margin:0 0 20px;border:1px solid #e0e8e2;border-radius:16px;background:#fff;padding:18px;box-shadow:0 5px 18px #193c2a08}
+.customer-stock .stock-form h3{margin:0 0 3px;font-size:18px}
+.customer-stock .stock-form input,.customer-stock .stock-form select{box-sizing:border-box;width:100%;min-height:42px;border:1px solid #dce5df;border-radius:9px;background:#fbfdfb;padding:9px 11px;color:#17372f;font:inherit;font-size:14px;outline:none}
+.customer-stock .stock-form input:focus,.customer-stock .stock-form select:focus{border-color:#4c907c;box-shadow:0 0 0 3px #4c907c1a}
+.customer-stock .stock-table{overflow:auto;border:1px solid #e0e8e2;border-radius:14px;background:#fff}
+.customer-stock .stock-table table{width:100%;border-collapse:collapse;text-align:left;font-size:13px}
+.customer-stock .stock-table th{background:#f3f7f4;color:#64776e;font-size:12px;font-weight:700;white-space:nowrap}
+.customer-stock .stock-table th,.customer-stock .stock-table td{padding:11px 13px;border-bottom:1px solid #edf1ee}
+.customer-stock .stock-table tbody tr:last-child td{border-bottom:0}
+.customer-stock .stock-table td[colspan]{padding:28px;text-align:center;color:#84918b}
+@media(max-width:850px){.customer-stock .stock-dashboard{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:520px){.customer-stock{padding:20px 12px 32px}.customer-stock .stock-dashboard{gap:8px}.customer-stock .stock-card{padding:12px}.customer-stock .stock-card h2{font-size:22px}.customer-stock .stock-form{padding:14px}}
