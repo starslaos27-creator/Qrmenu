@@ -1,7 +1,6 @@
 import {r as React, j as jsx} from './vendor-react-DCUvmuBu.js';
-import {openBarcodeLabels} from './menu-barcode-labels.js';
 
-export function MenuBarcodeInput({value, setValue, setQuantity, inputClass, menuName, stockQuantity}) {
+export function MenuBarcodeInput({value, setValue, setQuantity, inputClass}) {
   const [draft, setDraft] = React.useState(value || '');
   const [error, setError] = React.useState('');
   const input = React.useRef(null);
@@ -47,12 +46,9 @@ export function MenuBarcodeInput({value, setValue, setQuantity, inputClass, menu
     jsx.jsx('button', {type:'button', className:'menu-barcode-add-one',
       onMouseDown:event => event.preventDefault(), onClick:() => {accept(true); input.current?.focus();},
       children:'+ เพิ่ม 1 ชิ้น'}),
-    value ? jsx.jsx('button', {type:'button', className:'menu-barcode-add-one menu-barcode-view-print',
-      style:{marginLeft:6}, onClick:event => {
-        event.preventDefault(); event.stopPropagation();
-        openBarcodeLabels({name:menuName?.trim() || value, stock_barcode:value,
-          stock_quantity:Number(stockQuantity) || 0, track_stock:true});
-      }, children:'ดู / พิมพ์ Barcode / Serial'}) : null,
+    value ? jsx.jsx('button', {type:'button', className:'menu-barcode-add-one',
+      style:{marginLeft:6}, onClick:() => {lockedCode.current='';dirty.current=false;setValue('');setDraft('');setError('');input.current?.focus();},
+      children:'เปลี่ยนรหัส'}) : null,
     error ? jsx.jsx('small', {role:'alert', style:{color:'#b42318'}, children:error}) : null
   ]});
 }
