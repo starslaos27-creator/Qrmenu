@@ -1,0 +1,24 @@
+.ro-actions .shopqr-header-upgrade {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  gap: 6px;
+  padding: 10px 16px;
+  border: 1px solid #174a34;
+  border-radius: 12px;
+  background: #174a34;
+  color: #fffaf1;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.4;
+  white-space: nowrap;
+  text-decoration: none;
+}
+.ro-actions .shopqr-header-upgrade:hover { background: #0d3827; }
+.ro-actions .shopqr-header-upgrade:focus-visible { outline: 2px solid #174a34; outline-offset: 3px; }
+@media (max-width: 760px) {
+  .ro-header .ro-actions { flex-wrap: wrap; }
+  .ro-actions .shopqr-header-upgrade { padding: 9px 12px; }
+}

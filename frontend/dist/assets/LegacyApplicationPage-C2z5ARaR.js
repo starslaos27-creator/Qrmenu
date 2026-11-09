@@ -1,0 +1,1 @@
+import{r as o,j as a}from"./client-Bvlcdvno.js";import{t as r}from"./main-B27nLvGA.js";function c({frame:t}){const[e]=o.useState(()=>r(new URL(window.location.href)));return a.jsx("iframe",{ref:t,className:"block h-screen w-full border-0 bg-stone-50",title:"ShopQR restaurant and customer application",src:e})}export{c as default};

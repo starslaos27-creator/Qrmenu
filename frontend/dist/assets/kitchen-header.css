@@ -1,0 +1,50 @@
+.kitchen-reference-header {
+  display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between;
+  gap:20px; padding:20px 24px; margin:-24px -16px 20px;
+  color:#17253c; background:linear-gradient(115deg,#fff 0%,#f5f8ff 100%);
+  border-bottom:1px solid #e0e7f2;
+}
+.kitchen-heading { display:flex; align-items:center; gap:14px; }
+.kitchen-chef { font-size:58px; line-height:1.1; }
+.kitchen-heading h1 { margin:0; font-size:36px; line-height:1.3; font-weight:750; color:#17253c; }
+.kitchen-heading p { margin:5px 0 0; font-size:15px; color:#4b6387; }
+.kitchen-header-right { display:flex; flex-direction:column; gap:12px; }
+.kitchen-header-meta,.kitchen-header-actions { display:flex; align-items:center; justify-content:flex-end; gap:14px; flex-wrap:wrap; }
+.kitchen-header-meta { font-size:14px; }
+.kitchen-header-meta time { font-variant-numeric:tabular-nums; }
+.kitchen-notification-bell { position:relative; display:inline-flex; align-items:center; justify-content:center; flex-shrink:0; width:44px; height:44px; padding:8px; border:0; border-radius:50%; color:#17253c; background:transparent; cursor:pointer; }
+.kitchen-notification-bell:hover { background:#e7eef9; }
+.kitchen-notification-bell:focus-visible { outline:3px solid #8cb5fb; outline-offset:2px; }
+.kitchen-notification-count { position:absolute; top:0; right:0; display:flex; align-items:center; justify-content:center; min-width:20px; height:20px; padding:0 4px; border:2px solid #fff; border-radius:999px; background:#ed2638; color:#fff; font-size:11px; font-weight:700; line-height:1; font-variant-numeric:tabular-nums; }
+.kitchen-notification-announcement { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; border:0; }
+.kitchen-profile { display:flex; align-items:center; gap:9px; padding-left:8px; }
+.kitchen-profile > span:first-child { font-size:29px; background:#e6effb; border-radius:50%; padding:3px; }
+.kitchen-profile strong,.kitchen-profile small { display:block; }
+.kitchen-profile small { font-size:11px; color:#62758d; margin-top:2px; }
+.kitchen-header-actions button { display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:10px 14px; border:1px solid #c7d5e9; border-radius:9px; background:#fff; font-size:14px; font-weight:600; color:#223b62; cursor:pointer; }
+.kitchen-header-actions button:hover { background:#eef4ff; border-color:#94add0; }
+.kitchen-header-actions button:focus-visible { outline:3px solid #8cb5fb; outline-offset:2px; }
+.kitchen-sound-switch { display:inline-flex; width:36px; height:21px; padding:3px; border-radius:20px; background:#94a3b8; }
+.kitchen-sound-switch > span { height:15px; width:15px; border-radius:50%; background:#fff; }
+.kitchen-sound-switch.is-on { background:#17a454; justify-content:flex-end; }
+#kitchen-printer-settings { scroll-margin-top:16px; }
+#kitchen-printer-settings[hidden] { display:none !important; }
+.kitchen-order-content[hidden] { display:none !important; }
+.kitchen-printer-close { display:flex; justify-content:flex-end; margin-bottom:8px; }
+.kitchen-printer-close button { padding:6px 12px; border:1px solid #c7d5e9; border-radius:8px; background:#fff; color:#223b62; cursor:pointer; }
+.kitchen-printer-close button:focus-visible { outline:3px solid #8cb5fb; outline-offset:2px; }
+@media(min-width:640px) { .kitchen-reference-header { margin:-32px -24px 20px; } }
+@media(max-width:767px) {
+  .kitchen-reference-header { padding:18px 16px; gap:16px; }
+  .kitchen-heading h1 { font-size:28px; }
+  .kitchen-chef { font-size:44px; }
+  .kitchen-header-right { width:100%; }
+  .kitchen-header-meta,.kitchen-header-actions { justify-content:flex-start; gap:10px; }
+  .kitchen-header-actions button { padding:9px 10px; font-size:12px; }
+}
+
+/* Keep printer settings clear of the fixed sound and profile controls. */
+.kitchen-reference-header { position:relative; }
+.kitchen-header-right { position:absolute; top:30px; right:220px; }
+@media(max-width:767px) { .kitchen-header-right { position:static; width:100%; } }
+

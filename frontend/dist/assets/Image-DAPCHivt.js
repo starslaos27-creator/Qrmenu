@@ -1,0 +1,1 @@
+import{j as s}from"./vendor-react-DCUvmuBu.js";function d({fill:t,width:i,height:o,style:e,quality:u,unoptimized:m,...n}){return s.jsx("img",{...n,width:t?void 0:i,height:t?void 0:o,style:{...e,...t?{position:"absolute",inset:0,width:"100%",height:"100%"}:null}})}export{d as I};

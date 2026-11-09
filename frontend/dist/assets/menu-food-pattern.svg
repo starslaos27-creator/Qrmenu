@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="180" viewBox="0 0 720 180" fill="none">
+ <g stroke="#b99859" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" opacity=".22">
+  <!-- Noodle bowl and chopsticks -->
+  <g transform="translate(20 18) rotate(-12 30 30)">
+   <path d="M2 29h65c-3 22-15 31-32 31S6 51 2 29Z" fill="#ebcf91" fill-opacity=".3"/>
+   <path d="M9 37h51M23 61h25M20 28c-8-12 10-12 2-23m15 23c-8-12 10-12 2-23m15 23c-8-12 10-12 2-23M43 18 77 1M48 23 82 6"/>
+  </g>
+  <!-- Salmon nigiri -->
+  <g transform="translate(143 111) rotate(14)">
+   <rect x="0" y="10" width="53" height="26" rx="12" fill="#f5dba5" fill-opacity=".3"/>
+   <path d="M-3 10C-3-5 56-5 56 10v8H-3Z" fill="#e79762" fill-opacity=".6"/>
+   <path d="m11 2 8 15m8-17 8 17m8-15 7 15M10 26h2m10 3h2m12-4h2"/>
+  </g>
+  <!-- Shrimp -->
+  <g transform="translate(245 13) rotate(18 30 30)">
+   <path d="M49 8C17-10-8 18 6 43c10 18 38 18 47 0-19 10-34-2-31-14 2-9 15-11 24-5Z" fill="#e9ad7e" fill-opacity=".4"/>
+   <path d="m46 24 16 8-3-15-10-9M37 6l-3 12M22 6l4 14M10 15l13 10M5 28l17 3M8 42l16-6M19 53l12-11M34 56l3-11M48 10l15-9M47 11l22-3"/>
+  </g>
+  <!-- Pizza slice -->
+  <g transform="translate(365 104) rotate(-16 28 28)">
+   <path d="m4 5 54 5-31 58Z" fill="#efd18d" fill-opacity=".35"/>
+   <path d="M4 5q25-11 54 5l-3 8Q28 9 7 14Z" fill="#d4ae70" fill-opacity=".3"/>
+   <circle cx="21" cy="25" r="5"/><circle cx="39" cy="27" r="5"/><circle cx="28" cy="44" r="4"/>
+  </g>
+  <!-- Grilled fish on a plate -->
+  <g transform="translate(477 15) rotate(-10 38 28)">
+   <ellipse cx="38" cy="30" rx="42" ry="25"/>
+   <ellipse cx="38" cy="30" rx="36" ry="19"/>
+   <path d="M12 30q20-24 43 0-23 24-43 0Zm43 0 14-10v20ZM27 20l6 18m5-19 6 18" fill="#dccaa1" fill-opacity=".25"/>
+   <circle cx="21" cy="28" r="1"/>
+  </g>
+  <!-- Rice bowl -->
+  <g transform="translate(602 108) rotate(12 30 25)">
+   <path d="M0 23h64c-4 20-16 28-32 28S4 43 0 23ZM20 53h24" fill="#e7ca8c" fill-opacity=".3"/>
+   <path d="M6 23C0 13 13 9 18 11c-2-13 20-16 25-5 11-4 20 5 15 17M16 17l3-2m9 3 2-3m10 4 3-2m-12-8 3 1m13 4 3 1"/>
+  </g>
+  <path d="m114 29 3 5 6 1-4 4 1 6-5-3-5 3 1-6-4-4 6-1ZM333 84h6m-3-3v6m226 4h6m-3-3v6"/>
+  <circle cx="95" cy="133" r="3"/><circle cx="220" cy="77" r="2"/><circle cx="444" cy="65" r="3"/><circle cx="691" cy="44" r="3"/>
+ </g>
+</svg>

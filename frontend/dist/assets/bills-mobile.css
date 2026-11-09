@@ -1,0 +1,34 @@
+@media(max-width:640px){
+ .bill-history{min-width:0;max-width:100%;background:transparent;overflow:visible}
+ .bill-history-heading{gap:12px;padding:12px;width:100%;min-width:0}
+ .bill-history-heading>div{min-width:0;max-width:100%}
+ .bill-history-heading h2{font-size:18px;line-height:1.5;overflow-wrap:anywhere}
+ .bill-history-header-actions{gap:6px;justify-content:flex-start}
+ .bill-history-header-actions>div{display:flex;flex-wrap:wrap;min-width:0;max-width:100%}
+ .bill-history-header-actions button{font-size:11px;min-height:40px;white-space:normal;padding:7px 9px}
+ .bill-history-tools{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:10px;margin:10px 0}
+ .bill-history-tools input{grid-column:1/-1;min-width:0;width:100%;max-width:none;font-size:16px;min-height:44px}
+ .bill-history-tabs{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:3px;min-width:0}
+ .bill-history-tabs button{padding:7px 3px;font-size:12px;min-height:42px;white-space:normal;overflow-wrap:anywhere}
+ .bill-history-tools select{width:100%;min-width:0;min-height:42px;font-size:14px}
+ .bill-history-scroll{overflow:visible;border:0;border-radius:0}
+ .bill-history table{display:block;min-width:0;width:100%;font-size:13px}
+ .bill-history thead{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+ .bill-history tbody{display:grid;gap:10px;width:100%}
+ .bill-history tbody tr{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:'number status' 'date date' 'table zone' 'action action';gap:8px 10px;border:1px solid #d5c4aa;border-radius:12px;padding:12px;background:#fffaf0;min-width:0;box-shadow:0 2px 4px #174a3406}
+ .bill-history tbody td{display:block;padding:0;border:0;min-width:0;text-align:left!important;background:transparent!important}
+ .bill-history td:nth-child(1){grid-area:number;max-width:none;align-self:center;font-size:14px;line-height:1.5}
+ .bill-history td:nth-child(2){grid-area:date;font-size:12px;color:#766b5b}
+ .bill-history td:nth-child(3){grid-area:table}
+ .bill-history td:nth-child(4){grid-area:zone;text-align:right!important}
+ .bill-history td:nth-child(5){grid-area:status;align-self:center}
+ .bill-history td:nth-child(6){grid-area:action;border-top:1px solid #e9dfcf;padding-top:10px;margin-top:2px}
+ .bill-history td:nth-child(2):before,.bill-history td:nth-child(3):before,.bill-history td:nth-child(4):before{content:attr(data-label)' ';color:#8a806f;font-size:12px;margin-right:4px}
+ .bill-history td button{width:100%;min-height:44px;padding:9px 12px;font-size:13px}
+ .bill-history-status{font-size:11px;padding:3px 7px}
+ .bill-history tbody tr:has(.bill-history-empty){display:block}
+ .bill-history td.bill-history-empty{display:flex;align-items:center;justify-content:center;min-height:100px;text-align:center!important}
+}
+
+/* Keep total visible in the compact bill card layout. */
+@media(max-width:640px){.bill-history tbody tr{grid-template-areas:'number status' 'total total' 'date date' 'table zone' 'action action'}.bill-history td:nth-child(5){grid-area:total;font-weight:700;color:#174a34;text-align:left!important}.bill-history td:nth-child(5):before{content:attr(data-label)' ';color:#8a806f;font-size:12px;margin-right:4px}.bill-history td:nth-child(6){grid-area:status;align-self:center}.bill-history td:nth-child(7){grid-area:action;border-top:1px solid #e9dfcf;padding-top:10px;margin-top:2px}}

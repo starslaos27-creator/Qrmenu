@@ -1,0 +1,1 @@
+import{j as i}from"./vendor-react-DCUvmuBu.js";import{u as n,P as m}from"./index-BjXGGWCT.js?v=20261104-remove-stock-deposits-menu-v9";function x({titleKey:e,descKey:t,titleVars:o,descVars:s,action:a}){const{t:r}=n();return i.jsx(m,{title:r(e,o),description:t?r(t,s):void 0,action:a})}export{x as I};

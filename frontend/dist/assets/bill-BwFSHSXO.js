@@ -1,0 +1,1 @@
+function i(e,o,s){const c=Math.max(0,Number(o)||0),r=Math.max(0,Number(s)||0),a=t(e*c/100),n=t((e+a)*r/100),u=t(e+a+n);return{subtotal:t(e),serviceCharge:a,vat:n,grandTotal:u,serviceChargePct:c,vatPct:r}}function t(e){return Math.round(e*100)/100}export{i as c};

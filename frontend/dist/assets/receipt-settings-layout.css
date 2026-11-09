@@ -1,0 +1,23 @@
+.receipt-header-settings{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 12px;padding:14px;border-radius:12px}
+.receipt-header-settings>h3,.receipt-header-settings>p,.receipt-header-fields,.receipt-header-toggles{grid-column:1/-1;margin:0}
+.receipt-header-settings>h3{font-size:15px;line-height:1.4}
+.receipt-header-settings>p{line-height:1.5}
+.receipt-header-fields{grid-template-columns:repeat(3,minmax(0,1fr));grid-template-areas:'logo tagline tagline' 'village district province' 'phone prefix calendar';gap:10px 12px;align-items:start;margin-top:4px}
+.receipt-header-fields>*{min-width:0}
+.receipt-field-logo{grid-area:logo}.receipt-field-tagline{grid-area:tagline}.receipt-field-village{grid-area:village}.receipt-field-district{grid-area:district}.receipt-field-province{grid-area:province}.receipt-field-phone{grid-area:phone}.receipt-field-prefix{grid-area:prefix}.receipt-field-calendar{grid-area:calendar}
+.receipt-header-fields label{gap:4px;font-size:12px;line-height:1.5}
+.receipt-header-fields input,.receipt-header-fields select{height:38px;padding:7px 9px;border-radius:7px;font:inherit}
+.receipt-header-fields input[type=file]{font-size:11px;padding:5px;overflow:hidden}
+.receipt-header-fields input::file-selector-button{border:0;border-radius:4px;padding:4px 6px;background:#e9dfce;color:#174a34;margin-right:6px;cursor:pointer}
+.receipt-field-logo{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px;align-items:end}
+.receipt-field-logo label{grid-column:1/-1}
+.receipt-field-logo img{width:40px;height:40px;margin:0;border:1px solid #d5c4aa;border-radius:6px;background:#fff}
+.receipt-field-logo button{padding:4px 8px;font-size:11px;background:transparent;color:#766b5b}
+.receipt-header-fields small{font-size:11px;line-height:1.4}
+.receipt-header-toggles{gap:6px 16px;padding:10px 0 8px;border-top:1px solid #e0d4c1;margin-top:2px}
+.receipt-header-toggles label{font-size:12px;min-height:28px;cursor:pointer}.receipt-header-toggles input{accent-color:#174a34}
+.receipt-header-settings>small{font-size:11px;line-height:1.5;align-self:center;max-width:65ch}
+.receipt-header-settings>button{padding:8px 12px;font-size:12px;white-space:nowrap;min-height:38px;align-self:center}
+.receipt-header-settings :focus-visible{outline:2px solid #997335;outline-offset:2px}
+@media(max-width:760px){.receipt-header-fields{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-areas:'logo logo' 'tagline tagline' 'village district' 'province phone' 'prefix calendar';gap:10px}.receipt-field-logo{grid-template-columns:minmax(0,1fr) auto auto;align-items:center}.receipt-field-logo label{grid-column:auto}.receipt-header-settings{padding:12px}.receipt-header-settings>small,.receipt-header-settings>button{grid-column:1/-1}.receipt-header-settings>button{justify-self:end}.receipt-header-fields input,.receipt-header-fields select{font-size:16px;height:42px}.receipt-header-toggles{gap:4px 12px}}
+@media(max-width:360px){.receipt-header-fields{grid-template-columns:minmax(0,1fr);grid-template-areas:'logo' 'tagline' 'village' 'district' 'province' 'phone' 'prefix' 'calendar'}}

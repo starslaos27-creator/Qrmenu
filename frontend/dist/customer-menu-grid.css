@@ -1,0 +1,4 @@
+/* The legacy route can leave a second full customer page in #root. */
+.customer-menu-page ~ .customer-menu-page {
+  display: none !important;
+}

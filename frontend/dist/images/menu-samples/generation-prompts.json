@@ -1,0 +1,38 @@
+{
+  "tool": "built-in image_gen",
+  "purpose": "AI-generated temporary menu sample photos; replace with real restaurant photos when available.",
+  "assets": [
+    {
+      "file": "spring-rolls.png",
+      "prompt": "Use case: photorealistic-natural. Create one square restaurant menu sample photograph. Subject: Assorted fresh and golden fried spring rolls, dipping sauces on a ceramic plate. A single appetizing dish centered and fully visible, close three-quarter overhead angle, warm natural light, neutral beige table, realistic ingredients, professional food photography. No text, no logo, no watermark, no collage. This is an illustrative sample asset for a Lao restaurant menu."
+    },
+    {
+      "file": "salmon-sashimi.png",
+      "prompt": "Use case: photorealistic-natural. Create one square restaurant menu sample photograph. Subject: Fresh salmon sashimi slices, about 250 grams, with wasabi and shredded daikon. A single appetizing dish centered and fully visible, close three-quarter overhead angle, warm natural light, neutral beige table, realistic ingredients, professional food photography. No text, no logo, no watermark, no collage. This is an illustrative sample asset for a Lao restaurant menu."
+    },
+    {
+      "file": "mekong-fish.png",
+      "prompt": "Use case: photorealistic-natural. Create one square restaurant menu sample photograph. Subject: Poached Mekong freshwater fish pieces with fresh herbs, chili and dipping sauce, Lao style. A single appetizing dish centered and fully visible, close three-quarter overhead angle, warm natural light, neutral beige table, realistic ingredients, professional food photography. No text, no logo, no watermark, no collage. This is an illustrative sample asset for a Lao restaurant menu."
+    },
+    {
+      "file": "mixed-seafood.png",
+      "prompt": "Use case: photorealistic-natural. Create one square restaurant menu sample photograph. Subject: Blanched mixed seafood platter with squid rings, shrimp and mussels, Thai Lao seafood dipping sauce. A single appetizing dish centered and fully visible, close three-quarter overhead angle, warm natural light, neutral beige table, realistic ingredients, professional food photography. No text, no logo, no watermark, no collage. This is an illustrative sample asset for a Lao restaurant menu."
+    },
+    {
+      "file": "shrimp-fish-sauce.png",
+      "prompt": "Use case: photorealistic-natural. Create one square restaurant menu sample photograph. Subject: Thai Lao shrimp in fish sauce, neatly arranged peeled raw shrimp with lime, garlic, bitter melon slices and green chili sauce. A single appetizing dish centered and fully visible, close three-quarter overhead angle, warm natural light, neutral beige table, realistic ingredients, professional food photography. No text, no logo, no watermark, no collage. This is an illustrative sample asset for a Lao restaurant menu."
+    },
+    {
+      "file": "oysters.png",
+      "prompt": "Use case: photorealistic-natural. Create one square restaurant menu sample photograph. Subject: Fresh large oysters on half shells over crushed ice, lime and small bowls of chili sauce. A single appetizing dish centered and fully visible, close three-quarter overhead angle, warm natural light, neutral beige table, realistic ingredients, professional food photography. No text, no logo, no watermark, no collage. This is an illustrative sample asset for a Lao restaurant menu."
+    },
+    {
+      "file": "peanuts.png",
+      "prompt": "Use case: photorealistic-natural. Create one square restaurant menu sample photograph. Subject: A small bowl of roasted peanuts with a few lime leaves and dried red chilies. A single appetizing dish centered and fully visible, close three-quarter overhead angle, warm natural light, neutral beige table, realistic ingredients, professional food photography. No text, no logo, no watermark, no collage. This is an illustrative sample asset for a Lao restaurant menu."
+    },
+    {
+      "file": "soft-boiled-eggs.png",
+      "prompt": "Use case: photorealistic-natural. Create one square restaurant menu sample photograph. Subject: Ten soft-boiled chicken eggs, some in shells and a few halved showing soft golden yolks, arranged on a serving plate. A single appetizing dish centered and fully visible, close three-quarter overhead angle, warm natural light, neutral beige table, realistic ingredients, professional food photography. No text, no logo, no watermark, no collage. This is an illustrative sample asset for a Lao restaurant menu."
+    }
+  ]
+}

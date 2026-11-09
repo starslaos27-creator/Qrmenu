@@ -1,0 +1,1 @@
+function c(n,o){var i,m,a;const r=((i=n.name)==null?void 0:i.trim())||"",t=((m=n.name_lo)==null?void 0:m.trim())||"",e=((a=n.name_en)==null?void 0:a.trim())||"";return o==="lo"?t||r||e||"":o==="en"?e||r||t||"":r||t||e||""}export{c as p};

@@ -1,0 +1,771 @@
+﻿/* Recipe ingredient rows use a six-column layout so both fields and actions stay inside the card. */
+.recipe-ingredient-row {
+  display: grid !important;
+  grid-template-columns: 40px minmax(0, 1fr) 80px 88px 28px 28px !important;
+  gap: 4px !important;
+  align-items: center;
+  min-width: 0;
+  box-sizing: border-box;
+}
+.recipe-ingredient-row > :first-child {
+  width: 40px;
+  height: 40px;
+}
+.recipe-ingredient-row > div:nth-child(2) {
+  min-width: 0;
+}
+.recipe-ingredient-row > div:nth-child(2) > p {
+  white-space: normal;
+  overflow: visible;
+  overflow-wrap: anywhere;
+  line-height: 1.5;
+}
+.recipe-ingredient-row > div:nth-child(2) > p:first-child { font-size: 14px; }
+.recipe-ingredient-row > div:nth-child(2) > p:last-child {
+  margin-top: 4px;
+  color: #655b49;
+  font-size: 12px;
+}
+.recipe-ingredient-row > div:nth-child(3) {
+  display: contents !important;
+}
+.recipe-ingredient-row > div:nth-child(3) > input,
+.recipe-ingredient-row > div:nth-child(3) > label {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  box-sizing: border-box;
+}
+.recipe-ingredient-row > div:nth-child(3) > input {
+  min-height: 42px;
+  padding: 8px 6px;
+}
+.recipe-ingredient-row > div:nth-child(3) > label > input {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  min-height: 42px;
+  padding: 8px 4px;
+  box-sizing: border-box;
+}
+.recipe-ingredient-row > div:nth-child(3) > label > span {
+  display: block;
+  width: 100%;
+}
+.recipe-ingredient-row > div:nth-child(3) > button {
+  width: 28px;
+  min-width: 28px;
+  height: 30px;
+}
+@media (max-width: 560px) {
+  .recipe-ingredient-row {
+    grid-template-columns: 36px minmax(0, 1fr) 64px 76px 24px 24px !important;
+    gap: 3px !important;
+  }
+  .recipe-ingredient-row > :first-child {
+    width: 36px !important;
+    height: 36px !important;
+  }
+  .recipe-ingredient-row > div:nth-child(3) > input,
+  .recipe-ingredient-row > div:nth-child(3) > label > input {
+    min-height: 38px;
+    padding: 6px 3px;
+    font-size: 12px;
+  }
+  .recipe-ingredient-row > div:nth-child(3) > button {
+    width: 24px;
+    min-width: 24px;
+    height: 28px;
+  }
+}
+@media (max-width: 380px) {
+  .recipe-ingredient-row {
+    grid-template-columns: 32px minmax(0, 1fr) 56px 68px 22px 22px !important;
+  }
+  .recipe-ingredient-row > :first-child {
+    width: 32px !important;
+    height: 32px !important;
+  }
+  .recipe-ingredient-row > div:nth-child(3) > button {
+    width: 22px;
+    min-width: 22px;
+    height: 26px;
+  }
+}
+/* Recipe category banner: warm food tones with a soft leaf watermark. */
+.recipe-category-heading {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  min-height: 48px;
+  background: linear-gradient(112deg, #fff5df 0%, #f7f4df 48%, #e5f1dc 100%);
+  border-color: #bfd3af;
+  box-shadow: 0 2px 8px rgba(54, 91, 53, 0.08);
+}
+.recipe-category-heading::after {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  top: 50%;
+  right: 42px;
+  width: 78px;
+  height: 42px;
+  transform: translateY(-50%);
+  opacity: 0.20;
+  pointer-events: none;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 60'%3E%3Cg fill='%2374a85f'%3E%3Cpath d='M5 48C17 17 39 8 61 10 57 32 40 52 5 48Z'/%3E%3Cpath d='M43 57C48 30 69 13 96 9 95 34 77 56 43 57Z'/%3E%3Cpath d='M70 55C78 37 96 26 115 25 111 42 96 55 70 55Z'/%3E%3C/g%3E%3C/svg%3E") center / contain no-repeat;
+}
+.recipe-category-heading > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Framed search and category filters for the recipe menu list. */
+.recipe-menu-controls-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.recipe-menu-heading { flex: 0 1 360px; min-width: 250px; }
+.recipe-menu-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1 1 640px;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid #ddc9aa;
+  border-radius: 15px;
+  background: linear-gradient(110deg, #fffaf0 0%, #f8f6e9 60%, #f0f6e9 100%);
+  box-shadow: 0 3px 10px rgba(78, 67, 43, 0.07);
+}
+.recipe-menu-filter-search {
+  flex: 0 0 210px;
+  width: 210px;
+  min-width: 150px;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid #dfc9a7;
+  border-radius: 11px;
+  outline: none;
+  background: #fffdf8;
+  color: #173e30;
+  font: inherit;
+  font-size: 13px;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+.recipe-menu-filter-search:focus { border-color: #16845a; box-shadow: 0 0 0 3px rgba(22, 132, 90, 0.12); }
+.recipe-menu-filter-chips {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-x: auto;
+  padding: 2px;
+  scrollbar-width: thin;
+}
+.recipe-menu-filter-chip {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  padding: 8px 12px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: #f1e5cf;
+  color: #5e5039;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: background 150ms ease, color 150ms ease, box-shadow 150ms ease;
+}
+.recipe-menu-filter-chip:hover { background: #e6eedc; color: #174b37; }
+.recipe-menu-filter-chip.active { border-color: #f1cf72; background: #f7d577; color: #164735; box-shadow: 0 1px 3px rgba(77, 62, 23, 0.12); }
+@media (max-width: 1000px) {
+  .recipe-menu-controls-row { align-items: stretch; }
+  .recipe-menu-heading { flex-basis: 100%; }
+  .recipe-menu-filter-bar { flex-basis: 100%; }
+}
+@media (max-width: 620px) {
+  .recipe-menu-filter-bar { align-items: stretch; flex-direction: column; }
+  .recipe-menu-filter-search { flex: 0 0 auto; width: 100%; min-width: 0; }
+  .recipe-menu-filter-select { flex: 0 0 40px; width: 100%; min-width: 0; }
+  .recipe-menu-filter-chips { width: 100%; }
+}
+
+.recipe-menu-filter-select {
+  flex: 0 0 188px;
+  width: 188px;
+  min-width: 150px;
+  height: 40px;
+  padding: 0 30px 0 12px;
+  border: 1px solid #dfc9a7;
+  border-radius: 11px;
+  outline: none;
+  background: #fffdf8;
+  color: #173e30;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.recipe-menu-filter-select:focus { border-color: #16845a; box-shadow: 0 0 0 3px rgba(22, 132, 90, 0.12); }
+@media (max-width: 620px) {
+  .recipe-menu-filter-select { flex: 0 0 auto; width: 100%; min-width: 0; }
+}\n
+/* Cycle through distinct, gentle food inspired colors for each menu category. */
+.recipe-category-heading.recipe-category-tone-0 { background: linear-gradient(110deg, #fff1db 0%, #fff8e9 55%, #eaf3df 100%); border-color: #dfc49a; border-left-color: #bd8344; }
+.recipe-category-heading.recipe-category-tone-1 { background: linear-gradient(110deg, #fff0e9 0%, #fff5ee 52%, #f4e8df 100%); border-color: #e2c2ad; border-left-color: #c17a58; }
+.recipe-category-heading.recipe-category-tone-2 { background: linear-gradient(110deg, #edf6e8 0%, #f4f5e4 52%, #e2f0df 100%); border-color: #bfd4b4; border-left-color: #63935c; }
+.recipe-category-heading.recipe-category-tone-3 { background: linear-gradient(110deg, #f3eef9 0%, #f8f3eb 52%, #e9f2e4 100%); border-color: #d2c7dc; border-left-color: #8974a6; }
+.recipe-category-heading.recipe-category-tone-4 { background: linear-gradient(110deg, #fff0ed 0%, #fff6e9 52%, #eff2df 100%); border-color: #e2c5b7; border-left-color: #bd7968; }
+.recipe-category-heading.recipe-category-tone-5 { background: linear-gradient(110deg, #eaf5f1 0%, #f7f4e5 52%, #e5f0dd 100%); border-color: #bfd4c9; border-left-color: #5b8f80; }
+
+/* Brighter category colors with readable dark text. */
+.recipe-category-heading.recipe-category-tone-0 { background: linear-gradient(110deg, #ffe082 0%, #ffcc80 55%, #dcedc8 100%); border-color: #e7bd58; border-left-color: #c47d13; }
+.recipe-category-heading.recipe-category-tone-1 { background: linear-gradient(110deg, #ffccbc 0%, #ffab91 52%, #ffe0b2 100%); border-color: #e8a58e; border-left-color: #bd5336; }
+.recipe-category-heading.recipe-category-tone-2 { background: linear-gradient(110deg, #c5e1a5 0%, #dcedc8 52%, #a5d6a7 100%); border-color: #9ec785; border-left-color: #4f873e; }
+.recipe-category-heading.recipe-category-tone-3 { background: linear-gradient(110deg, #d1c4e9 0%, #ede7f6 52%, #b2dfdb 100%); border-color: #b3a3d0; border-left-color: #7156a0; }
+.recipe-category-heading.recipe-category-tone-4 { background: linear-gradient(110deg, #f8bbd0 0%, #fce4ec 52%, #ffe0b2 100%); border-color: #e6a2bb; border-left-color: #b74f78; }
+.recipe-category-heading.recipe-category-tone-5 { background: linear-gradient(110deg, #b2dfdb 0%, #b3e5fc 52%, #c5e1a5 100%); border-color: #91c9c4; border-left-color: #378c83; }
+
+/* Restaurant identity palette: forest green, warm cream, herbs and spices. */
+.recipe-category-heading { color: #123f30; box-shadow: 0 3px 10px rgba(38, 73, 48, 0.11); }
+.recipe-category-heading.recipe-category-tone-0 { background: linear-gradient(110deg, #f5d77e 0%, #fff0c4 55%, #dce8bf 100%); border-color: #d7c176; border-left-color: #14513b; }
+.recipe-category-heading.recipe-category-tone-1 { background: linear-gradient(110deg, #edaa82 0%, #f8dfc4 55%, #e8edcf 100%); border-color: #d8ab86; border-left-color: #14513b; }
+.recipe-category-heading.recipe-category-tone-2 { background: linear-gradient(110deg, #a9c982 0%, #dbe8bd 55%, #b9d7a8 100%); border-color: #a9c58b; border-left-color: #14513b; }
+.recipe-category-heading.recipe-category-tone-3 { background: linear-gradient(110deg, #d8be8a 0%, #f1e4c5 55%, #d4e3c2 100%); border-color: #d2bd91; border-left-color: #14513b; }
+.recipe-category-heading.recipe-category-tone-4 { background: linear-gradient(110deg, #df9877 0%, #f2d1b0 55%, #dbe6c5 100%); border-color: #d3a083; border-left-color: #14513b; }
+.recipe-category-heading.recipe-category-tone-5 { background: linear-gradient(110deg, #8fbba0 0%, #d5e5cf 55%, #f0e5c8 100%); border-color: #9dbda4; border-left-color: #14513b; }
+.recipe-category-heading > span { background: #14513b; color: #fff7e7; }
+
+/* Restaurant menu style category ribbons, with each category dish as decoration. */
+.recipe-category-heading {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 88px;
+  width: 100%;
+  overflow: hidden;
+  padding: 11px 17px 11px 19px;
+  border: 2px solid #d7a43e !important;
+  border-radius: 28px !important;
+  background-color: #21180f !important;
+  background-image: linear-gradient(90deg, #171816 0%, rgba(24, 23, 20, .98) 37%, rgba(31, 24, 17, .78) 56%, rgba(27, 20, 14, .30) 80%, rgba(20, 19, 17, .78) 100%), repeating-linear-gradient(0deg, #2b1d12 0 8px, #3a2818 9px, #21170f 11px, #302116 18px), repeating-linear-gradient(90deg, transparent 0 310px, rgba(0,0,0,.22) 311px 314px, transparent 315px 620px) !important;
+  box-shadow: 0 4px 9px rgba(49, 30, 12, .27), inset 0 0 0 1px rgba(255, 222, 143, .22);
+}
+.recipe-category-heading::before {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(255, 220, 139, .13), transparent 28%, transparent 77%, rgba(226, 162, 44, .22));
+}
+.recipe-category-heading::after {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  right: 64px;
+  width: min(36%, 360px);
+  height: 100%;
+  opacity: .42;
+  pointer-events: none;
+  background: url("/assets/menu-food-pattern.svg") right center / auto 100% no-repeat;
+}
+.recipe-category-food-image {
+  position: absolute;
+  z-index: 0;
+  top: 0;
+  right: 64px;
+  width: min(32%, 340px);
+  height: 100%;
+  object-fit: cover;
+  object-position: center 45%;
+  opacity: .92;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 24%, #000 100%);
+  mask-image: linear-gradient(90deg, transparent 0%, #000 24%, #000 100%);
+}
+.recipe-category-brand { position: relative; z-index: 2; display: flex; align-items: center; gap: 17px; min-width: 0; }
+.recipe-category-icon {
+  display: grid;
+  flex: 0 0 58px;
+  width: 58px;
+  height: 58px;
+  place-items: center;
+  border: 3px solid #efbd45;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #df3020, #a91810);
+  color: #fff8e9;
+  font-size: 29px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.35), inset 0 0 0 2px rgba(255,255,255,.18);
+}
+.recipe-category-copy { min-width: 0; }
+.recipe-category-title { margin: 0; overflow: hidden; color: #fff9ec; font-size: clamp(18px, 1.35vw, 25px); font-weight: 850; line-height: 1.2; text-overflow: ellipsis; white-space: nowrap; text-shadow: 0 2px 3px #0009; }
+.recipe-category-subtitle { margin: 4px 0 0; max-width: min(55vw, 640px); overflow: hidden; color: #f4e6c9; font-size: 12px; line-height: 1.35; text-overflow: ellipsis; white-space: nowrap; text-shadow: 0 1px 2px #0009; }
+.recipe-category-count {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  flex: 0 0 48px;
+  width: 48px;
+  height: 48px;
+  place-items: center;
+  border: 1px solid #ffb24d;
+  border-radius: 13px;
+  background: linear-gradient(145deg, #ed3b20, #bf2115);
+  color: #fff8e8;
+  font-size: 19px;
+  font-weight: 850;
+  box-shadow: 0 3px 7px rgba(0,0,0,.3);
+}
+@media (max-width: 640px) {
+  .recipe-category-heading { min-height: 70px; gap: 8px; padding: 8px 9px; border-radius: 20px !important; }
+  .recipe-category-food-image { right: 48px; width: 43%; opacity: .62; }
+  .recipe-category-heading::after { right: 48px; width: 42%; }
+  .recipe-category-brand { gap: 9px; }
+  .recipe-category-icon { flex-basis: 44px; width: 44px; height: 44px; border-width: 2px; font-size: 22px; }
+  .recipe-category-title { font-size: 16px; }
+  .recipe-category-subtitle { max-width: 42vw; font-size: 10px; }
+  .recipe-category-count { flex-basis: 39px; width: 39px; height: 39px; border-radius: 11px; font-size: 16px; }
+}
+
+/* Match the category ribbons to the program forest-green identity. */
+.recipe-category-heading {
+  border-color: #d5b04f !important;
+  background-color: #103f2e !important;
+  background-image: linear-gradient(90deg, #103b2c 0%, rgba(16, 69, 46, .98) 37%, rgba(20, 83, 53, .86) 56%, rgba(23, 85, 54, .40) 80%, rgba(13, 54, 38, .80) 100%), repeating-linear-gradient(0deg, #17452f 0 8px, #20583a 9px, #123d2b 11px, #1a4c33 18px), repeating-linear-gradient(90deg, transparent 0 310px, rgba(0,0,0,.18) 311px 314px, transparent 315px 620px) !important;
+  box-shadow: 0 4px 9px rgba(18, 61, 39, .30), inset 0 0 0 1px rgba(255, 224, 143, .28);
+}
+.recipe-category-heading::before { background: linear-gradient(180deg, rgba(207, 230, 160, .12), transparent 28%, transparent 77%, rgba(207, 178, 80, .20)); }
+.recipe-category-icon { border-color: #e3c45a; background: linear-gradient(145deg, #278a50, #0b4b32); }
+.recipe-category-count { border-color: #e5c458; background: linear-gradient(145deg, #196b43, #0c4c33); }
+
+/* Match the bright green customer ordering theme in the category reference. */
+.recipe-category-heading {
+  border-color: #e5c65d !important;
+  background-color: #087346 !important;
+  background-image: linear-gradient(90deg, #087342 0%, rgba(15, 117, 65, .98) 35%, rgba(22, 132, 70, .91) 54%, rgba(24, 116, 57, .35) 78%, rgba(5, 65, 39, .88) 100%), repeating-linear-gradient(0deg, #0d673d 0 8px, #17794a 9px, #095b37 11px, #116b41 18px), repeating-linear-gradient(90deg, transparent 0 310px, rgba(0,0,0,.12) 311px 314px, transparent 315px 620px) !important;
+  box-shadow: 0 4px 11px rgba(9, 78, 47, .24), inset 0 0 0 1px rgba(250, 229, 142, .3);
+}
+.recipe-category-heading::before { background: linear-gradient(180deg, rgba(197, 235, 162, .13), transparent 30%, transparent 76%, rgba(222, 197, 94, .16)); }
+.recipe-category-icon { border-color: #f3e8c8; background: linear-gradient(145deg, #158d53, #075638); box-shadow: 0 2px 8px rgba(0,0,0,.25), inset 0 0 0 1px rgba(255,255,255,.2); }
+.recipe-category-icon-glyph { display: inline-block; filter: grayscale(1) brightness(0) invert(1); }
+.recipe-category-count { border-color: #b9e9be; background: linear-gradient(145deg, #49b85d, #148348); color: #fff; box-shadow: 0 3px 7px rgba(0,0,0,.22); }
+.recipe-category-heading + .grid > div > button { border-color: #087346 !important; border-radius: 999px !important; background: linear-gradient(110deg, #168b4d, #08613c) !important; color: #fffdf2 !important; box-shadow: 0 3px 8px rgba(11, 91, 54, .20); min-height: 40px; }
+.recipe-category-heading + .grid > div > button:hover { background: linear-gradient(110deg, #1a9c57, #087046) !important; box-shadow: 0 5px 12px rgba(11, 91, 54, .28); }
+
+/* Deeper forest-green variation for the restaurant theme. */
+.recipe-category-heading {
+  background-color: #073b2b !important;
+  background-image: linear-gradient(90deg, #073b2b 0%, rgba(7, 66, 43, .99) 36%, rgba(9, 78, 48, .93) 56%, rgba(10, 70, 43, .38) 80%, rgba(5, 48, 34, .92) 100%), repeating-linear-gradient(0deg, #0b432d 0 8px, #104b33 9px, #073725 11px, #0b422d 18px), repeating-linear-gradient(90deg, transparent 0 310px, rgba(0,0,0,.20) 311px 314px, transparent 315px 620px) !important;
+  box-shadow: 0 4px 11px rgba(5, 54, 35, .32), inset 0 0 0 1px rgba(250, 229, 142, .28);
+}
+.recipe-category-heading::before { background: linear-gradient(180deg, rgba(170, 210, 135, .08), transparent 30%, transparent 76%, rgba(205, 171, 77, .18)); }
+.recipe-category-icon { background: linear-gradient(145deg, #0e6741, #063d2b); }
+.recipe-category-count { border-color: #a9d2a6; background: linear-gradient(145deg, #197b48, #0b5538); }
+.recipe-category-heading + .grid > div > button { background: linear-gradient(110deg, #0d7044, #064b32) !important; }
+.recipe-category-heading + .grid > div > button:hover { background: linear-gradient(110deg, #12804c, #075b39) !important; }
+
+/* Refine green category ribbon proportions and food styling. */
+.recipe-category-heading { min-height: 76px; padding: 8px 15px 8px 17px; border-width: 1.5px !important; border-radius: 23px !important; background-image: linear-gradient(90deg, #075b39 0%, rgba(9, 103, 60, .98) 36%, rgba(15, 117, 65, .91) 57%, rgba(19, 105, 56, .32) 80%, rgba(5, 60, 38, .85) 100%), repeating-linear-gradient(0deg, #0c603a 0 8px, #126c41 9px, #085433 11px, #0d633b 18px), repeating-linear-gradient(90deg, transparent 0 310px, rgba(0,0,0,.12) 311px 314px, transparent 315px 620px) !important; }
+.recipe-category-heading::before { background: linear-gradient(180deg, rgba(208, 239, 171, .10), transparent 34%, transparent 78%, rgba(229, 199, 103, .20)); }
+.recipe-category-heading::after { left: 38%; right: auto; width: 28%; opacity: .28; background: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 120 60%22%3E%3Cg fill=%22%237dbb54%22%3E%3Cpath d=%22M5 48C17 17 39 8 61 10 57 32 40 52 5 48Z%22/%3E%3Cpath d=%22M43 57C48 30 69 13 96 9 95 34 77 56 43 57Z%22/%3E%3Cpath d=%22M70 55C78 37 96 26 115 25 111 42 96 55 70 55Z%22/%3E%3C/g%3E%3C/svg%3E") center / contain no-repeat; }
+.recipe-category-food-image { right: 62px; width: min(36%, 390px); opacity: .96; filter: saturate(1.12) contrast(1.04); -webkit-mask-image: none; mask-image: none; clip-path: polygon(24% 0, 100% 0, 100% 100%, 0 100%); }
+.recipe-category-brand { gap: 14px; }
+.recipe-category-icon { flex-basis: 52px; width: 52px; height: 52px; border-width: 2px; border-color: #fff5df; background: rgba(5, 62, 39, .34); box-shadow: 0 1px 4px rgba(0,0,0,.18); font-size: 26px; }
+.recipe-category-title { font-size: clamp(19px, 1.25vw, 23px); }
+.recipe-category-subtitle { margin-top: 3px; color: #e4f0d8; font-size: 11px; }
+.recipe-category-count { flex-basis: 46px; width: 46px; height: 46px; border-radius: 12px; border-color: #c8e8bd; background: linear-gradient(145deg, #167847, #0a5e3b); }
+@media (max-width: 640px) {
+  .recipe-category-heading { min-height: 68px; padding: 7px 8px; border-radius: 18px !important; }
+  .recipe-category-heading::after { left: 38%; right: auto; width: 27%; }
+  .recipe-category-food-image { right: 48px; width: 44%; opacity: .78; clip-path: polygon(20% 0, 100% 0, 100% 100%, 0 100%); }
+  .recipe-category-brand { gap: 8px; }
+  .recipe-category-icon { flex-basis: 42px; width: 42px; height: 42px; font-size: 21px; }
+  .recipe-category-title { font-size: 16px; }
+  .recipe-category-subtitle { max-width: 40vw; font-size: 10px; }
+  .recipe-category-count { flex-basis: 37px; width: 37px; height: 37px; font-size: 15px; }
+}
+
+/* Final proportions and diagonal wood trim from the supplied banner sample. */
+.recipe-category-heading { min-height: 70px; padding: 7px 13px 7px 15px; border-radius: 21px !important; background-image: linear-gradient(90deg, #075b39 0%, rgba(9, 105, 61, .98) 36%, rgba(15, 119, 65, .91) 57%, rgba(19, 105, 56, .30) 80%, rgba(5, 60, 38, .88) 100%), repeating-linear-gradient(0deg, #0c603a 0 8px, #126c41 9px, #085433 11px, #0d633b 18px), repeating-linear-gradient(90deg, transparent 0 310px, rgba(0,0,0,.12) 311px 314px, transparent 315px 620px) !important; }
+.recipe-category-food-image { right: 58px; width: min(36%, 390px); clip-path: polygon(25% 0, 100% 0, 100% 100%, 0 100%); }
+.recipe-category-wood-accent { position: absolute; z-index: 2; top: -4%; right: 29%; width: 13%; height: 108%; pointer-events: none; clip-path: polygon(38% 0, 100% 0, 62% 100%, 0 100%); background: repeating-linear-gradient(0deg, #69441f 0 4px, #986330 5px, #57371d 8px, #805326 12px); box-shadow: inset 0 0 0 1px rgba(232, 193, 91, .7); opacity: .95; }
+.recipe-category-icon { flex-basis: 46px; width: 46px; height: 46px; font-size: 23px; }
+.recipe-category-brand { gap: 12px; }
+.recipe-category-title { font-size: clamp(18px, 1.2vw, 22px); }
+.recipe-category-subtitle { font-size: 10px; }
+.recipe-category-count { flex-basis: 42px; width: 42px; height: 42px; border-radius: 12px; }
+@media (max-width: 640px) {
+  .recipe-category-heading { min-height: 66px; padding: 6px 7px; }
+  .recipe-category-food-image { right: 46px; width: 44%; }
+  .recipe-category-wood-accent { right: 31%; width: 15%; }
+  .recipe-category-icon { flex-basis: 40px; width: 40px; height: 40px; font-size: 20px; }
+  .recipe-category-brand { gap: 8px; }
+  .recipe-category-count { flex-basis: 36px; width: 36px; height: 36px; font-size: 14px; }
+}
+
+/* Crisp white utensil mark and sample-matched ribbon details. */
+.recipe-category-heading { background-image: linear-gradient(90deg, #0a6840 0%, rgba(13, 112, 62, .98) 35%, rgba(17, 122, 65, .90) 55%, rgba(20, 109, 57, .30) 79%, rgba(5, 62, 39, .91) 100%), repeating-linear-gradient(0deg, #0c603a 0 8px, #126c41 9px, #085433 11px, #0d633b 18px), repeating-linear-gradient(90deg, transparent 0 310px, rgba(0,0,0,.12) 311px 314px, transparent 315px 620px) !important; }
+.recipe-category-icon { color: #fff9e8; border-color: #f7f2df; background: rgba(7, 79, 49, .20); }
+.recipe-category-icon svg { display: block; width: 25px; height: 25px; }
+.recipe-category-wood-accent { right: 28%; width: 16%; background: repeating-linear-gradient(0deg, #775027 0 4px, #a37135 5px, #64401f 8px, #8a5b2d 12px); }
+.recipe-category-food-image { width: min(35%, 390px); }
+.recipe-category-count { border-color: #d5edbd; background: linear-gradient(145deg, #16844b, #075d3a); }
+
+/* Polished food banner finish: vivid herb green, natural wood and soft gold. */
+.recipe-category-heading {
+  min-height: 72px;
+  border: 1px solid #e6c86a !important;
+  border-radius: 22px !important;
+  background-color: #08633e !important;
+  background-image: linear-gradient(100deg, #087544 0%, rgba(10, 112, 63, .98) 34%, rgba(16, 123, 67, .94) 52%, rgba(15, 105, 57, .42) 76%, rgba(5, 65, 41, .92) 100%), repeating-linear-gradient(0deg, #0b633b 0 12px, #116e43 13px, #095734 15px, #0e643c 25px), repeating-linear-gradient(90deg, transparent 0 340px, rgba(0,0,0,.10) 341px 343px, transparent 344px 680px) !important;
+  box-shadow: 0 4px 12px rgba(12, 72, 45, .19), inset 0 1px 0 rgba(255,255,228,.28), inset 0 -1px 0 rgba(239,195,88,.30);
+  transition: box-shadow 180ms ease, filter 180ms ease;
+}
+.recipe-category-heading:hover { box-shadow: 0 6px 15px rgba(12, 72, 45, .24), inset 0 1px 0 rgba(255,255,228,.3), inset 0 -1px 0 rgba(239,195,88,.35); }
+.recipe-category-heading::before { background: linear-gradient(180deg, rgba(234, 248, 211, .12), transparent 32%, transparent 75%, rgba(223, 192, 91, .15)); }
+.recipe-category-heading::after { left: 39%; width: 26%; opacity: .34; filter: saturate(1.22); }
+.recipe-category-wood-accent {
+  right: 28%;
+  width: 16%;
+  background: linear-gradient(105deg, #63401f 0%, #a36e36 28%, #87572b 47%, #bd8746 67%, #704720 100%), repeating-linear-gradient(0deg, transparent 0 10px, rgba(255,226,173,.18) 11px, transparent 13px 19px);
+  box-shadow: inset 0 1px 0 rgba(255,226,151,.45), inset 0 -1px 0 rgba(55,33,12,.4), -5px 0 12px rgba(4,53,34,.18);
+}
+.recipe-category-food-image { right: 57px; width: min(35%, 390px); opacity: .98; filter: saturate(1.16) contrast(1.04); }
+.recipe-category-brand { gap: 13px; }
+.recipe-category-icon { border: 2px solid #f6f2df; background: rgba(3, 73, 45, .20); box-shadow: 0 0 0 1px rgba(255,255,255,.12), 0 2px 6px rgba(0,0,0,.14); }
+.recipe-category-title { letter-spacing: .1px; text-shadow: 0 1px 2px rgba(0,0,0,.24); }
+.recipe-category-subtitle { color: #e6f3dc; text-shadow: 0 1px 2px rgba(0,0,0,.20); }
+.recipe-category-count { border: 1px solid #dff1d4; border-radius: 14px; background: linear-gradient(145deg, #147b4a, #095b3a); box-shadow: inset 0 0 0 1px rgba(255,255,255,.12), 0 3px 7px rgba(0,0,0,.18); }
+.recipe-category-heading + .grid > div > button { background: linear-gradient(105deg, #168348, #09613d) !important; box-shadow: 0 3px 9px rgba(9, 86, 51, .18); }
+.recipe-category-heading + .grid > div > button:hover { filter: brightness(1.08); }
+@media (max-width: 640px) {
+  .recipe-category-heading { min-height: 66px; }
+  .recipe-category-heading::after { left: 37%; width: 28%; }
+  .recipe-category-wood-accent { right: 30%; width: 17%; }
+  .recipe-category-food-image { right: 45px; width: 45%; }
+}
+
+.recipe-category-icon svg { width: 27px; height: 27px; stroke-width: 1.8; }
+.recipe-category-icon { background: radial-gradient(circle at 50% 42%, rgba(255,255,255,.10), rgba(3,73,45,.24) 72%); }
+
+/* Simplify the transition beside the food photo: one restrained wood slash and a small leaf. */
+.recipe-category-heading::after { left: 49%; right: auto; width: clamp(76px, 9vw, 126px); opacity: .26; background-size: 100% 100%; }
+.recipe-category-wood-accent { right: 29%; width: 10%; z-index: 2; opacity: .92; clip-path: polygon(48% 0, 100% 0, 52% 100%, 0 100%); background-color: #8a5d32 !important; background-image: linear-gradient(112deg, rgba(103,68,34,.91), rgba(181,132,68,.86) 48%, rgba(103,68,34,.92)), repeating-linear-gradient(0deg, transparent 0 13px, rgba(255,235,195,.17) 14px, transparent 16px 24px) !important; box-shadow: inset 0 1px 0 rgba(255,232,171,.5), inset 0 -1px 0 rgba(64,39,17,.45), -4px 0 9px rgba(4,53,34,.16); }
+.recipe-category-food-image { clip-path: polygon(23% 0, 100% 0, 100% 100%, 0 100%); }
+@media (max-width: 640px) {
+  .recipe-category-heading::after { left: 46%; right: auto; width: 82px; }
+  .recipe-category-wood-accent { right: 30%; width: 12%; }
+}
+
+/* Deeper forest greens for stronger contrast. */
+.recipe-category-heading { background-color: #043b2a !important; background-image: linear-gradient(100deg, #043b2a 0%, rgba(5, 65, 42, .99) 35%, rgba(7, 79, 47, .95) 55%, rgba(8, 69, 42, .42) 78%, rgba(3, 46, 32, .96) 100%), repeating-linear-gradient(0deg, #08432e 0 12px, #0c4c33 13px, #063b29 15px, #09442e 25px), repeating-linear-gradient(90deg, transparent 0 340px, rgba(0,0,0,.16) 341px 343px, transparent 344px 680px) !important; box-shadow: 0 4px 12px rgba(4, 47, 31, .30), inset 0 1px 0 rgba(255,255,228,.20), inset 0 -1px 0 rgba(239,195,88,.25); }
+.recipe-category-icon { background: rgba(2, 51, 33, .42); }
+.recipe-category-count { background: linear-gradient(145deg, #0e6941, #06442f); }
+.recipe-category-heading + .grid > div > button { background: linear-gradient(105deg, #0c643e, #06452f) !important; }
+.recipe-category-heading + .grid > div > button:hover { background: linear-gradient(105deg, #0e7045, #075239) !important; }
+
+/* Warm, food themed dashboard summary cards. */
+.inventory-stat-card { position: relative; isolation: isolate; min-height: 92px; border: 1px solid #e0d1b8; border-radius: 18px; background: linear-gradient(115deg, #fffdf8 0%, #fbf9ef 74%, #f1f5e9 100%); box-shadow: 0 3px 9px rgba(75, 62, 39, .09); }
+.inventory-stat-card::before { content: ""; position: absolute; z-index: 0; top: -28px; right: -22px; width: 128px; height: 128px; border-radius: 50%; background: radial-gradient(circle, rgba(163, 202, 133, .17), rgba(255,255,255,0) 72%); pointer-events: none; }
+.inventory-stat-card::after { position: absolute; z-index: 0; right: 18px; bottom: 4px; font-size: 42px; line-height: 1; opacity: .20; filter: saturate(.9); pointer-events: none; }
+.inventory-stat-card[data-theme="blue"] { background: linear-gradient(115deg, #fffdf8 0%, #f7f8eb 72%, #edf4df 100%); border-color: #d7dfc3; }
+.inventory-stat-card[data-theme="blue"]::after { content: "\1F957"; }
+.inventory-stat-card[data-theme="amber"] { background: linear-gradient(115deg, #fffdf8 0%, #fff8e9 72%, #fff0d5 100%); border-color: #ead8b7; }
+.inventory-stat-card[data-theme="amber"]::after { content: "\1F4E6"; }
+.inventory-stat-card[data-theme="rose"] { background: linear-gradient(115deg, #fffdf9 0%, #fff7f3 72%, #ffebe7 100%); border-color: #ead0c8; }
+.inventory-stat-card[data-theme="rose"]::after { content: "\1F6AB"; }
+.inventory-stat-card[data-theme="emerald"] { background: linear-gradient(115deg, #fffdf8 0%, #f4f8ed 72%, #e8f2e2 100%); border-color: #d0dfc7; }
+.inventory-stat-card[data-theme="emerald"]::after { content: "\1F4CB"; }
+.inventory-stat-card > div { position: relative; z-index: 1; }
+.inventory-stat-card > div > div:first-child { flex: 0 0 54px; width: 54px; height: 54px; border-radius: 50% !important; box-shadow: 0 2px 7px rgba(51, 62, 39, .08); }
+.inventory-stat-card:hover { transform: translateY(-1px); box-shadow: 0 6px 14px rgba(62, 75, 44, .12); }
+
+/* Bright circular stat icons, as in the dashboard reference. */
+.inventory-stat-card > div > div:first-child { flex-basis: 46px; width: 46px; height: 46px; border: 0 !important; color: #fff !important; }
+.inventory-stat-card > div > div:first-child svg { width: 24px; height: 24px; stroke: currentColor; }
+.inventory-stat-card[data-theme="blue"] > div > div:first-child { background: linear-gradient(145deg, #22a34f, #087640) !important; box-shadow: 0 0 0 6px rgba(85, 177, 71, .16), 0 3px 8px rgba(14, 101, 53, .18); }
+.inventory-stat-card[data-theme="amber"] > div > div:first-child { background: linear-gradient(145deg, #ffad32, #f47b0b) !important; box-shadow: 0 0 0 6px rgba(255, 164, 47, .18), 0 3px 8px rgba(208, 106, 13, .17); }
+.inventory-stat-card[data-theme="rose"] > div > div:first-child { background: linear-gradient(145deg, #ff6684, #e72d59) !important; box-shadow: 0 0 0 6px rgba(242, 77, 111, .16), 0 3px 8px rgba(193, 44, 76, .16); }
+.inventory-stat-card[data-theme="emerald"] > div > div:first-child { background: linear-gradient(145deg, #24a159, #087444) !important; box-shadow: 0 0 0 6px rgba(69, 174, 83, .16), 0 3px 8px rgba(11, 99, 55, .16); }
+.inventory-stat-card::after { opacity: .28; font-size: 44px; }
+
+
+/* Compact restaurant banner in the inventory page header. */
+.inventory-page > div:first-child {
+  position: relative;
+  isolation: isolate;
+  min-height: 64px;
+  align-items: center;
+}
+.inventory-page > div:first-child > div {
+  position: relative;
+  z-index: 3;
+}
+.inventory-page > div:first-child::after {
+  content: "ครัวสดใหม่  •  วัตถุดิบคุณภาพ  •  จัดการสต็อกง่าย";
+  position: absolute;
+  z-index: 1;
+  top: 1px;
+  bottom: 1px;
+  left: clamp(340px, 20vw, 420px);
+  right: clamp(140px, 10vw, 190px);
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  padding: 0 24px;
+  border: 1px solid rgba(224, 189, 91, .88);
+  border-radius: 20px;
+  color: #fff8e8;
+  font-size: clamp(12px, .9vw, 15px);
+  font-weight: 700;
+  letter-spacing: .15px;
+  text-shadow: 0 1px 3px rgba(0, 24, 14, .5);
+  background-color: #06442e;
+  background-image:
+    linear-gradient(90deg, #06442e 0%, rgba(7, 87, 53, .99) 38%, rgba(7, 87, 53, .82) 61%, rgba(4, 55, 37, .18) 100%),
+    url("/images/menu-samples/papaya-salad.png");
+  background-position: center, right 46%;
+  background-size: cover, auto 175%;
+  background-repeat: no-repeat;
+  box-shadow: 0 5px 13px rgba(20, 66, 42, .18), inset 0 1px 0 rgba(255, 255, 235, .25), inset 0 -1px 0 rgba(236, 195, 89, .25);
+}
+.inventory-page > div:first-child::before {
+  content: "";
+  position: absolute;
+  z-index: 2;
+  top: 1px;
+  bottom: 1px;
+  right: clamp(140px, 10vw, 190px);
+  width: clamp(48px, 5vw, 82px);
+  pointer-events: none;
+  clip-path: polygon(44% 0, 100% 0, 56% 100%, 0 100%);
+  background: linear-gradient(110deg, #80552b, #c1904d 48%, #76502a);
+  box-shadow: inset 0 1px 0 rgba(255, 236, 185, .55);
+}
+@media (max-width: 1100px) {
+  .inventory-page > div:first-child::before,
+  .inventory-page > div:first-child::after { display: none; }
+  .inventory-page > div:first-child { min-height: 0; }
+}
+
+
+/* Cream and herb header inspired by the restaurant ordering banner. */
+.inventory-page > div:first-child {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center !important;
+  min-height: 112px;
+  margin-bottom: 0 !important;
+  padding: 16px 22px;
+  overflow: hidden;
+  border: 1px solid #e4d2b4;
+  border-radius: 23px;
+  background-color: #fffaf0;
+  background-image:
+    linear-gradient(90deg, #fffdf7 0%, rgba(255, 253, 247, .99) 33%, rgba(255, 253, 247, .88) 53%, rgba(255, 253, 247, .06) 80%),
+    url("/images/menu-samples/papaya-salad-banner.jpg");
+  background-position: center, right 48%;
+  background-size: cover, auto 340%;
+  background-repeat: no-repeat;
+  box-shadow: 0 7px 19px rgba(80, 63, 36, .12), inset 0 1px 0 rgba(255,255,255,.85);
+}
+.inventory-page > div:first-child > div {
+  position: relative;
+  z-index: 3;
+}
+.inventory-page > div:first-child > div:first-child {
+  min-height: 72px;
+  justify-content: center;
+  border: 0 !important;
+  padding-left: 72px !important;
+}
+.inventory-page > div:first-child > div:first-child::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 54px;
+  height: 54px;
+  transform: translateY(-50%);
+  border: 1px solid #c8dfc5;
+  border-radius: 18px;
+  background-color: #edf5e8;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48' fill='none' stroke='%23065b3b' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M13 24a8 8 0 1 1 3-15 10 10 0 0 1 18 2 7 7 0 0 1 2 13v5H13v-5Z'/%3E%3Cpath d='M14 29h22v10H14zM14 33h22M19 36h12'/%3E%3C/svg%3E");
+  background-position: center;
+  background-size: 36px;
+  background-repeat: no-repeat;
+  box-shadow: 0 3px 8px rgba(16, 86, 54, .09);
+}
+.inventory-page > div:first-child h1 {
+  color: #064c34;
+  font-size: clamp(22px, 1.65vw, 30px);
+  font-weight: 800;
+  letter-spacing: -.35px;
+  line-height: 1.15;
+}
+.inventory-page > div:first-child h1::after {
+  content: "";
+  display: block;
+  width: 126px;
+  height: 3px;
+  margin-top: 7px;
+  border-radius: 99px;
+  background: linear-gradient(90deg, #0a6540 0 82%, transparent 82%);
+}
+.inventory-page > div:first-child p {
+  color: #526b5b;
+}
+.inventory-page > div:first-child > div:last-child > button {
+  border: 1px solid #0d6641;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #16834c, #075637) !important;
+  box-shadow: 0 4px 10px rgba(6, 79, 49, .24), inset 0 1px 0 rgba(255,255,255,.16);
+}
+.inventory-page > div:first-child > div:last-child > button:hover {
+  filter: brightness(1.08);
+  box-shadow: 0 6px 13px rgba(6, 79, 49, .28);
+}
+.inventory-page > div:first-child::before {
+  content: "";
+  position: absolute;
+  z-index: 2;
+  top: 1px;
+  bottom: 1px;
+  right: clamp(180px, 24vw, 410px);
+  width: clamp(58px, 7vw, 116px);
+  pointer-events: none;
+  clip-path: polygon(48% 0, 100% 0, 53% 100%, 0 100%);
+  background: linear-gradient(110deg, rgba(104,69,34,.82), rgba(190,145,78,.84) 48%, rgba(111,73,36,.80));
+  box-shadow: inset 0 1px 0 rgba(255,236,185,.55);
+}
+.inventory-page > div:first-child::after { content: none; }
+@media (max-width: 1100px) {
+  .inventory-page > div:first-child {
+    background-image:
+      linear-gradient(90deg, #fffdf7 0%, rgba(255,253,247,.97) 43%, rgba(255,253,247,.76) 67%, rgba(255,253,247,.18) 100%),
+      url("/images/menu-samples/papaya-salad-banner.jpg");
+    background-size: cover, auto 250%;
+  }
+  .inventory-page > div:first-child::before { display: block; right: 185px; width: 58px; }
+}
+@media (max-width: 760px) {
+  .inventory-page > div:first-child {
+    flex-wrap: wrap;
+    min-height: 0;
+    padding: 14px;
+    background-position: center, right center;
+    background-size: cover, auto 165%;
+  }
+  .inventory-page > div:first-child > div:first-child { padding-left: 62px !important; }
+  .inventory-page > div:first-child > div:first-child::before { width: 46px; height: 46px; background-size: 30px; }
+  .inventory-page > div:first-child h1 { font-size: 21px; }
+  .inventory-page > div:first-child::before { display: none; }
+  .inventory-page > div:first-child > div:last-child { margin-left: auto; }
+}
+
+
+/* Inventory product image input and upload control. */
+.inventory-stock-unit-row { align-items: end; }
+.inventory-image-section {
+  padding: 13px;
+  border: 1px solid #ddceb3;
+  border-radius: 17px;
+  background: linear-gradient(145deg, #fffdf7, #f5f8ef);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.8);
+}
+.inventory-image-upload-frame {
+  display: grid;
+  grid-template-columns: 54px minmax(135px, max-content) minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  min-height: 76px;
+  margin-top: 10px;
+  padding: 10px 12px;
+  border: 1px dashed #9abb9e;
+  border-radius: 14px;
+  background: rgba(238, 246, 232, .68);
+}
+.inventory-image-preview,
+.inventory-image-placeholder {
+  display: flex;
+  width: 54px;
+  height: 54px;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 1px solid #d8c9ad;
+  border-radius: 13px;
+  background: #fffaf0;
+  color: #0b6741;
+  font-size: 24px;
+  object-fit: cover;
+}
+.inventory-image-picker {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 0 14px;
+  border: 1px solid #a9c9a5;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #fff, #eaf4e5);
+  color: #075537;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(28, 80, 48, .08);
+  transition: background 150ms ease, transform 150ms ease;
+}
+.inventory-image-picker:hover { background: #e0f0da; transform: translateY(-1px); }
+.inventory-image-picker.is-uploading { opacity: .65; cursor: wait; }
+.inventory-image-file { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; clip-path: inset(50%); }
+.inventory-image-file:focus-visible + span { outline: 2px solid #0b6741; outline-offset: 3px; }
+.inventory-image-help { color: #6e7e6d; font-size: 10px; line-height: 1.45; }
+@media (max-width: 520px) {
+  .inventory-stock-unit-row { grid-template-columns: minmax(0,1fr); }
+  .inventory-image-upload-frame { grid-template-columns: 48px minmax(0,1fr); gap: 8px; }
+  .inventory-image-preview, .inventory-image-placeholder { width: 48px; height: 48px; }
+  .inventory-image-help { grid-column: 2; }
+}
+
+
+/* Keep the native file chooser visible and directly clickable. */
+.inventory-image-native-file { width: 100%; min-width: 0; max-width: 100%; color: #526b5b; font-size: 11px; }
+.inventory-image-native-file::file-selector-button { max-width: 100%; min-height: 38px; margin-right: 8px; padding: 0 12px; border: 1px solid #a9c9a5; border-radius: 11px; background: linear-gradient(135deg, #fff, #eaf4e5); color: #075537; font: inherit; font-weight: 700; cursor: pointer; box-shadow: 0 2px 5px rgba(28,80,48,.08); }
+.inventory-image-native-file::file-selector-button:hover { background: #e0f0da; }
+.inventory-image-native-file.is-uploading { opacity: .65; cursor: wait; }
+/* Keep the pre-auth screen text-free so browser translation helpers cannot
+   replace nodes that React later tries to reconcile during dashboard startup. */
+.shopqr-loading-screen {
+  position: relative;
+  min-height: 100vh;
+  background: #f0e8d8;
+}
+
+.shopqr-loading-screen::after {
+  content: "";
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: 32px;
+  height: 32px;
+  border: 3px solid #d9c9ac;
+  border-top-color: #174a34;
+  border-radius: 50%;
+  animation: shopqr-loading-spin 800ms linear infinite;
+  transform: translate(-50%, -50%);
+}
+
+@keyframes shopqr-loading-spin {
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}

@@ -1,0 +1,65 @@
+.menu-view-switch { display:flex; align-items:center; gap:8px; }
+.menu-view-switch button { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-width:112px; min-height:46px; padding:10px 16px; border:1px solid #d9c6a4; border-radius:12px; background:#fffdf8; color:#5b6d5d; font-size:14px; font-weight:600; cursor:pointer; transition:background .15s,border-color .15s; }
+.menu-view-switch button svg { width:19px; height:19px; flex:none; }
+.menu-view-switch button:hover { background:#f0f5ed; }
+.menu-view-switch button[aria-pressed="true"] { background:#e6f1e8; color:#174a34; border-color:#568b6b; box-shadow:inset 0 0 0 1px #568b6b; }
+.menu-view-switch button:focus-visible { outline:3px solid #aa7218; outline-offset:3px; }
+
+/* Reflow the existing React cards so editing, filtering and stock controls keep their state. */
+.menu-list-facts { display:none; }
+#root .grid:has(#menu-add-form) > .menu-card-list-panel[data-menu-view="list"] > section > ul {
+  grid-template-columns:minmax(0,1fr) !important;
+  gap:8px !important;
+}
+#root .grid:has(#menu-add-form) > .menu-card-list-panel[data-menu-view="list"] > section > ul > li {
+  min-height:0 !important; border-radius:12px !important; box-shadow:0 1px 4px #4c37170a !important;
+}
+#root .grid:has(#menu-add-form) > .menu-card-list-panel[data-menu-view="list"] > section > ul > li:hover { transform:none; }
+#root .grid:has(#menu-add-form) > .menu-card-list-panel[data-menu-view="list"] > section > ul > li > div {
+  grid-template-columns:minmax(0,1fr) auto !important; grid-template-rows:auto !important;
+  align-items:center !important; gap:16px !important; padding:12px 16px !important; min-height:90px !important; height:auto;
+}
+#root .grid:has(#menu-add-form) > .menu-card-list-panel[data-menu-view="list"] > section > ul > li > div > div:first-child {
+  display:none !important;
+}
+#root .grid:has(#menu-add-form) > .menu-card-list-panel[data-menu-view="list"] > section > ul > li > div > div:nth-child(2) {
+  display:grid !important; grid-template-columns:minmax(150px,1fr) minmax(0,3fr); gap:6px 24px; align-items:center; align-self:center;
+  grid-column:1; grid-row:1;
+}
+#root .menu-card-list-panel[data-menu-view="list"] .menu-card-list-content > div:nth-child(2) > button { grid-column:1; grid-row:1; }
+#root .menu-card-list-panel[data-menu-view="list"] .menu-shared-description { display:none !important; }
+#root .menu-card-list-panel[data-menu-view="list"] .menu-list-facts {
+  display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); grid-column:2; grid-row:1 / span 2; gap:16px; margin:0;
+}
+.menu-list-fact { min-width:0; }
+.menu-list-fact dt { font-size:12px; color:#7b806f; margin-bottom:7px; }
+.menu-list-fact dd { margin:0; font-size:14px; font-weight:600; color:#174a34; font-variant-numeric:tabular-nums; overflow-wrap:anywhere; }
+.menu-list-fact[data-fact="sale"] dd { color:#b57300; }
+.menu-list-fact.is-low dd { color:#a96900; }
+.menu-list-fact.is-empty dd { color:#c33e32; }
+#root .menu-card-list-panel[data-menu-view="list"] .menu-card-list-content > div:nth-child(2) > div:last-child {
+  grid-column:1; grid-row:2; margin:0 !important; align-self:center;
+}
+#root .menu-card-list-panel[data-menu-view="list"] .menu-card-list-content > div:nth-child(2) > div:last-child > span:first-child,
+#root .menu-card-list-panel[data-menu-view="list"] .menu-stock-statuses,
+#root .menu-card-list-panel[data-menu-view="list"] .text-line-vertical {
+  display:none !important;
+}
+#root .grid:has(#menu-add-form) > .menu-card-list-panel[data-menu-view="list"] > section > ul > li > div > div:last-child {
+  grid-column:2; grid-row:1; align-self:center; flex-wrap:nowrap; padding:0 !important; margin:0 !important;
+}
+@media(max-width:1100px) {
+  .menu-list-toolbar-title { flex-wrap:wrap; }
+  .menu-list-toolbar-actions { gap:10px; }
+  #root .grid:has(#menu-add-form) > .menu-card-list-panel[data-menu-view="list"] > section > ul > li > div > div:nth-child(2) { grid-template-columns:minmax(0,1fr); }
+  #root .menu-card-list-panel[data-menu-view="list"] .menu-list-facts { grid-column:1; grid-row:3; margin-top:8px; }
+}
+@media(max-width:600px) {
+  .menu-view-switch { width:100%; }
+  .menu-view-switch button { flex:1; min-width:0; }
+  #root .grid:has(#menu-add-form) > .menu-card-list-panel[data-menu-view="list"] > section > ul > li > div {
+    grid-template-columns:minmax(0,1fr) !important; gap:10px !important; padding:12px !important;
+  }
+  #root .menu-card-list-panel[data-menu-view="list"] .menu-list-facts { grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+  #root .grid:has(#menu-add-form) > .menu-card-list-panel[data-menu-view="list"] > section > ul > li > div > div:last-child { grid-column:1; grid-row:2; justify-content:flex-end; }
+}

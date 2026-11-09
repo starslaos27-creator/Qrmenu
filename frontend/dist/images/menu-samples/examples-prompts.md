@@ -1,0 +1,7 @@
+Generated with the built-in image_gen tool. Existing sample images are retained.
+
+- `papaya-salad.png`: Create one square photorealistic restaurant menu food photograph of Lao green papaya salad (tam mak hoong): shredded green papaya, cherry tomatoes, lime, red chilies, green beans and fermented dressing, on a cream ceramic plate on a warm neutral cream tabletop. Appetizing natural side light, overhead three-quarter angle, entire plate centered and visible, fills 85 percent of frame. No text, no watermark, no people. Asset for a small restaurant menu thumbnail.
+- `green-salad.png`: Square photorealistic restaurant menu thumbnail, fresh mixed green salad with lettuce cherry tomatoes cucumber carrot on a cream ceramic plate. Whole plate centered fills 85% of frame, warm cream tabletop, soft natural light, three-quarter overhead view. No text no watermark no people.
+- `lager-glass.png`: Square photorealistic restaurant beverage menu thumbnail, one large chilled clear glass mug of golden lager beer with white foam and condensation, centered whole glass visible on a warm cream tabletop, neutral background, natural soft light. No brands, no labels, no text, no watermark, no people.
+
+Menu examples are presentation-only in `../../assets/menu-card-examples.js` and scoped to the existing local sample restaurant. Saved descriptions and images take precedence. Enabling stock tracking uses actual quantities. Examples never change database quantities, availability, prices or edit-form values.

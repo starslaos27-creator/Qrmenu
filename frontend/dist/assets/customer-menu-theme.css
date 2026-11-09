@@ -1,0 +1,290 @@
+/* Scoped to the customer ordering page; maintained separately for this compiled build. */
+.customer-menu-page {
+  background: radial-gradient(ellipse at 0 0, #efdfac80, transparent 45%), linear-gradient(135deg, #fffaf0, #f5ecd7);
+  color: #104d33;
+}
+.customer-menu-page .menu-hero {
+  position: relative;
+  padding: 30px 28px 26px;
+  border-bottom: 3px solid #dfc67e;
+  background: radial-gradient(ellipse at 4% 0, #dcebb888, transparent 45%), linear-gradient(110deg, #fffef7, #fff5d9);
+  box-shadow: 0 6px 28px #7158250a;
+}
+.menu-hero:before {
+  content: "";
+  position: absolute;
+  width: 110px;
+  height: 12px;
+  top: 0;
+  left: 28px;
+  background: #14623b;
+  border-radius: 0 0 90% 10%;
+}
+.customer-menu-page .menu-brand {
+  font-size: clamp(26px, 3vw, 48px);
+  font-weight: 900;
+  line-height: 1.35;
+  color: #07512f;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-shadow: 2px 3px 0 #fff;
+}
+.menu-tagline { margin-top: 8px; font-size: clamp(18px, 1.5vw, 26px); font-weight: 700; line-height: 1.5; color: #416238; }
+.customer-menu-page .menu-table {
+  min-width: 68px;
+  text-align: center;
+  background: linear-gradient(145deg, #16804c, #06442b);
+  border: 1px solid #e1cf91;
+  border-radius: 19px;
+  box-shadow: 0 5px 12px #13452d18;
+}
+.customer-menu-page .menu-table > div { color: #fff8df; }
+.customer-menu-page .menu-table > div:last-child { font-size: 30px; font-weight: 800; }
+.customer-menu-page .menu-sections { padding: 24px 20px 32px; }
+.customer-menu-page .menu-sections > section + section { margin-top: 20px; }
+.menu-category-heading { gap: 12px; }
+.customer-menu-page .menu-category-heading h2 {
+  background: linear-gradient(100deg, #07512f, #1c7347);
+  color: #fffbe9;
+  padding: 10px 26px 10px 18px;
+  border-radius: 8px 26px 8px 8px;
+  border-left: 5px solid #e7bc46;
+  box-shadow: 0 4px 10px #164b3020;
+  font-size: 18px;
+  font-weight: 800;
+}
+.customer-menu-page .customer-menu-grid { gap: 12px 16px; align-items: start; }
+.customer-menu-page .menu-food-card {
+  border: 1px solid #d9cba8;
+  border-radius: 20px;
+  background: #fffdf5;
+  box-shadow: 0 4px 5px #54411e0a, 0 9px 22px #54411e0d;
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+.menu-food-action { padding-bottom: 58px; }
+.customer-menu-page .menu-food-photo { aspect-ratio: 1.12; border-bottom: 3px solid #e4cc8a; }
+.customer-menu-page .menu-food-photo img { transition: transform .45s ease; }
+.customer-menu-page .menu-food-info { padding: 13px 14px 0; }
+.customer-menu-page .menu-food-name { color: #104d33; font-size: 16px; font-weight: 800; line-height: 1.4; min-height: 0; }
+.customer-menu-page .menu-food-price {
+  display: inline-block;
+  color: #dc2028;
+  font-size: clamp(16px, 1.2vw, 23px);
+  line-height: 1.3;
+  font-weight: 900;
+  margin-top: 8px;
+  padding: 3px 9px;
+  background: #fff0e9;
+  border-radius: 7px 12px 7px 12px;
+}
+.menu-add-label {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  left: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 36px;
+  padding: 7px 12px;
+  border: 1px solid #ffffff55;
+  border-radius: 999px;
+  color: #fff;
+  background: linear-gradient(#168550, #075332);
+  box-shadow: 0 3px 6px #09533126;
+  font-size: 13px;
+  font-weight: 700;
+}
+.menu-add-label svg { width: 20px; height: 20px; flex-shrink: 0; }
+.customer-menu-page button:focus-visible { outline: 3px solid #dca92c; outline-offset: -3px; }
+@media (hover:hover) {
+  .customer-menu-page .menu-food-card:hover { transform: translateY(-4px); box-shadow: 0 12px 28px #3d502222; border-color: #9baf79; }
+  .menu-food-action:hover .menu-add-label { background: #06432a; }
+}
+@media (min-width:1024px) { .customer-menu-page .customer-menu-grid { grid-template-columns: repeat(6,minmax(0,1fr)); } }
+@media (min-width:1600px) {
+  .menu-food-action { padding-bottom: 16px; }
+  .customer-menu-page .menu-food-price { max-width: 53%; font-size: 20px; }
+  .menu-add-label { left: auto; bottom: 16px; padding: 7px 10px; font-size: 12px; }
+}
+@media (max-width:639px) {
+  .customer-menu-page .menu-hero { padding: 22px 14px 18px; }
+  .menu-hero > div { gap: 10px; }
+  .customer-menu-page .menu-brand { font-size: 24px; }
+  .menu-tagline { font-size: 16px; line-height: 1.6; }
+  .customer-menu-page .menu-table { min-width: 46px; padding: 6px; border-radius: 13px; }
+  .customer-menu-page .menu-sections { padding: 18px 10px 26px; }
+  .customer-menu-page .customer-menu-grid { gap: 10px; }
+  .customer-menu-page .menu-food-card { border-radius: 14px; }
+  .customer-menu-page .menu-food-info { padding: 10px 10px 0; }
+  .customer-menu-page .menu-food-name { font-size: 14px; }
+  .customer-menu-page .menu-category-heading h2 { font-size: 15px; padding: 8px 16px 8px 12px; }
+}
+@media (prefers-reduced-motion:reduce) {
+  .customer-menu-page .menu-food-card, .customer-menu-page .menu-food-photo img { transition: none; }
+  .customer-menu-page .menu-food-card:hover { transform: none; }
+}
+
+/* Restaurant sign inspired by the cream, green and yellow reference. */
+.customer-menu-page .menu-hero {
+  background: radial-gradient(ellipse at 0 0, #c9df9c66, transparent 42%), linear-gradient(110deg, #fffef5, #fff8e4 70%, #f7efcf);
+  padding-top: 26px;
+  padding-bottom: 26px;
+}
+.menu-hero:before {
+  width: 145px;
+  height: 20px;
+  left: 0;
+  background: linear-gradient(100deg, #07512f, #6d982f);
+  border-radius: 0 0 100% 0;
+}
+.menu-hero > div > div:first-child {
+  position: relative;
+  padding-left: 112px;
+  min-height: 112px;
+}
+.menu-hero > div > div:first-child:before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 98px;
+  height: 118px;
+  background: url('/assets/menu-chef.svg') center / contain no-repeat;
+  filter: drop-shadow(0 4px 2px #164a2b18);
+  pointer-events: none;
+}
+.customer-menu-page .menu-brand {
+  position: relative;
+  display: table;
+  padding-right: 42px;
+  font-size: clamp(30px, 3.4vw, 58px);
+  font-weight: 900;
+  letter-spacing: -.025em;
+  color: #005630;
+  paint-order: stroke fill;
+  -webkit-text-stroke: 5px #fffef8;
+  text-shadow: 0 4px 0 #cdd7b6, 0 6px 8px #254a2320;
+}
+.menu-brand:after {
+  content: "";
+  position: absolute;
+  right: 2px;
+  top: 10px;
+  width: 27px;
+  height: 43px;
+  border-radius: 95% 0 95% 0;
+  transform: rotate(24deg);
+  background: linear-gradient(130deg, #a8cd4e 0%, #5d9228 48%, #d4e8a1 50%, #347c27 54%, #18532a 100%);
+  box-shadow: 2px 3px 3px #254a231c;
+}
+.customer-menu-page .menu-tagline {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 5px 24px 7px 16px;
+  color: #235630;
+  font-size: clamp(18px, 1.55vw, 27px);
+  font-weight: 800;
+  line-height: 1.5;
+  background: linear-gradient(100deg, #fff3a3, #ffdc57 55%, #ffe990);
+  border-radius: 35% 8px 28% 7px / 12px 7px 10px 8px;
+  box-shadow: 0 3px 0 #e9bd3d22;
+}
+.menu-browse-tools {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 20px;
+  border-bottom: 1px solid #dfcfb2;
+  background: #fffaf1ee;
+  backdrop-filter: blur(12px);
+}
+.menu-browse-controls {
+  display: grid;
+  grid-template-columns: minmax(220px, 310px) minmax(190px, 230px) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+}
+.menu-search-field {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: min(100%, 440px);
+  min-height: 42px;
+  padding: 0 12px;
+  border: 1px solid #dfcfb2;
+  border-radius: 12px;
+  background: #fffdf5;
+  color: #174a34;
+}
+.menu-browse-controls .menu-search-field { width: 100%; min-width: 0; }
+.menu-search-field:focus-within { border-color: #16835e; box-shadow: 0 0 0 3px #16835e24; }
+.menu-search-icon { width: 16px; height: 16px; flex: none; }
+.menu-search-field input { width: 100%; min-width: 0; border: 0; outline: 0; background: transparent; color: #174a34; font: inherit; }
+.menu-search-field input::placeholder { color: #9b8b73; }
+.menu-category-select { min-width: 0; }
+.menu-category-select select {
+  width: 100%;
+  height: 42px;
+  padding: 0 12px;
+  border: 1px solid #dfcfb2;
+  border-radius: 12px;
+  background: #fffdf5;
+  color: #174a34;
+  font: inherit;
+}
+.menu-category-select select:focus-visible { outline: 3px solid #16835e40; border-color: #16835e; }
+.menu-search-button {
+  min-height: 42px;
+  padding: 0 18px;
+  border: 1px solid #174a34;
+  border-radius: 12px;
+  background: #174a34;
+  color: #fffaf1;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.menu-search-button:hover { background: #0f3d2a; }
+.menu-search-button:focus-visible { outline: 3px solid #16835e55; outline-offset: 2px; }
+.menu-category-filters { display: flex; gap: 8px; min-width: 0; overflow-x: auto; padding: 1px 0; }
+.menu-browse-controls .menu-category-filters { grid-column: 4; justify-content: flex-end; }
+.menu-category-pill {
+  flex: none;
+  padding: 8px 14px;
+  border: 0;
+  border-radius: 999px;
+  background: #f1e6d1;
+  color: #65563f;
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.2;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background .15s ease, color .15s ease;
+}
+.menu-category-pill:hover { background: #ead9b7; }
+.menu-category-pill.is-active { background: #ffd875; color: #174a34; }
+.menu-category-pill:focus-visible { outline: 2px solid #16835e; outline-offset: 2px; }
+.menu-search-empty { margin: 0; padding: 36px 20px; text-align: center; color: #806f55; }
+@media (max-width:1200px) {
+  .menu-browse-controls { grid-template-columns: minmax(0, 1fr) minmax(180px, 230px) auto; }
+  .menu-browse-controls .menu-category-filters { grid-column: 1 / -1; justify-content: flex-start; }
+}
+@media (max-width:767px) {
+  .menu-browse-tools { padding: 10px 12px; }
+  .menu-browse-controls { grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
+  .menu-search-field { grid-column: 1; grid-row: 1; }
+  .menu-category-select { grid-column: 1 / -1; grid-row: 2; }
+  .menu-search-button { grid-column: 2; grid-row: 1; }
+  .menu-browse-controls .menu-category-filters { grid-column: 1 / -1; grid-row: 3; }
+  .menu-search-field { width: 100%; }
+  .menu-hero > div { flex-wrap: wrap; }
+  .menu-hero > div > div:first-child { padding-left: 72px; min-height: 86px; flex: 1 1 100%; }
+  .menu-hero > div > div:first-child:before { width: 62px; height: 80px; top: 4px; }
+  .customer-menu-page .menu-brand { font-size: clamp(27px, 5.5vw, 38px); padding-right: 28px; -webkit-text-stroke-width: 3px; }
+  .menu-brand:after { width: 18px; height: 28px; top: 6px; }
+  .customer-menu-page .menu-tagline { font-size: 16px; padding: 5px 12px; }
+  .menu-hero > div > div:last-child { margin-left: auto; }
+}

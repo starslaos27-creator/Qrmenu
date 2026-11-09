@@ -1,0 +1,26 @@
+/* Keep category names as searchable, accessible text over a decorative ribbon. */
+#root .menu-card-list-panel > section:has(> ul) > div:has(> h3) {
+  display:flex; align-items:center; gap:16px;
+  border-bottom:1px solid #d9c6a466; padding:0 0 8px; margin-top:10px;
+}
+#root .menu-card-list-panel > section:has(> ul) > div > h3 {
+  display:flex; align-items:center; justify-content:center; flex:0 1 auto;
+  min-width:220px; max-width:calc(100% - 88px); min-height:64px;
+  margin:0; padding:17px 42px 19px;
+  background:url('/assets/menu-category-ribbon.svg') center / 100% 100% no-repeat;
+  color:#fff9e6; font-size:18px; font-weight:800; font-style:italic;
+  line-height:1.5; letter-spacing:0; text-align:center; overflow-wrap:anywhere;
+  filter:drop-shadow(0 3px 2px #174a3418);
+}
+#root .menu-card-list-panel > section:has(> ul) > div:has(> h3) > span {
+  flex:none; margin-left:auto; padding:5px 10px; border:1px solid #d9c6a488;
+  border-radius:999px; background:#fffaf1; color:#756247; font-size:11px;
+}
+@media(max-width:600px) {
+  #root .menu-card-list-panel > section:has(> ul) > div:has(> h3) { gap:8px; }
+  #root .menu-card-list-panel > section:has(> ul) > div > h3 {
+    min-width:0; max-width:calc(100% - 70px); min-height:58px;
+    padding:15px 32px 17px; font-size:16px;
+  }
+  #root .menu-card-list-panel > section:has(> ul) > div:has(> h3) > span { padding:4px 7px; }
+}

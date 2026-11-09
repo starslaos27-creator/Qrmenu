@@ -1,0 +1,8 @@
+import {j as e} from "./vendor-react-DCUvmuBu.js";
+import {u as useLocale} from "./index-BjXGGWCT.js?v=20261104-remove-stock-deposits-menu-v9";
+
+// Collapsed Chrome setup instructions, available from the Settings page.
+export function KioskPrintingSettings(){
+  const {t:s}=useLocale();
+  return e.jsxs("details",{className:"group rounded-lg border border-line bg-canvas/50",children:[e.jsx("summary",{className:"cursor-pointer list-none px-3 py-2 text-[11px] font-medium text-ink select-none",children:e.jsxs("span",{className:"inline-flex items-center gap-1.5",children:[e.jsx("span",{className:"transition-transform group-open:rotate-90",children:"›"}),s("kitchen_print.kiosk.title")]})}),e.jsxs("div",{className:"space-y-2 border-t border-line px-3 py-2.5 text-[11px] text-muted",children:[e.jsx("p",{children:s("kitchen_print.kiosk.intro")}),e.jsxs("div",{children:[e.jsx("p",{className:"mb-1 font-medium text-ink",children:s("kitchen_print.kiosk.windows")}),e.jsx("pre",{className:"overflow-x-auto rounded bg-ink/95 px-2.5 py-2 text-[10px] leading-relaxed text-surface",children:'"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe" --kiosk-printing https://qr-menu-eta-seven.vercel.app/dashboard/kitchen'})]}),e.jsxs("div",{children:[e.jsx("p",{className:"mb-1 font-medium text-ink",children:s("kitchen_print.kiosk.mac")}),e.jsx("pre",{className:"overflow-x-auto rounded bg-ink/95 px-2.5 py-2 text-[10px] leading-relaxed text-surface",children:'open -a "Google Chrome" --args --kiosk-printing https://qr-menu-eta-seven.vercel.app/dashboard/kitchen'})]}),e.jsx("p",{className:"italic",children:s("kitchen_print.kiosk.tip")})]})]});
+}
