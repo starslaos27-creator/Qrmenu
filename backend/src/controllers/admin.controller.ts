@@ -191,6 +191,8 @@ export function createAdminController(app, env) {
               greatest(paid.expires_at, trial.expires_at) as pro_expires_at,
               coalesce(trial.expires_at > clock.server_now and
                 (paid.expires_at is null or trial.expires_at >= paid.expires_at), false) as trial_active,
+              exists(select 1 from pro_requests pending
+                where pending.restaurant_id = r.id and pending.status = 'pending') as pro_request_pending,
               owner.email as owner_email,
               (select count(*) from restaurant_members m
                 where m.restaurant_id = r.id)::int as member_count,
@@ -244,6 +246,8 @@ export function createAdminController(app, env) {
               clock.server_now,
               paid.expires_at as pro_expires_at,
               false as trial_active,
+              exists(select 1 from pro_requests pending
+                where pending.restaurant_id = r.id and pending.status = 'pending') as pro_request_pending,
               owner.email as owner_email,
               (select count(*) from restaurant_members m
                 where m.restaurant_id = r.id)::int as member_count,

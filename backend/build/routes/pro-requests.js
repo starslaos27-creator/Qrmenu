@@ -8,5 +8,6 @@ export async function registerProRequestRoutes(app, env) {
     app.get("/api/restaurants/:restaurantId/pro-requests", controller.get_api_restaurants_restaurantId_pro_requests);
     app.post("/api/restaurants/:restaurantId/pro-requests", controller.post_api_restaurants_restaurantId_pro_requests);
     app.get("/api/admin/pro-requests", controller.get_api_admin_pro_requests);
+    app.post("/api/admin/restaurants/:restaurantId/pro-purchases", controller.post_api_admin_restaurants_restaurantId_pro_purchases);
     app.post("/api/admin/pro-requests/:id/review", controller.post_api_admin_pro_requests_id_review);
 }

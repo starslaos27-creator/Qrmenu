@@ -107,8 +107,86 @@ export function createProRequestController(app, env) {
     const status = request.query.status || "all";
     if (!["all","pending","approved","rejected"].includes(status)) return reply.code(400).send({error:"INVALID_STATUS"});
     const offset = Math.max(0, Math.min(100000, Number(request.query.offset) || 0)) | 0;
-    const result = await app.db.query(`select ${columns} ${joins} where ($1='all' or p.status=$1) order by p.created_at desc,p.id desc limit 50 offset $2`, [status,offset]);
+    const result = await app.db.query(`select ${columns},
+      exists(select 1 from platform_admin_audit_logs l
+        where l.target_type='pro_request' and l.target_id=p.id and l.action='pro_purchase.activated') as admin_purchase
+      ${joins} where ($1='all' or p.status=$1) order by p.created_at desc,p.id desc limit 50 offset $2`, [status,offset]);
     return { requests:result.rows };
+  };
+  const post_api_admin_restaurants_restaurantId_pro_purchases = async (request, reply) => {
+    const admin = await requirePlatformAdmin(request, reply, env, ["super_admin", "support"]);
+    if (!admin) return;
+    const restaurantId = request.params.restaurantId;
+    const body = request.body || {};
+    if (!uuid(restaurantId) || !uuid(body.requestKey) || ![1, 3, 6, 9, 12].includes(body.paidMonths) ||
+        !Number.isSafeInteger(body.pricingVersion) || body.paymentReceived !== true) {
+      return reply.code(400).send({ error: "INVALID_PURCHASE" });
+    }
+
+    const client = await app.db.connect();
+    try {
+      await client.query("begin");
+      await client.query("select pg_advisory_xact_lock(hashtext($1))", [`pro:${restaurantId}`]);
+      const restaurant = (await client.query("select id from restaurants where id=$1 for update", [restaurantId])).rows[0];
+      if (!restaurant) {
+        await client.query("rollback");
+        return reply.code(404).send({ error: "RESTAURANT_NOT_FOUND" });
+      }
+
+      const existing = (await client.query("select * from pro_requests where request_key=$1", [body.requestKey])).rows[0];
+      if (existing) {
+        await client.query("rollback");
+        if (existing.restaurant_id !== restaurantId || existing.requested_by !== admin.user.id ||
+            existing.paid_months !== body.paidMonths || existing.status !== "approved") {
+          return reply.code(409).send({ error: "REQUEST_CONFLICT" });
+        }
+        return reply.send({ request: existing });
+      }
+
+      const activePaid = (await client.query(`select max(reviewed_at + (paid_months + free_months) * interval '30 days') as expires_at
+        from pro_requests where restaurant_id=$1 and status='approved'
+        having max(reviewed_at + (paid_months + free_months) * interval '30 days') > clock_timestamp()`, [restaurantId])).rows[0];
+      const trialTable = (await client.query("select to_regclass('restaurant_pro_trials') is not null as present")).rows[0]?.present;
+      const activeTrial = trialTable
+        ? (await client.query("select expires_at from restaurant_pro_trials where restaurant_id=$1 and expires_at>clock_timestamp() for update", [restaurantId])).rows[0]
+        : null;
+      if (activePaid || activeTrial) {
+        await client.query("rollback");
+        return reply.code(409).send({ error: "PRO_ACTIVE", expiresAt: activeTrial?.expires_at ?? activePaid?.expires_at });
+      }
+
+      const pending = (await client.query("select id from pro_requests where restaurant_id=$1 and status='pending'", [restaurantId])).rows[0];
+      if (pending) {
+        await client.query("rollback");
+        return reply.code(409).send({ error: "REQUEST_PENDING" });
+      }
+      const pricing = (await client.query("select monthly_usd, version from pro_pricing where id=true for share")).rows[0];
+      if (!pricing?.monthly_usd || Number(pricing.version) !== body.pricingVersion) {
+        await client.query("rollback");
+        return reply.code(409).send({ error: pricing?.monthly_usd ? "PRICE_CHANGED" : "PRICE_NOT_CONFIGURED" });
+      }
+
+      const freeMonths = body.paidMonths === 12 ? 2 : [6, 9].includes(body.paidMonths) ? 1 : 0;
+      const purchase = (await client.query(`insert into pro_requests
+          (request_key, restaurant_id, requested_by, paid_months, free_months, monthly_usd, total_usd,
+           status, reviewed_by, reviewed_at, review_note)
+        values ($1, $2, $3, $4, $5, $6::numeric, $6::numeric * $4::integer, 'approved', $3, clock_timestamp(), $7)
+        returning *`, [body.requestKey, restaurantId, admin.user.id, body.paidMonths, freeMonths,
+          pricing.monthly_usd, "ซื้อโดยแอดมินหลังยืนยันว่าได้รับเงินแล้ว"])).rows[0];
+      await client.query(`insert into platform_admin_audit_logs
+          (admin_user_id, action, target_type, target_id, restaurant_id, reason, details, ip_address)
+        values ($1, 'pro_purchase.activated', 'pro_request', $2, $3,
+          'payment_received', $4::jsonb, $5)`, [admin.user.id, purchase.id, restaurantId,
+        JSON.stringify({ paidMonths: body.paidMonths, freeMonths, monthlyUsd: pricing.monthly_usd,
+          totalUsd: purchase.total_usd, currency: "USD", paymentReceived: true }), request.ip]);
+      await client.query("commit");
+      return reply.code(201).send({ request: purchase });
+    } catch (error) {
+      await client.query("rollback");
+      throw error;
+    } finally {
+      client.release();
+    }
   };
   const post_api_admin_pro_requests_id_review = async (request, reply) => {
     const admin = await requirePlatformAdmin(request, reply, env, ["super_admin","support"]); if (!admin) return;
@@ -133,7 +211,7 @@ export function createProRequestController(app, env) {
     } catch (error) { await client.query("rollback"); throw error; }
     finally { client.release(); }
   };
-  return { get_api_pro_pricing, get_api_admin_pro_pricing, put_api_admin_pro_pricing, get_api_restaurants_restaurantId_pro_countdown, get_api_restaurants_restaurantId_pro_requests, post_api_restaurants_restaurantId_pro_requests, get_api_admin_pro_requests, post_api_admin_pro_requests_id_review };
+  return { get_api_pro_pricing, get_api_admin_pro_pricing, put_api_admin_pro_pricing, get_api_restaurants_restaurantId_pro_countdown, get_api_restaurants_restaurantId_pro_requests, post_api_restaurants_restaurantId_pro_requests, get_api_admin_pro_requests, post_api_admin_restaurants_restaurantId_pro_purchases, post_api_admin_pro_requests_id_review };
 }
 
 
