@@ -55,7 +55,7 @@ export function createProRequestController(app, env) {
         const result = await app.db.query(`with clock as (
         select clock_timestamp() as server_now
       ), paid as (
-        select max(reviewed_at) + interval '720 hours' as expires_at
+        select max(reviewed_at + (paid_months + free_months) * interval '30 days') as expires_at
         from pro_requests where restaurant_id=$1 and status='approved'
       ), trial as (
         select starts_at, expires_at from restaurant_pro_trials where restaurant_id=$1
@@ -105,7 +105,9 @@ export function createProRequestController(app, env) {
                     return reply.code(409).send({ error: "REQUEST_CONFLICT" });
                 return { request: existing };
             }
-            const active = (await client.query("select max(reviewed_at) + interval '720 hours' as expires_at from pro_requests where restaurant_id=$1 and status='approved' having max(reviewed_at) + interval '720 hours' > clock_timestamp()", [auth.restaurantId])).rows[0];
+            const active = (await client.query(`select max(reviewed_at + (paid_months + free_months) * interval '30 days') as expires_at
+        from pro_requests where restaurant_id=$1 and status='approved'
+        having max(reviewed_at + (paid_months + free_months) * interval '30 days') > clock_timestamp()`, [auth.restaurantId])).rows[0];
             if (active) {
                 await client.query("rollback");
                 return reply.code(409).send({ error: "PRO_ACTIVE", expiresAt: active.expires_at });

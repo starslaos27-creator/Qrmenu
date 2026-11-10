@@ -389,7 +389,7 @@ async function createOwnerRestaurant(client, user, restaurantName, phone, curren
     const row = restaurant.rows[0];
     await client.query(`with trial_start as (select clock_timestamp() as starts_at)
       insert into restaurant_pro_trials (restaurant_id, starts_at, expires_at)
-      select $1, starts_at, starts_at + interval '3 months' from trial_start`, [row.id]);
+      select $1, starts_at, starts_at + interval '90 days' from trial_start`, [row.id]);
     await client.query(`insert into restaurant_members
       (restaurant_id, user_id, role, invited_email, phone)
      values ($1, $2, 'owner', $3, $4)`, [row.id, user.id, user.email, phone]);

@@ -179,8 +179,17 @@ export function createAdminController(app, env) {
         }
         const limit = clampInteger(request.query.limit, 50, 1, 100);
         const offset = clampInteger(request.query.offset, 0, 0, 100_000);
-        const result = await app.db.query(`select r.id, r.name, r.accepting_orders, r.suspended_at,
-              r.suspension_reason, r.created_at,
+        let result;
+        try {
+            result = await app.db.query(`with clock as (
+         select clock_timestamp() as server_now
+       )
+       select r.id, r.name, r.accepting_orders, r.suspended_at,
+              r.suspension_reason, r.created_at, r.currency_code,
+              clock.server_now,
+              greatest(paid.expires_at, trial.expires_at) as pro_expires_at,
+              coalesce(trial.expires_at > clock.server_now and
+                (paid.expires_at is null or trial.expires_at >= paid.expires_at), false) as trial_active,
               owner.email as owner_email,
               (select count(*) from restaurant_members m
                 where m.restaurant_id = r.id)::int as member_count,
@@ -194,10 +203,19 @@ export function createAdminController(app, env) {
                 where t.restaurant_id = r.id)::int as table_count,
               (select count(*) from orders o
                 where o.restaurant_id = r.id)::int as order_count,
+              coalesce((select sum(o.total) from orders o
+                where o.restaurant_id = r.id and o.paid = true
+                  and o.paid_at >= current_date), 0)::text as today_revenue,
               (select max(o.created_at) from orders o
                 where o.restaurant_id = r.id) as last_order_at
        from restaurants r
+       cross join clock
        left join app_users owner on owner.id = r.user_id
+       left join lateral (
+         select max(p.reviewed_at + (p.paid_months + p.free_months) * interval '30 days') as expires_at
+         from pro_requests p where p.restaurant_id = r.id and p.status = 'approved'
+       ) paid on true
+       left join restaurant_pro_trials trial on trial.restaurant_id = r.id
        where ($1 = '' or r.name ilike '%' || $1 || '%'
               or owner.email ilike '%' || $1 || '%')
          and ($2 = 'all'
@@ -210,6 +228,60 @@ export function createAdminController(app, env) {
            )))
        order by r.created_at desc
        limit $3 offset $4`, [search, status, limit, offset]);
+        }
+        catch (error) {
+            // Keep shop management usable on databases that have not applied
+            // migration 0040 yet. Trial expiry data becomes available once it is applied.
+            const databaseError = error;
+            if (databaseError.code !== "42P01" || !databaseError.message?.includes("restaurant_pro_trials")) {
+                throw error;
+            }
+            result = await app.db.query(`with clock as (
+         select clock_timestamp() as server_now
+       )
+       select r.id, r.name, r.accepting_orders, r.suspended_at,
+              r.suspension_reason, r.created_at, r.currency_code,
+              clock.server_now,
+              paid.expires_at as pro_expires_at,
+              false as trial_active,
+              owner.email as owner_email,
+              (select count(*) from restaurant_members m
+                where m.restaurant_id = r.id)::int as member_count,
+              (select count(*) from restaurant_members m
+                join app_users u on u.id = m.user_id
+                where m.restaurant_id = r.id
+                  and u.password_hash is not null)::int as migrated_member_count,
+              (select count(*) from menus me
+                where me.restaurant_id = r.id)::int as menu_count,
+              (select count(*) from tables t
+                where t.restaurant_id = r.id)::int as table_count,
+              (select count(*) from orders o
+                where o.restaurant_id = r.id)::int as order_count,
+              coalesce((select sum(o.total) from orders o
+                where o.restaurant_id = r.id and o.paid = true
+                  and o.paid_at >= current_date), 0)::text as today_revenue,
+              (select max(o.created_at) from orders o
+                where o.restaurant_id = r.id) as last_order_at
+       from restaurants r
+       cross join clock
+       left join app_users owner on owner.id = r.user_id
+       left join lateral (
+         select max(p.reviewed_at + (p.paid_months + p.free_months) * interval '30 days') as expires_at
+         from pro_requests p where p.restaurant_id = r.id and p.status = 'approved'
+       ) paid on true
+       where ($1 = '' or r.name ilike '%' || $1 || '%'
+              or owner.email ilike '%' || $1 || '%')
+         and ($2 = 'all'
+           or ($2 = 'active' and r.suspended_at is null)
+           or ($2 = 'suspended' and r.suspended_at is not null)
+           or ($2 = 'migration_pending' and exists (
+             select 1 from restaurant_members pm
+             join app_users pu on pu.id = pm.user_id
+             where pm.restaurant_id = r.id and pu.password_hash is null
+           )))
+       order by r.created_at desc
+       limit $3 offset $4`, [search, status, limit, offset]);
+        }
         return reply.send({ ok: true, restaurants: result.rows });
     };
     const get_api_admin_restaurants_restaurantId = async (request, reply) => {

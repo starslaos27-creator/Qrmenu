@@ -9,12 +9,18 @@ interface Restaurant {
   suspended_at: string | null;
   suspension_reason: string | null;
   created_at: string;
+  currency_code: "LAK" | "THB" | "USD";
+  today_revenue: number | string;
   member_count: number;
   migrated_member_count: number;
   menu_count: number;
   table_count: number;
   order_count: number;
   last_order_at: string | null;
+  pro_expires_at?: string | null;
+  server_now?: string;
+  trial_active?: boolean;
+  clockOffsetMs?: number;
 }
 
 interface RestaurantDetail {
@@ -34,6 +40,7 @@ export default function ShopManagementPage({ canManage }: { canManage: boolean }
   const [error, setError] = useState("");
   const [selected, setSelected] = useState<RestaurantDetail | null>(null);
   const [notice, setNotice] = useState("");
+  const [clockNow, setClockNow] = useState(() => Date.now());
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -41,12 +48,20 @@ export default function ShopManagementPage({ canManage }: { canManage: boolean }
     const query = new URLSearchParams({ search, status, limit: "50", offset: String(offset) });
     try {
       const result = await adminRequest<{ restaurants: Restaurant[] }>(`/api/admin/restaurants?${query}`);
-      setRestaurants(result.restaurants);
+      const receivedAt = Date.now();
+      setRestaurants(result.restaurants.map((restaurant) => ({
+        ...restaurant,
+        clockOffsetMs: Date.parse(restaurant.server_now || "") - receivedAt,
+      })));
     } catch (cause) { setError(cause instanceof AdminApiError ? `โหลดร้านค้าไม่สำเร็จ (${cause.code})` : "โหลดร้านค้าไม่สำเร็จ"); }
     finally { setLoading(false); }
   }, [search, status, offset]);
 
   useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    const timer = window.setInterval(() => setClockNow(Date.now()), 60_000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   async function openDetail(restaurantId: string) {
     setSelected(null);
@@ -82,10 +97,10 @@ export default function ShopManagementPage({ canManage }: { canManage: boolean }
       {error && <p className="rounded-xl bg-red-50 p-3 text-sm text-red-800" role="alert">{error}</p>}
       {loading ? <PageState /> : restaurants.length === 0 ? <PageState error="ไม่พบร้านค้าที่ตรงกับเงื่อนไข" /> : (
         <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-          <div className="overflow-x-auto"><table className="w-full min-w-[850px] text-left text-sm"><thead className="bg-slate-50 text-xs text-slate-500"><tr>{["ร้านค้า", "สมาชิก", "เมนู / โต๊ะ", "ออเดอร์", "สถานะ", ""].map((title) => <th className="px-4 py-3 font-medium" key={title}>{title}</th>)}</tr></thead><tbody className="divide-y divide-slate-100">{restaurants.map((restaurant) => <tr key={restaurant.id}>
+          <div className="overflow-x-auto"><table className="w-full min-w-[1250px] text-left text-sm"><thead className="bg-slate-50 text-xs text-slate-500"><tr>{["ร้านค้า", "วันที่สมัคร", "สมาชิก", "เมนู / โต๊ะ", "ออเดอร์", "ยอดขายวันนี้", "สถานะ", "เวลาคงเหลือ", ""].map((title) => <th className="px-4 py-3 font-medium" key={title}>{title}</th>)}</tr></thead><tbody className="divide-y divide-slate-100">{restaurants.map((restaurant) => <tr key={restaurant.id}>
             <td className="px-4 py-3"><button className="font-semibold text-emerald-900 hover:underline" type="button" onClick={() => void openDetail(restaurant.id)}>{restaurant.name}</button><span className="mt-1 block text-xs text-slate-500">{restaurant.owner_email || "ไม่ระบุเจ้าของ"}</span><span className="mt-1 block font-mono text-[10px] text-slate-400">{restaurant.id}</span></td>
-            <td className="px-4 py-3 tabular-nums">{restaurant.migrated_member_count}/{restaurant.member_count}</td><td className="px-4 py-3 tabular-nums">{restaurant.menu_count} / {restaurant.table_count}</td><td className="px-4 py-3 tabular-nums">{restaurant.order_count.toLocaleString("th-TH")}</td>
-            <td className="px-4 py-3"><span className={`rounded-full px-2 py-1 text-xs ${restaurant.suspended_at ? "bg-red-50 text-red-700" : "bg-emerald-50 text-emerald-800"}`}>{restaurant.suspended_at ? "ถูกระงับ" : "ใช้งาน"}</span></td>
+            <td className="px-4 py-3 whitespace-nowrap text-xs text-slate-600">{formatSignupDate(restaurant.created_at)}</td><td className="px-4 py-3 tabular-nums">{restaurant.migrated_member_count}/{restaurant.member_count}</td><td className="px-4 py-3 tabular-nums">{restaurant.menu_count} / {restaurant.table_count}</td><td className="px-4 py-3 tabular-nums">{restaurant.order_count.toLocaleString("th-TH")}</td><td className="px-4 py-3 whitespace-nowrap text-right font-semibold tabular-nums text-emerald-900">{formatCurrency(Number(restaurant.today_revenue), restaurant.currency_code)}</td>
+            <td className="px-4 py-3"><span className={`rounded-full px-2 py-1 text-xs ${restaurant.suspended_at ? "bg-red-50 text-red-700" : "bg-emerald-50 text-emerald-800"}`}>{restaurant.suspended_at ? "ถูกระงับ" : "ใช้งาน"}</span></td><td className="px-4 py-3 whitespace-nowrap text-xs" title={restaurant.pro_expires_at ? formatSignupDate(restaurant.pro_expires_at) : undefined}><span className={proCountdownClass(restaurant, clockNow)}>{formatProCountdown(restaurant, clockNow)}</span></td>
             <td className="px-4 py-3 text-right">{canManage && <button className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs hover:bg-slate-50" type="button" onClick={() => void changeStatus(restaurant)}>{restaurant.suspended_at ? "คืนสถานะ" : "ระงับ"}</button>}</td>
           </tr>)}</tbody></table></div>
           <div className="flex justify-end gap-2 border-t border-slate-100 p-3"><button className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs disabled:opacity-40" type="button" disabled={offset === 0} onClick={() => setOffset((value) => Math.max(0, value - 50))}>ก่อนหน้า</button><button className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs disabled:opacity-40" type="button" disabled={restaurants.length < 50} onClick={() => setOffset((value) => value + 50)}>ถัดไป</button></div>
@@ -103,6 +118,47 @@ function RestaurantDetailDialog({ detail, onClose }: { detail: RestaurantDetail;
     <dl className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">{[["ออเดอร์วันนี้", metrics.today_order_count], ["ยอดขายวันนี้", money(metrics.today_revenue)], ["ออเดอร์ 30 วัน", metrics.last_30_order_count], ["ยอดขาย 30 วัน", money(metrics.last_30_revenue)]].map(([label, value]) => <div className="rounded-xl bg-slate-50 p-3" key={String(label)}><dt className="text-xs text-slate-500">{label}</dt><dd className="m-0 mt-1 font-semibold tabular-nums">{value}</dd></div>)}</dl>
     <div className="mt-5 grid gap-5 md:grid-cols-2"><section><h3 className="font-semibold">สมาชิก</h3><ul className="mt-2 grid gap-2">{detail.members.map((member) => <li className="flex justify-between gap-3 rounded-lg border border-slate-100 p-2 text-sm" key={member.id}><span>{member.email}</span><span className="text-slate-500">{member.role}</span></li>)}</ul></section><section><h3 className="font-semibold">ออเดอร์ล่าสุด</h3><ul className="mt-2 grid gap-2">{detail.recentOrders.slice(0, 8).map((order) => <li className="flex justify-between gap-3 rounded-lg border border-slate-100 p-2 text-xs" key={order.id}><span>#{order.id.slice(0, 7)} · โต๊ะ {order.table_number}</span><span>{money(order.total)}</span></li>)}</ul></section></div>
   </section></div>;
+}
+
+function proRemainingMs(restaurant: Restaurant, now: number) {
+  if (!restaurant.pro_expires_at) return null;
+  const expiresAt = Date.parse(restaurant.pro_expires_at);
+  if (!Number.isFinite(expiresAt)) return null;
+  const offset = Number.isFinite(restaurant.clockOffsetMs) ? restaurant.clockOffsetMs! : 0;
+  return expiresAt - (now + offset);
+}
+
+function formatProCountdown(restaurant: Restaurant, now: number) {
+  const remaining = proRemainingMs(restaurant, now);
+  if (remaining === null) return "ไม่มีแพ็กเกจ";
+  if (remaining <= 0) return "หมดอายุแล้ว";
+  const totalMinutes = Math.floor(remaining / 60_000);
+  const days = Math.floor(totalMinutes / 1_440);
+  const hours = Math.floor((totalMinutes % 1_440) / 60);
+  const minutes = totalMinutes % 60;
+  const prefix = restaurant.trial_active ? "ทดลองใช้ฟรี" : "Pro";
+  return prefix + " · เหลือ " + days + " วัน " + hours + " ชม. " + minutes + " นาที";
+}
+
+function proCountdownClass(restaurant: Restaurant, now: number) {
+  const remaining = proRemainingMs(restaurant, now);
+  if (remaining === null) return "text-slate-400";
+  return remaining <= 0 ? "font-semibold text-red-700" : "font-medium text-emerald-800";
+}
+
+function formatCurrency(value: number, currency: "LAK" | "THB" | "USD") {
+  return new Intl.NumberFormat("th-TH", {
+    style: "currency",
+    currency,
+    maximumFractionDigits: currency === "LAK" ? 0 : 2,
+  }).format(Number.isFinite(value) ? value : 0);
+}
+
+function formatSignupDate(value: string) {
+  const timestamp = Date.parse(value);
+  return Number.isFinite(timestamp)
+    ? new Date(timestamp).toLocaleString("th-TH", { calendar: "gregory", dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Bangkok" })
+    : "—";
 }
 
 function money(value: number) { return `${Number(value || 0).toLocaleString("th-TH")} ₭`; }
