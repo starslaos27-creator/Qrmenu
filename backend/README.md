@@ -65,3 +65,8 @@ have been migrated, then it can be removed from the server and backups.
 
 `npm run db:migrate` runs the built `build/database/migrate.js`. Read
 [migrations/README.md](migrations/README.md) before using it.
+Before deploying a backend version that grants the three-month Pro trial to new
+restaurant signups, build the backend and apply pending migrations with
+`npm run db:migrate`, then restart the API. Migration `0040` adds a separate,
+one-per-restaurant trial record; it does not rewrite existing restaurants or
+Pro request history.

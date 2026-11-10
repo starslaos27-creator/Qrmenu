@@ -43,6 +43,8 @@ export function loadEnv() {
         databaseSsl: readBoolean("DATABASE_SSL", false),
         databaseSslRejectUnauthorized: readBoolean("DATABASE_SSL_REJECT_UNAUTHORIZED", true),
         authJwtSecret: readOptional("AUTH_JWT_SECRET"),
+        adminBootstrapToken: readOptional("ADMIN_BOOTSTRAP_TOKEN"),
+        adminBootstrapEmail: readOptional("ADMIN_BOOTSTRAP_EMAIL"),
         authIssuer: process.env.AUTH_ISSUER?.trim() || "shopqr",
         authAccessTokenTtlMinutes: readPositiveInteger("AUTH_ACCESS_TOKEN_TTL_MINUTES", 15),
         authRefreshTokenTtlDays: readPositiveInteger("AUTH_REFRESH_TOKEN_TTL_DAYS", 30),
@@ -72,6 +74,9 @@ function validateProductionEnv(env) {
     }
     if (!env.authJwtSecret || Buffer.byteLength(env.authJwtSecret, "utf8") < 32) {
         throw new Error("AUTH_JWT_SECRET must contain at least 32 bytes in production");
+    }
+    if (env.adminBootstrapToken && Buffer.byteLength(env.adminBootstrapToken, "utf8") < 32) {
+        throw new Error("ADMIN_BOOTSTRAP_TOKEN must contain at least 32 bytes when configured");
     }
     if (isPlaceholder(env.authJwtSecret)) {
         throw new Error("AUTH_JWT_SECRET still contains a placeholder value");

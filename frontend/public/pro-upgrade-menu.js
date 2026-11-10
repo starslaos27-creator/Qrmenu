@@ -1,5 +1,6 @@
 (() => {
   let expiresAt = 0;
+  let trialActive = false;
   let serverTime = 0;
   let synchronizedAt = 0;
   let syncing = false;
@@ -13,10 +14,10 @@
       const seconds = Math.floor(remaining / 1000);
       const days = Math.floor(seconds / 86400);
       const clock = [Math.floor(seconds % 86400 / 3600), Math.floor(seconds % 3600 / 60), seconds % 60].map(value => String(value).padStart(2, '0')).join(':');
-      label = `⭐ โปรเหลือ ${days} วัน ${clock}`;
+      label = `⭐ ${trialActive ? 'ทดลองใช้ฟรี' : 'โปรเหลือ'} ${days} วัน ${clock}`;
     }
     if (link.textContent !== label) link.textContent = label;
-    link.title = remaining > 0 ? `ครบกำหนด ${new Date(expiresAt).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' })}` : 'เลือกแพ็กเกจโปร';
+    link.title = remaining > 0 ? `${trialActive ? 'ทดลองโปรฟรีหมดอายุ' : 'ครบกำหนด'} ${new Date(expiresAt).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' })}` : 'เลือกแพ็กเกจโปร';
   }
   async function api(path) {
     const send = () => {
@@ -47,9 +48,10 @@
     try {
       // Reuse the authenticated API client already loaded by the legacy application.
       const session = await api('/api/auth/me');
-      if (!session.membership?.restaurant_id) { expiresAt = 0; updateCountdown(); return; }
+      if (!session.membership?.restaurant_id) { expiresAt = 0; trialActive = false; updateCountdown(); return; }
       const data = await api(`/api/restaurants/${session.membership.restaurant_id}/pro-countdown`);
       expiresAt = Date.parse(data.expires_at) || 0;
+      trialActive = data.trial_active === true;
       serverTime = Date.parse(data.server_now);
       synchronizedAt = performance.now();
       updateCountdown();

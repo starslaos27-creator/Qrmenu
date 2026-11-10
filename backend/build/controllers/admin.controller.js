@@ -1,4 +1,4 @@
-import { createHash, randomBytes } from "node:crypto";
+import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 import { createRefreshSession, hashPassword, normalizeEmail, setRefreshCookie, signAccessToken, verifyPassword, } from "../security/auth.js";
 import { clearLoginFailures, recordLoginFailure } from "../security/login-failures.js";
 import { requirePlatformAdmin, } from "../admin/authorization.js";
@@ -7,16 +7,25 @@ export function createAdminController(app, env) {
         if (!app.db) {
             return reply.status(503).send({ ok: false, error: "DATABASE_NOT_CONFIGURED" });
         }
-        const count = await app.db.query("select count(*)::int as count from app_admins where active = true");
+        const count = await app.db.query(`select count(*)::int as count,
+          exists(select 1 from app_admins a join app_users u on u.id=a.user_id
+            where a.active=true and lower(u.email)=$1) as bootstrap_admin_exists
+          from app_admins where active = true`, [normalizeEmail(env.adminBootstrapEmail ?? "")]);
+        const localBootstrap = env.nodeEnv !== "production" && isLoopback(request.ip);
+        const secureBootstrap = env.nodeEnv === "production" && !!env.adminBootstrapToken;
+        const canRecoverConfiguredAdmin = secureBootstrap && !!env.adminBootstrapEmail && count.rows[0].bootstrap_admin_exists;
         return reply.send({
             ok: true,
-            canBootstrap: env.nodeEnv !== "production" &&
-                isLoopback(request.ip) &&
-                count.rows[0].count === 0,
+            canBootstrap: canRecoverConfiguredAdmin || (count.rows[0].count === 0 && (localBootstrap || secureBootstrap)),
+            requiresBootstrapToken: !!env.adminBootstrapToken,
         });
     };
     const post_api_admin_bootstrap = async (request, reply) => {
-        if (!app.db || env.nodeEnv === "production" || !isLoopback(request.ip)) {
+        const suppliedToken = typeof request.body?.bootstrapToken === "string" ? request.body.bootstrapToken : "";
+        const tokenConfigured = !!env.adminBootstrapToken;
+        const tokenValid = tokenConfigured && safeTokenEquals(env.adminBootstrapToken, suppliedToken);
+        const localBootstrap = env.nodeEnv !== "production" && isLoopback(request.ip);
+        if (!app.db || (tokenConfigured ? !tokenValid : !localBootstrap)) {
             return reply.status(403).send({ ok: false, error: "BOOTSTRAP_FORBIDDEN" });
         }
         const email = normalizeEmail(request.body?.email ?? "");
@@ -24,7 +33,11 @@ export function createAdminController(app, env) {
         if (!isValidEmail(email)) {
             return reply.status(400).send({ ok: false, error: "INVALID_EMAIL" });
         }
-        if (password.length < 4 || password.length > 200) {
+        const configuredBootstrapEmail = normalizeEmail(env.adminBootstrapEmail ?? "");
+        if (tokenConfigured && configuredBootstrapEmail && email !== configuredBootstrapEmail) {
+            return reply.status(403).send({ ok: false, error: "BOOTSTRAP_EMAIL_MISMATCH" });
+        }
+        if (password.length < 6 || password.length > 200) {
             return reply
                 .status(400)
                 .send({ ok: false, error: "ADMIN_PASSWORD_TOO_SHORT" });
@@ -34,7 +47,11 @@ export function createAdminController(app, env) {
             await client.query("begin");
             await client.query("select pg_advisory_xact_lock(hashtext('shopqr:admin-bootstrap'))");
             const existingAdmin = await client.query("select 1 from app_admins where active = true limit 1");
-            if (existingAdmin.rows[0]) {
+            const targetIsActiveAdmin = existingAdmin.rows[0] && tokenValid && configuredBootstrapEmail
+                ? (await client.query(`select 1 from app_admins a join app_users u on u.id=a.user_id
+                    where a.active=true and lower(u.email)=$1 limit 1`, [configuredBootstrapEmail])).rows[0]
+                : null;
+            if (existingAdmin.rows[0] && !targetIsActiveAdmin) {
                 await client.query("rollback");
                 return reply.status(409).send({ ok: false, error: "ADMIN_ALREADY_EXISTS" });
             }
@@ -54,7 +71,8 @@ export function createAdminController(app, env) {
                 userId = created.rows[0].id;
             }
             await client.query(`insert into app_admins (user_id, role, active)
-           values ($1, 'super_admin', true)`, [userId]);
+           values ($1, 'super_admin', true)
+           on conflict (user_id) do update set role='super_admin', active=true, updated_at=now()`, [userId]);
             await client.query("commit");
             return reply.status(201).send({ ok: true });
         }
@@ -732,4 +750,9 @@ function isLoopback(ip) {
 }
 function isValidEmail(value) {
     return value.length <= 320 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+function safeTokenEquals(expected, supplied) {
+    const expectedBytes = Buffer.from(expected, "utf8");
+    const suppliedBytes = Buffer.from(supplied, "utf8");
+    return expectedBytes.length === suppliedBytes.length && timingSafeEqual(expectedBytes, suppliedBytes);
 }

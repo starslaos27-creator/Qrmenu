@@ -52,10 +52,20 @@ export function createProRequestController(app, env) {
             return reply.code(400).send({ error: "INVALID_RESTAURANT" });
         if (!await requireRestaurantAccess(request, reply, env, request.params.restaurantId))
             return;
-        const result = await app.db.query(`select max(reviewed_at) as approved_at,
-      max(reviewed_at) + interval '720 hours' as expires_at, clock_timestamp() as server_now,
-      exists(select 1 from pro_requests where restaurant_id=$1 and status='pending') as pending
-      from pro_requests where restaurant_id=$1 and status='approved'`, [request.params.restaurantId]);
+        const result = await app.db.query(`with clock as (
+        select clock_timestamp() as server_now
+      ), paid as (
+        select max(reviewed_at) + interval '720 hours' as expires_at
+        from pro_requests where restaurant_id=$1 and status='approved'
+      ), trial as (
+        select starts_at, expires_at from restaurant_pro_trials where restaurant_id=$1
+      )
+      select greatest(paid.expires_at, trial.expires_at) as expires_at,
+        clock.server_now,
+        exists(select 1 from pro_requests where restaurant_id=$1 and status='pending') as pending,
+        coalesce(trial.expires_at > clock.server_now and
+          (paid.expires_at is null or trial.expires_at >= paid.expires_at), false) as trial_active
+      from clock cross join paid left join trial on true`, [request.params.restaurantId]);
         reply.header("Cache-Control", "no-store");
         return result.rows[0];
     };
@@ -99,6 +109,11 @@ export function createProRequestController(app, env) {
             if (active) {
                 await client.query("rollback");
                 return reply.code(409).send({ error: "PRO_ACTIVE", expiresAt: active.expires_at });
+            }
+            const trial = (await client.query("select expires_at from restaurant_pro_trials where restaurant_id=$1 and expires_at>clock_timestamp() for update", [auth.restaurantId])).rows[0];
+            if (trial) {
+                await client.query("rollback");
+                return reply.code(409).send({ error: "PRO_ACTIVE", expiresAt: trial.expires_at, trial: true });
             }
             const pending = (await client.query("select id from pro_requests where restaurant_id=$1 and status='pending'", [auth.restaurantId])).rows[0];
             if (pending) {

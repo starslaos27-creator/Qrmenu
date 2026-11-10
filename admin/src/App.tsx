@@ -28,7 +28,7 @@ export default function App() {
   }
 
   if (auth.status === "loading") return <div className="grid min-h-screen place-items-center bg-slate-50 text-sm text-slate-500">กำลังโหลดข้อมูลผู้ดูแลระบบ…</div>;
-  if (auth.status === "bootstrap") return <AdminBootstrapPage onComplete={completeBootstrap} />;
+  if (auth.status === "bootstrap") return <AdminBootstrapPage requiresToken={auth.requiresToken} onComplete={completeBootstrap} />;
   if (auth.status === "login") return <AdminLoginPage onAuthenticated={(role) => void completeLogin(role)} />;
 
   const canManage = auth.session.adminRole === "super_admin" || auth.session.adminRole === "support";

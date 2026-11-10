@@ -59,7 +59,7 @@ export default function UpgradeCheckoutPage() {
       await loadHistory(restaurantId, 0).catch(() => setError("ส่งคำขอแล้ว แต่โหลดประวัติล่าสุดไม่สำเร็จ กรุณารีเฟรชสถานะ"));
     } catch (cause) {
       if(cause instanceof ApiError && (cause.code === "PRO_ACTIVE" || cause.code === "REQUEST_PENDING")) void purchase.refresh();
-      setError(cause instanceof ApiError && cause.code === "PRO_ACTIVE" ? "ท่านได้ชำระแล้ว แพ็กเกจยังไม่หมดอายุ จึงไม่สามารถซื้อซ้ำได้" : cause instanceof ApiError && cause.code === "PRICE_CHANGED" ? "แอดมินเปลี่ยนราคาแล้ว กรุณาโหลดหน้าใหม่เพื่อตรวจสอบยอดล่าสุดก่อนส่งคำขอ" : cause instanceof ApiError && cause.code === "REQUEST_PENDING" ? "ร้านนี้มีคำขอรออนุมัติอยู่แล้ว กรุณารอแอดมินตรวจสอบ" : "ส่งคำขอไม่สำเร็จ กรุณาลองอีกครั้ง");
+      setError(cause instanceof ApiError && cause.code === "PRO_ACTIVE" ? "สิทธิ์โปรของร้านยังไม่หมดอายุ จึงยังส่งคำขอแพ็กเกจใหม่ไม่ได้" : cause instanceof ApiError && cause.code === "PRICE_CHANGED" ? "แอดมินเปลี่ยนราคาแล้ว กรุณาโหลดหน้าใหม่เพื่อตรวจสอบยอดล่าสุดก่อนส่งคำขอ" : cause instanceof ApiError && cause.code === "REQUEST_PENDING" ? "ร้านนี้มีคำขอรออนุมัติอยู่แล้ว กรุณารอแอดมินตรวจสอบ" : "ส่งคำขอไม่สำเร็จ กรุณาลองอีกครั้ง");
     } finally { setBusy(false); }
   }
   const usd = (amount: number) => `${amount.toLocaleString("en-US", { style: "currency", currency: "USD" })} USD`;

@@ -5,7 +5,7 @@ export type AdminSession = { user: AdminUser; adminRole: string };
 export type AdminAuthState =
   | { status: "loading" }
   | { status: "login" }
-  | { status: "bootstrap" }
+  | { status: "bootstrap"; requiresToken: boolean }
   | { status: "ready"; session: AdminSession };
 
 export function useAdminSession() {
@@ -18,8 +18,8 @@ export function useAdminSession() {
     } catch {
       saveAccessToken(null);
       try {
-        const result = await adminRequest<{ canBootstrap: boolean }>("/api/admin/bootstrap-status", {}, false);
-        setAuth({ status: result.canBootstrap ? "bootstrap" : "login" });
+        const result = await adminRequest<{ canBootstrap: boolean; requiresBootstrapToken?: boolean }>("/api/admin/bootstrap-status", {}, false);
+        setAuth(result.canBootstrap ? { status: "bootstrap", requiresToken: result.requiresBootstrapToken === true } : { status: "login" });
       } catch {
         setAuth({ status: "login" });
       }
