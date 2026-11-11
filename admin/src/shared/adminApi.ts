@@ -37,6 +37,26 @@ export async function adminLogin(email: string, password: string) {
   return result;
 }
 
+export async function requestAdminPasswordReset(email: string) {
+  return adminRequest<{ ok: boolean }>("/api/admin/auth/forgot-password", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  }, false);
+}
+
+export async function getAdminPasswordResetInfo(token: string) {
+  return adminRequest<{ ok: boolean; email: string; expiresAt: string }>(`/api/admin/auth/password-reset/${encodeURIComponent(token)}`, {}, false);
+}
+
+export async function resetAdminPassword(token: string, newPassword: string) {
+  return adminRequest<{ ok: boolean }>("/api/admin/auth/reset-password", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token, newPassword }),
+  }, false);
+}
+
 export async function adminLogout() {
   try { await adminRequest("/api/auth/logout", { method: "POST" }); }
   finally { saveAccessToken(null); }

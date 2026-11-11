@@ -7,6 +7,9 @@ export async function registerAdminRoutes(app, env) {
   app.get("/api/admin/bootstrap-status", controller.get_api_admin_bootstrap_status);
   app.post("/api/admin/bootstrap", controller.post_api_admin_bootstrap);
   app.post("/api/admin/auth/login", controller.post_api_admin_auth_login);
+  app.post("/api/admin/auth/forgot-password", controller.post_api_admin_auth_forgot_password);
+  app.get("/api/admin/auth/password-reset/:token", controller.get_api_admin_auth_password_reset_token);
+  app.post("/api/admin/auth/reset-password", controller.post_api_admin_auth_reset_password);
   app.get("/api/admin/me", controller.get_api_admin_me);
   app.get("/api/admin/summary", controller.get_api_admin_summary);
   app.get("/api/admin/restaurants", controller.get_api_admin_restaurants);

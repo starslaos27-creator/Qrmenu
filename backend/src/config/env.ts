@@ -45,6 +45,9 @@ export function loadEnv() {
         authJwtSecret: readOptional("AUTH_JWT_SECRET"),
         adminBootstrapToken: readOptional("ADMIN_BOOTSTRAP_TOKEN"),
         adminBootstrapEmail: readOptional("ADMIN_BOOTSTRAP_EMAIL"),
+        resendApiKey: readOptional("RESEND_API_KEY"),
+        mailFrom: readOptional("MAIL_FROM"),
+        adminPublicUrl: readOptional("ADMIN_PUBLIC_URL") ?? ((process.env.NODE_ENV ?? "development") === "production" ? null : "http://localhost:5176"),
         authIssuer: process.env.AUTH_ISSUER?.trim() || "shopqr",
         authAccessTokenTtlMinutes: readPositiveInteger("AUTH_ACCESS_TOKEN_TTL_MINUTES", 15),
         authRefreshTokenTtlDays: readPositiveInteger("AUTH_REFRESH_TOKEN_TTL_DAYS", 30),
@@ -65,6 +68,15 @@ export function loadEnv() {
 
 function validateProductionEnv(env) {
     if (env.nodeEnv !== "production") return;
+
+    if (env.adminPublicUrl) {
+        let adminUrl;
+        try { adminUrl = new URL(env.adminPublicUrl); }
+        catch { throw new Error("ADMIN_PUBLIC_URL must be a valid absolute URL"); }
+        if (adminUrl.protocol !== "https:" || adminUrl.origin !== env.adminPublicUrl || adminUrl.pathname !== "/") {
+            throw new Error("ADMIN_PUBLIC_URL must be an HTTPS origin without a path");
+        }
+    }
 
     if (!env.databaseUrl) {
         throw new Error("DATABASE_URL is required when NODE_ENV=production");

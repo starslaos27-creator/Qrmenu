@@ -1,9 +1,106 @@
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
-import { createRefreshSession, hashPassword, normalizeEmail, setRefreshCookie, signAccessToken, verifyPassword, } from "../security/auth.js";
+import { createRefreshSession, hashPassword, normalizeEmail, setRefreshCookie, signAccessToken, validatePassword, verifyPassword, } from "../security/auth.js";
 import { clearLoginFailures, recordLoginFailure } from "../security/login-failures.js";
 import { requirePlatformAdmin, } from "../admin/authorization.js";
 
 export function createAdminController(app, env) {
+  const post_api_admin_auth_forgot_password = async (request, reply) => {
+    if (!app.db) return reply.status(503).send({ ok: false, error: "DATABASE_NOT_CONFIGURED" });
+    if (!env.resendApiKey || !env.mailFrom || !env.adminPublicUrl) return reply.status(503).send({ ok: false, error: "PASSWORD_RESET_EMAIL_NOT_CONFIGURED" });
+    const email = normalizeEmail(request.body?.email ?? "");
+    if (!isValidEmail(email)) return reply.send({ ok: true });
+    const adminResult = await app.db.query(`select u.id, u.email
+      from app_users u join app_admins a on a.user_id=u.id
+      where lower(u.email)=$1 and u.disabled_at is null and a.active=true limit 1`, [email]);
+    const admin = adminResult.rows[0];
+    if (!admin) return reply.send({ ok: true });
+
+    const client = await app.db.connect();
+    let resetToken = "";
+    try {
+      await client.query("begin");
+      const recent = await client.query(`select 1 from password_reset_tokens
+        where user_id=$1 and created_at > now() - interval '15 minutes' limit 1`, [admin.id]);
+      if (recent.rows.length) {
+        await client.query("commit");
+        return reply.send({ ok: true });
+      }
+      resetToken = randomBytes(32).toString("base64url");
+      await client.query(`update password_reset_tokens set used_at=coalesce(used_at,now())
+        where user_id=$1 and used_at is null`, [admin.id]);
+      await client.query(`insert into password_reset_tokens (user_id, token_hash, expires_at)
+        values ($1,$2,now() + interval '30 minutes')`, [admin.id, createHash("sha256").update(resetToken).digest()]);
+      await client.query("commit");
+    } catch (error) {
+      await client.query("rollback");
+      throw error;
+    } finally { client.release(); }
+
+    const resetUrl = new URL("/", env.adminPublicUrl);
+    resetUrl.searchParams.set("reset", resetToken);
+    try {
+      const response = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${env.resendApiKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          from: env.mailFrom,
+          to: [admin.email],
+          subject: "ShopQR platform admin password reset",
+          html: `<p>A password reset was requested for your ShopQR platform admin account.</p><p><a href="${resetUrl.toString()}">Reset your password</a></p><p>This link expires in 30 minutes and can be used once. If you did not request this, ignore this email.</p>`,
+          text: `Reset your ShopQR platform admin password using this one-time link (expires in 30 minutes): ${resetUrl.toString()}`,
+        }),
+      });
+      if (!response.ok) throw new Error(`Mail provider returned ${response.status}`);
+    } catch (error) {
+      app.log.error({ err: error }, "Could not send platform admin password reset email");
+      await app.db.query(`update password_reset_tokens set used_at=now()
+        where user_id=$1 and used_at is null`, [admin.id]);
+    }
+    return reply.send({ ok: true });
+  };
+  const get_api_admin_auth_password_reset_token = async (request, reply) => {
+    if (!app.db) return reply.status(503).send({ ok: false, error: "DATABASE_NOT_CONFIGURED" });
+    const token = typeof request.params.token === "string" ? request.params.token.trim() : "";
+    if (!isResetToken(token)) return reply.status(400).send({ ok: false, error: "INVALID_RESET_TOKEN" });
+    const result = await app.db.query(`select u.email, t.expires_at
+      from password_reset_tokens t join app_users u on u.id=t.user_id
+      join app_admins a on a.user_id=u.id
+      where t.token_hash=$1 and t.used_at is null and t.expires_at>now()
+        and u.disabled_at is null and a.active=true limit 1`, [createHash("sha256").update(token).digest()]);
+    if (!result.rows[0]) return reply.status(404).send({ ok: false, error: "RESET_TOKEN_EXPIRED" });
+    return reply.send({ ok: true, email: result.rows[0].email, expiresAt: result.rows[0].expires_at });
+  };
+  const post_api_admin_auth_reset_password = async (request, reply) => {
+    if (!app.db) return reply.status(503).send({ ok: false, error: "DATABASE_NOT_CONFIGURED" });
+    const token = typeof request.body?.token === "string" ? request.body.token.trim() : "";
+    const password = typeof request.body?.newPassword === "string" ? request.body.newPassword : "";
+    if (!isResetToken(token)) return reply.status(400).send({ ok: false, error: "INVALID_RESET_TOKEN" });
+    const passwordError = validatePassword(password);
+    if (passwordError) return reply.status(400).send({ ok: false, error: passwordError });
+    const client = await app.db.connect();
+    try {
+      await client.query("begin");
+      const found = await client.query(`select t.id,t.user_id,u.email
+        from password_reset_tokens t join app_users u on u.id=t.user_id
+        join app_admins a on a.user_id=u.id
+        where t.token_hash=$1 and t.used_at is null and t.expires_at>now()
+          and u.disabled_at is null and a.active=true for update of t`, [createHash("sha256").update(token).digest()]);
+      const row = found.rows[0];
+      if (!row) { await client.query("rollback"); return reply.status(404).send({ ok: false, error: "RESET_TOKEN_EXPIRED" }); }
+      await client.query(`update app_users set password_hash=$2,
+        password_migrated_at=coalesce(password_migrated_at,now()),updated_at=now() where id=$1`, [row.user_id, await hashPassword(password)]);
+      await client.query("update password_reset_tokens set used_at=now() where id=$1", [row.id]);
+      await client.query(`update auth_refresh_sessions set revoked_at=coalesce(revoked_at,now())
+        where user_id=$1`, [row.user_id]);
+      await client.query(`insert into platform_admin_audit_logs (action,target_type,target_id,reason,details)
+        values ('admin.password_reset.complete','admin',$1,'Password reset by email link',jsonb_build_object('email',$2::text))`, [row.user_id, row.email]);
+      await client.query("commit");
+      return reply.send({ ok: true });
+    } catch (error) {
+      await client.query("rollback");
+      throw error;
+    } finally { client.release(); }
+  };
   const get_api_admin_bootstrap_status = async (request, reply) => {
         if (!app.db) {
             return reply.status(503).send({ ok: false, error: "DATABASE_NOT_CONFIGURED" });
@@ -887,7 +984,7 @@ export function createAdminController(app, env) {
        limit $7 offset $8`, [...filters, limit, offset]);
         return reply.send({ ok: true, logs: result.rows, total: countResult.rows[0].total, limit, offset });
     };
-  return { get_api_admin_bootstrap_status, post_api_admin_bootstrap, post_api_admin_auth_login, get_api_admin_me, get_api_admin_summary, get_api_admin_restaurants, get_api_admin_restaurants_restaurantId, get_api_admin_users, get_api_admin_users_userId, patch_api_admin_restaurants_restaurantId_status, patch_api_admin_users_userId_status, post_api_admin_users_userId_password_reset_link, post_api_admin_users_userId_set_password, get_api_admin_audit_logs };
+  return { get_api_admin_bootstrap_status, post_api_admin_bootstrap, post_api_admin_auth_login, post_api_admin_auth_forgot_password, get_api_admin_auth_password_reset_token, post_api_admin_auth_reset_password, get_api_admin_me, get_api_admin_summary, get_api_admin_restaurants, get_api_admin_restaurants_restaurantId, get_api_admin_users, get_api_admin_users_userId, patch_api_admin_restaurants_restaurantId_status, patch_api_admin_users_userId_status, post_api_admin_users_userId_password_reset_link, post_api_admin_users_userId_set_password, get_api_admin_audit_logs };
 }
 
 async function writeAdminAudit(client, ipAddress, input) {
@@ -917,6 +1014,10 @@ function isLoopback(ip) {
 }
 function isValidEmail(value) {
     return value.length <= 320 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
+function isResetToken(value) {
+    return /^[A-Za-z0-9_-]{40,60}$/.test(value);
 }
 function safeTokenEquals(expected, supplied) {
     const expectedBytes = Buffer.from(expected, "utf8");
