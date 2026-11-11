@@ -93,5 +93,5 @@ export function KitchenHistoryCard({ order, tableNumber, zoneName, menuMap, memb
 
 function menuName(menu: KitchenMenu) { return menu.name_lo || menu.name; }
 function money(value: number | string, currencyCode: "LAK" | "THB" | "USD") { return new Intl.NumberFormat("th-TH", { style: "currency", currency: currencyCode, maximumFractionDigits: currencyCode === "LAK" ? 0 : 2 }).format(Number(value || 0)); }
-function formatTime(value: string) { return new Intl.DateTimeFormat("th-TH", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value)); }
+function formatTime(value: string) { return new Intl.DateTimeFormat("th-TH-u-ca-gregory", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value)); }
 function elapsedTime(value: string) { const seconds = Math.max(0, Math.floor((Date.now() - new Date(value).getTime()) / 1000)); return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`; }

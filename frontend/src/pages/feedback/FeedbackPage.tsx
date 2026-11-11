@@ -229,7 +229,7 @@ export default function FeedbackPage({ onLogin }: FeedbackPageProps) {
 }
 
 function formatDate(value: string) {
-  return new Intl.DateTimeFormat("th-TH", {
+  return new Intl.DateTimeFormat("th-TH-u-ca-gregory", {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(new Date(value));

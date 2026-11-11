@@ -370,7 +370,7 @@ export default function CustomerStock() {
                                 {history.map(h => (
                                     <tr key={h.id}>
                                         <td>{h.transaction_no}</td>
-                                        <td>{new Date(h.created_at).toLocaleString()}</td>
+                                        <td>{new Date(h.created_at).toLocaleString(undefined, { calendar: "gregory" })}</td>
                                         <td>{h.customer_name}</td>
                                         <td>{h.product_name}</td>
                                         <td>

@@ -115,11 +115,11 @@ export function createAuthController(app, env) {
             if (migratedPasswordHash) {
                 await client.query(`update app_users
              set password_hash = $2, password_migrated_at = now(),
-                 last_login_at = now(), updated_at = now()
+                 last_login_at = now(), last_activity_at = now(), updated_at = now()
              where id = $1 and password_hash is null`, [user.id, migratedPasswordHash]);
             }
             else {
-                await client.query("update app_users set last_login_at = now() where id = $1", [user.id]);
+                await client.query("update app_users set last_login_at = now(), last_activity_at = now() where id = $1", [user.id]);
             }
             await clearLoginFailures(client, email);
             const session = await createRefreshSession(client, user.id, request, env);
@@ -193,8 +193,12 @@ export function createAuthController(app, env) {
         const tokenUser = await requireAuth(request, reply, env);
         if (!tokenUser)
             return;
-        const result = await app.db.query(`select id, email, phone, display_name, disabled_at
-       from app_users where id = $1`, [tokenUser.id]);
+        const result = await app.db.query(`update app_users
+         set last_activity_at = case
+           when last_activity_at < now() - interval '1 minute' then now()
+           else last_activity_at end
+         where id = $1 and disabled_at is null
+         returning id, email, phone, display_name, disabled_at`, [tokenUser.id]);
         const user = result.rows[0];
         if (!user || user.disabled_at) {
             return reply.status(401).send({ ok: false, error: "UNAUTHORIZED" });
@@ -210,6 +214,29 @@ export function createAuthController(app, env) {
             },
             membership,
         });
+    };
+  const post_api_auth_activity = async (request, reply) => {
+        if (!isSelfHostedAuthReady(app, env, reply))
+            return;
+        const tokenUser = await requireAuth(request, reply, env);
+        if (!tokenUser)
+            return;
+        let result;
+        try {
+            result = await app.db.query(`update app_users
+             set last_activity_at = now()
+             where id = $1 and disabled_at is null
+             returning last_activity_at`, [tokenUser.id]);
+        } catch (error) {
+            if (isUndefinedColumn(error)) {
+                return reply.status(202).send({ ok: true, trackingReady: false });
+            }
+            throw error;
+        }
+        if (!result.rows[0]) {
+            return reply.status(401).send({ ok: false, error: "UNAUTHORIZED" });
+        }
+        return reply.send({ ok: true, lastActivityAt: result.rows[0].last_activity_at });
     };
   const post_api_auth_change_password = async (request, reply) => {
         if (!isSelfHostedAuthReady(app, env, reply))
@@ -381,7 +408,7 @@ export function createAuthController(app, env) {
             client.release();
         }
     };
-  return { post_api_auth_signup, post_api_auth_login, post_api_auth_refresh, post_api_auth_logout, get_api_auth_me, post_api_auth_change_password, get_api_auth_invites_token, post_api_auth_accept_invite, post_api_auth_forgot_password, get_api_auth_password_reset_token, post_api_auth_reset_password };
+  return { post_api_auth_signup, post_api_auth_login, post_api_auth_refresh, post_api_auth_logout, get_api_auth_me, post_api_auth_activity, post_api_auth_change_password, get_api_auth_invites_token, post_api_auth_accept_invite, post_api_auth_forgot_password, get_api_auth_password_reset_token, post_api_auth_reset_password };
 }
 
 async function createOwnerRestaurant(client, user, restaurantName, phone, currencyCode = "LAK") {
@@ -464,6 +491,9 @@ function isUniqueViolation(error) {
         error !== null &&
         "code" in error &&
         error.code === "23505");
+}
+function isUndefinedColumn(error) {
+    return typeof error === "object" && error !== null && "code" in error && error.code === "42703";
 }
 class AuthRouteError extends Error {
     status;

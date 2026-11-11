@@ -166,7 +166,7 @@ function displayValue(value: unknown) {
 }
 
 function formatDate(value: string) {
-  return new Intl.DateTimeFormat("th-TH", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
+  return new Intl.DateTimeFormat("th-TH-u-ca-gregory", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
 }
 
 function exportCsv(rows: AuditLog[], actorEmails: Record<string, string>) {

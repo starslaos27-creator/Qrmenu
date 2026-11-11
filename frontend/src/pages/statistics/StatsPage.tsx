@@ -289,7 +289,7 @@ function calculateMetrics(orders: PaidOrder[], menus: MenuItem[], tables: Table[
   const last7Days = Array.from({ length: 7 }, (_, index) => {
     const date = addDays(startOfDay(now), index - 6);
     const isoDate = dateInput(date);
-    return { date, isoDate, label: new Intl.DateTimeFormat("th-TH", { month: "short", day: "numeric" }).format(date), revenue: daily.get(isoDate) ?? 0, isToday: index === 6 };
+    return { date, isoDate, label: new Intl.DateTimeFormat("th-TH-u-ca-gregory", { month: "short", day: "numeric" }).format(date), revenue: daily.get(isoDate) ?? 0, isToday: index === 6 };
   });
   const maxRevenue = Math.max(1, ...last7Days.map((day) => day.revenue));
   const topMenus = [...byMenu.entries()].map(([id, data]) => ({ id, name: menuName(menuById.get(id)), ...data }))
@@ -359,4 +359,4 @@ function categoryName(category: Category) { return category.name; }
 function rangeLabel(range: DetailRange) { return range === "today" ? "วันนี้" : range === "week" ? "7 วันล่าสุด" : "เดือนนี้"; }
 function money(value: number, currencyCode: "LAK" | "THB" | "USD") { return new Intl.NumberFormat("th-TH", { style: "currency", currency: currencyCode, maximumFractionDigits: currencyCode === "LAK" ? 0 : 2 }).format(value); }
 function compactMoney(value: number) { return new Intl.NumberFormat("th-TH", { maximumFractionDigits: 0 }).format(value); }
-function formatDate(value: string) { return new Intl.DateTimeFormat("th-TH", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value)); }
+function formatDate(value: string) { return new Intl.DateTimeFormat("th-TH-u-ca-gregory", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value)); }

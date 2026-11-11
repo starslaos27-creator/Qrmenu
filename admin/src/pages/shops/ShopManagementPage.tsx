@@ -32,6 +32,7 @@ const proPackages = [
   { paid: 9, free: 1 },
   { paid: 12, free: 2 },
 ];
+const paymentMethodNames = { cash: "เงินสด", transfer: "โอน / ธนาคาร", qr: "QR Payment", card: "บัตร", other: "อื่น ๆ" };
 
 interface RestaurantDetail {
   restaurant: Restaurant & { owner_phone?: string | null; accepting_orders?: boolean };
@@ -54,6 +55,8 @@ export default function ShopManagementPage({ canManage }: { canManage: boolean }
   const [purchaseTarget, setPurchaseTarget] = useState<Restaurant | null>(null);
   const [purchasePricing, setPurchasePricing] = useState<ProPricing | null>(null);
   const [purchaseMonths, setPurchaseMonths] = useState(1);
+  const [purchasePaymentMethod, setPurchasePaymentMethod] = useState<keyof typeof paymentMethodNames>("transfer");
+  const [purchaseReference, setPurchaseReference] = useState("");
   const [paymentReceived, setPaymentReceived] = useState(false);
   const [purchaseRequestKey, setPurchaseRequestKey] = useState("");
   const [purchaseLoading, setPurchaseLoading] = useState(false);
@@ -108,6 +111,8 @@ export default function ShopManagementPage({ canManage }: { canManage: boolean }
     setPurchaseTarget(restaurant);
     setPurchasePricing(null);
     setPurchaseMonths(1);
+    setPurchasePaymentMethod("transfer");
+    setPurchaseReference("");
     setPaymentReceived(false);
     setPurchaseRequestKey(crypto.randomUUID());
     setPurchaseError("");
@@ -139,6 +144,8 @@ export default function ShopManagementPage({ canManage }: { canManage: boolean }
           paidMonths: purchaseMonths,
           pricingVersion: purchasePricing.version,
           paymentReceived: true,
+          paymentMethod: purchasePaymentMethod,
+          paymentReference: purchaseReference.trim(),
         }),
       });
       setNotice(`เปิดแพ็กเกจโปรให้ร้าน ${purchaseTarget.name} แล้ว`);
@@ -202,11 +209,15 @@ export default function ShopManagementPage({ canManage }: { canManage: boolean }
         pricing={purchasePricing}
         selectedMonths={purchaseMonths}
         paymentReceived={paymentReceived}
+        paymentMethod={purchasePaymentMethod}
+        paymentReference={purchaseReference}
         loading={purchaseLoading}
         busy={purchaseBusy}
         error={purchaseError}
         onSelectMonths={selectPurchaseMonths}
         onPaymentReceived={setPaymentReceived}
+        onPaymentMethod={setPurchasePaymentMethod}
+        onPaymentReference={setPurchaseReference}
         onConfirm={() => void activateProPurchase()}
         onClose={() => { if (!purchaseBusy) setPurchaseTarget(null); }}
       />}
@@ -215,18 +226,22 @@ export default function ShopManagementPage({ canManage }: { canManage: boolean }
 }
 
 function ProPurchaseDialog({
-  restaurant, pricing, selectedMonths, paymentReceived, loading, busy, error,
-  onSelectMonths, onPaymentReceived, onConfirm, onClose,
+  restaurant, pricing, selectedMonths, paymentReceived, paymentMethod, paymentReference, loading, busy, error,
+  onSelectMonths, onPaymentReceived, onPaymentMethod, onPaymentReference, onConfirm, onClose,
 }: {
   restaurant: Restaurant;
   pricing: ProPricing | null;
   selectedMonths: number;
   paymentReceived: boolean;
+  paymentMethod: keyof typeof paymentMethodNames;
+  paymentReference: string;
   loading: boolean;
   busy: boolean;
   error: string;
   onSelectMonths: (months: number) => void;
   onPaymentReceived: (received: boolean) => void;
+  onPaymentMethod: (method: keyof typeof paymentMethodNames) => void;
+  onPaymentReference: (reference: string) => void;
   onConfirm: () => void;
   onClose: () => void;
 }) {
@@ -252,6 +267,7 @@ function ProPurchaseDialog({
         </fieldset>}
         {validPrice && <>
           <div className="mt-4 rounded-xl bg-slate-50 p-4 text-sm"><div className="flex justify-between gap-3"><span>ยอดที่ยืนยันว่าได้รับ</span><strong>{usd(monthly * chosen.paid)} USD</strong></div><div className="mt-1 flex justify-between gap-3 text-slate-600"><span>สิทธิ์ใช้งาน</span><span>{chosen.paid + chosen.free} เดือน (เดือนละ 30 วัน)</span></div><p className="mt-2 text-xs leading-5 text-slate-500">เริ่มนับสิทธิ์ตั้งแต่เวลาที่แอดมินยืนยัน และบันทึกชื่อแอดมินกับรายละเอียดแพ็กเกจไว้ในประวัติระบบ</p></div>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2"><label className="grid gap-1 text-xs font-medium text-slate-600">ช่องทางรับเงิน<select className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900" value={paymentMethod} onChange={(event) => onPaymentMethod(event.target.value as keyof typeof paymentMethodNames)} disabled={busy}>{Object.entries(paymentMethodNames).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label><label className="grid gap-1 text-xs font-medium text-slate-600">เลขอ้างอิง (ถ้ามี)<input maxLength={200} className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900" value={paymentReference} onChange={(event) => onPaymentReference(event.target.value)} disabled={busy} /></label></div>
           <label className="mt-4 flex cursor-pointer items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950"><input className="mt-0.5" type="checkbox" checked={paymentReceived} onChange={(event) => onPaymentReceived(event.target.checked)} disabled={busy} /><span>ยืนยันว่าได้รับเงิน <strong>{usd(monthly * chosen.paid)} USD</strong> จากร้านนี้แล้ว และต้องการเปิดแพ็กเกจทันที</span></label>
         </>}
       </>}
@@ -307,7 +323,7 @@ function formatCurrency(value: number, currency: "LAK" | "THB" | "USD") {
 function formatSignupDate(value: string) {
   const timestamp = Date.parse(value);
   return Number.isFinite(timestamp)
-    ? new Date(timestamp).toLocaleString("th-TH", { calendar: "gregory", dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Bangkok" })
+    ? new Date(timestamp).toLocaleString("th-TH-u-ca-gregory", { calendar: "gregory", dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Bangkok" })
     : "—";
 }
 

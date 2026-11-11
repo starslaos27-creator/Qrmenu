@@ -7,7 +7,7 @@ interface ProRequest {
   created_at: string; reviewed_at: string | null; reviewer_email: string | null; review_note: string; admin_purchase?: boolean;
 }
 const labels = {pending:"รออนุมัติ",approved:"อนุมัติแล้ว",rejected:"ไม่อนุมัติ"};
-const date = (value: string) => new Date(value).toLocaleString("th-TH",{timeZone:"Asia/Bangkok"});
+const date = (value: string) => new Date(value).toLocaleString("th-TH-u-ca-gregory",{timeZone:"Asia/Bangkok"});
 export default function ProRequestsPage({canManage}: {canManage: boolean}) {
   const [rows,setRows] = useState<ProRequest[]>([]);
   const [filter,setFilter] = useState("pending");

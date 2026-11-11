@@ -28,7 +28,7 @@ export function downloadKitchenCsv({ orders, history, stage, tables, zones, menu
       const menu = menuMap.get(item.menu_id);
       rows.push([
         order.receipt_number || order.id,
-        new Date(order.created_at).toLocaleString("th-TH", { timeZone: "Asia/Vientiane" }),
+        new Date(order.created_at).toLocaleString("th-TH-u-ca-gregory", { timeZone: "Asia/Vientiane" }),
         table?.table_number ?? "",
         zone?.name ?? "",
         labels[order.status === "served" || order.status === "cancelled" ? order.status : kitchenOrderStage(order)] ?? order.status,

@@ -33,4 +33,4 @@ export default function SystemMonitorPage() {
   </div>;
 }
 
-function dateTime(value: string) { return value ? new Intl.DateTimeFormat("th-TH", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value)) : "—"; }
+function dateTime(value: string) { return value ? new Intl.DateTimeFormat("th-TH-u-ca-gregory", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value)) : "—"; }

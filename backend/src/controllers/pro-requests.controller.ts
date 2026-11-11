@@ -118,8 +118,10 @@ export function createProRequestController(app, env) {
     if (!admin) return;
     const restaurantId = request.params.restaurantId;
     const body = request.body || {};
+    const paymentReference = typeof body.paymentReference === "string" ? body.paymentReference.trim() : "";
     if (!uuid(restaurantId) || !uuid(body.requestKey) || ![1, 3, 6, 9, 12].includes(body.paidMonths) ||
-        !Number.isSafeInteger(body.pricingVersion) || body.paymentReceived !== true) {
+        !Number.isSafeInteger(body.pricingVersion) || body.paymentReceived !== true ||
+        !["cash", "transfer", "qr", "card", "other"].includes(body.paymentMethod) || paymentReference.length > 200) {
       return reply.code(400).send({ error: "INVALID_PURCHASE" });
     }
 
@@ -127,7 +129,7 @@ export function createProRequestController(app, env) {
     try {
       await client.query("begin");
       await client.query("select pg_advisory_xact_lock(hashtext($1))", [`pro:${restaurantId}`]);
-      const restaurant = (await client.query("select id from restaurants where id=$1 for update", [restaurantId])).rows[0];
+      const restaurant = (await client.query("select id, name from restaurants where id=$1 for update", [restaurantId])).rows[0];
       if (!restaurant) {
         await client.query("rollback");
         return reply.code(404).send({ error: "RESTAURANT_NOT_FOUND" });
@@ -178,7 +180,15 @@ export function createProRequestController(app, env) {
         values ($1, 'pro_purchase.activated', 'pro_request', $2, $3,
           'payment_received', $4::jsonb, $5)`, [admin.user.id, purchase.id, restaurantId,
         JSON.stringify({ paidMonths: body.paidMonths, freeMonths, monthlyUsd: pricing.monthly_usd,
-          totalUsd: purchase.total_usd, currency: "USD", paymentReceived: true }), request.ip]);
+          totalUsd: purchase.total_usd, currency: "USD", paymentReceived: true,
+          paymentMethod: body.paymentMethod, paymentReference }), request.ip]);
+      await client.query(`insert into platform_finance_entries
+          (request_key, kind, entry_date, category, description, amount, currency_code, payment_method,
+           reference, source, restaurant_id, pro_request_id, created_by, created_at)
+        values ($1, 'income', (clock_timestamp() at time zone 'Asia/Bangkok')::date,
+          'แพ็กเกจ Pro', $2, $3::numeric, 'USD', $4, $5, 'pro_package', $6, $7, $8, clock_timestamp())`,
+        [body.requestKey, `แพ็กเกจ Pro · ${restaurant.name} · ${body.paidMonths} เดือน${freeMonths ? ` แถม ${freeMonths} เดือน` : ""}`,
+          purchase.total_usd, body.paymentMethod, paymentReference, restaurantId, purchase.id, admin.user.id]);
       await client.query("commit");
       return reply.code(201).send({ request: purchase });
     } catch (error) {

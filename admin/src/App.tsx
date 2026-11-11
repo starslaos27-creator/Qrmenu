@@ -9,6 +9,7 @@ import PlatformOverviewPage from "./pages/dashboard/PlatformOverviewPage";
 import SystemMonitorPage from "./pages/monitor/SystemMonitorPage";
 import ProPricingPage from "./pages/pro/ProPricingPage";
 import ProRequestsPage from "./pages/pro/ProRequestsPage";
+import PlatformFinancePage from "./pages/finance/PlatformFinancePage";
 import ShopManagementPage from "./pages/shops/ShopManagementPage";
 import UserManagementPage from "./pages/users/UserManagementPage";
 
@@ -40,5 +41,7 @@ export default function App() {
     {section === "monitor" && <SystemMonitorPage />}
     {section === "pro" && <ProRequestsPage canManage={canManage} />}
     {section === "pro-pricing" && <ProPricingPage canManage={canManage} />}
+    {section === "finance-income" && <PlatformFinancePage kind="income" canManage={canManage} />}
+    {section === "finance-expense" && <PlatformFinancePage kind="expense" canManage={canManage} />}
   </AdminLayout>;
 }

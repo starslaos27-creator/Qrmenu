@@ -8,7 +8,6 @@ interface ReceiptHeader {
   phone?: string;
   numberPrefix?: string;
   tagline?: string;
-  calendar?: "buddhist" | "gregory";
   showName?: boolean;
   showNumber?: boolean;
   showDate?: boolean;
@@ -24,7 +23,7 @@ export function readReceiptHeader(restaurantId: string): ReceiptHeader {
 }
 
 export default function ReceiptHeaderSettings({ restaurantId }: { restaurantId: string }) {
-  const [value, setValue] = useState<ReceiptHeader>(() => ({ calendar: "buddhist", ...readReceiptHeader(restaurantId) }));
+  const [value, setValue] = useState<ReceiptHeader>(() => readReceiptHeader(restaurantId));
   const [message, setMessage] = useState("");
   const [uploading, setUploading] = useState(false);
 
@@ -95,7 +94,7 @@ export default function ReceiptHeaderSettings({ restaurantId }: { restaurantId: 
     <h3 className="m-0 border-t border-slate-100 pt-4 text-sm font-semibold">à¸‚à¹‰à¸­à¸¡à¸¹à¸¥à¸•à¸´à¸”à¸•à¹ˆà¸­à¸£à¹‰à¸²à¸™</h3>
     <div className="grid gap-3 sm:grid-cols-2"><TextField label="à¸—à¸µà¹ˆà¸­à¸¢à¸¹à¹ˆ / à¸šà¹‰à¸²à¸™" value={value.village ?? ""} maxLength={160} onChange={(next) => update("village", next)} /><TextField label="à¹€à¸¡à¸·à¸­à¸‡" value={value.district ?? ""} maxLength={160} onChange={(next) => update("district", next)} /><TextField label="à¹à¸‚à¸§à¸‡" value={value.province ?? ""} maxLength={160} onChange={(next) => update("province", next)} /><TextField label="à¹€à¸šà¸­à¸£à¹Œà¹‚à¸—à¸£" value={value.phone ?? ""} maxLength={40} type="tel" onChange={(next) => update("phone", next)} /></div>
     <h3 className="m-0 border-t border-slate-100 pt-4 text-sm font-semibold">à¸£à¸¹à¸›à¹à¸šà¸šà¹ƒà¸šà¹€à¸ªà¸£à¹‡à¸ˆ</h3>
-    <div className="grid gap-3 sm:grid-cols-2"><TextField label="à¸„à¸³à¸™à¸³à¸«à¸™à¹‰à¸²à¹€à¸¥à¸‚à¸—à¸µà¹ˆà¸šà¸´à¸¥" value={value.numberPrefix ?? ""} maxLength={30} placeholder="BILL-" onChange={(next) => update("numberPrefix", next)} /><TextField label="à¸‚à¹‰à¸­à¸„à¸§à¸²à¸¡à¹‚à¸†à¸©à¸“à¸²à¸šà¸™à¸«à¸±à¸§à¸šà¸´à¸¥" value={value.tagline ?? "à¸­à¸£à¹ˆà¸­à¸¢ à¸ªà¸°à¸­à¸²à¸” à¸ªà¸”à¹ƒà¸«à¸¡à¹ˆ à¸—à¸¸à¸à¸ˆà¸²à¸™"} maxLength={160} onChange={(next) => update("tagline", next)} /><label className="grid gap-1.5 text-sm font-medium">à¸›à¸µà¸—à¸µà¹ˆà¹à¸ªà¸”à¸‡<select className={inputClass} value={value.calendar || "buddhist"} onChange={(event) => update("calendar", event.target.value as ReceiptHeader["calendar"])}><option value="buddhist">à¸ž.à¸¨.</option><option value="gregory">à¸„.à¸¨.</option></select></label></div>
+    <div className="grid gap-3 sm:grid-cols-2"><TextField label="à¸„à¸³à¸™à¸³à¸«à¸™à¹‰à¸²à¹€à¸¥à¸‚à¸—à¸µà¹ˆà¸šà¸´à¸¥" value={value.numberPrefix ?? ""} maxLength={30} placeholder="BILL-" onChange={(next) => update("numberPrefix", next)} /><TextField label="à¸‚à¹‰à¸­à¸„à¸§à¸²à¸¡à¹‚à¸†à¸©à¸“à¸²à¸šà¸™à¸«à¸±à¸§à¸šà¸´à¸¥" value={value.tagline ?? "à¸­à¸£à¹ˆà¸­à¸¢ à¸ªà¸°à¸­à¸²à¸” à¸ªà¸”à¹ƒà¸«à¸¡à¹ˆ à¸—à¸¸à¸à¸ˆà¸²à¸™"} maxLength={160} onChange={(next) => update("tagline", next)} /></div>
     <div className="grid gap-2 sm:grid-cols-2">{([["showName", "à¸Šà¸·à¹ˆà¸­à¸£à¹‰à¸²à¸™"], ["showNumber", "à¹€à¸¥à¸‚à¸—à¸µà¹ˆà¸šà¸´à¸¥"], ["showDate", "à¸§à¸±à¸™à¸—à¸µà¹ˆ / à¹€à¸”à¸·à¸­à¸™ / à¸›à¸µ"], ["showTime", "à¹€à¸§à¸¥à¸²"]] as const).map(([field, label]) => <label key={field} className="flex items-center gap-2 text-sm"><input type="checkbox" checked={value[field] !== false} onChange={(event) => update(field, event.target.checked)} className="h-4 w-4 accent-emerald-700" />{label}</label>)}</div>
     {message && <p role="status" className="rounded-lg bg-slate-100 p-3 text-sm text-slate-700">{message}</p>}
     <button className="rounded-xl bg-emerald-800 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-900">à¸šà¸±à¸™à¸—à¸¶à¸à¸«à¸±à¸§à¹ƒà¸šà¹€à¸ªà¸£à¹‡à¸ˆ</button>

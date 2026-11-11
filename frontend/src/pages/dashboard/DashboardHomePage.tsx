@@ -97,7 +97,7 @@ export default function DashboardHomePage({ onLogin }: DashboardHomePageProps) {
   const profileName = user?.display_name?.trim() || user?.email || membership?.restaurant_name || "R";
   const profileInitial = Array.from(profileName.trim())[0]?.toUpperCase() || "R";
   const isOnline = presenceNow - presenceAt < 5 * 60_000;
-  const lastOnlineLabel = new Intl.DateTimeFormat("th-TH", { hour: "2-digit", minute: "2-digit" }).format(new Date(presenceAt));
+  const lastOnlineLabel = new Intl.DateTimeFormat("th-TH-u-ca-gregory", { hour: "2-digit", minute: "2-digit" }).format(new Date(presenceAt));
 
   function changeProfilePhoto(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -163,7 +163,7 @@ export default function DashboardHomePage({ onLogin }: DashboardHomePageProps) {
         <div><div className="text-[11px] font-bold uppercase tracking-[.18em] text-slate-500">RESTAURANT OVERVIEW</div><h1 className="mt-1 text-xl font-semibold tracking-tight sm:text-2xl">ภาพรวมร้านอาหาร <span aria-hidden="true">👋</span></h1><p className="mt-1 text-sm text-slate-600">ยินดีต้อนรับกลับมา! มาดูความเคลื่อนไหวของ{membership.restaurant_name || "ร้าน"}วันนี้กัน</p></div>
         <div className="flex items-center gap-3 text-sm text-slate-600">
           <ProUpgradeButton restaurantId={restaurantId} />
-          <time>{new Date().toLocaleDateString("th-TH", { day: "2-digit", month: "2-digit", year: "numeric" })}</time>
+          <time>{new Date().toLocaleDateString("th-TH-u-ca-gregory", { day: "2-digit", month: "2-digit", year: "numeric" })}</time>
           {owner && <button className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-medium hover:bg-slate-100" type="button" onClick={() => exportSummary(summary)}>↥ ส่งออกรายงาน</button>}
           <div className="relative">
             <button type="button" className={`grid h-11 w-11 place-items-center overflow-hidden rounded-full border-2 border-white bg-emerald-800 text-lg font-semibold text-white shadow ${isOnline ? "ring-2 ring-emerald-500" : "ring-2 ring-slate-300"}`} title={isOnline ? "Online" : `Offline · Last seen ${lastOnlineLabel}`} aria-label={`${profileName} · ${isOnline ? "Online" : `Offline, last seen ${lastOnlineLabel}`} · เปิดเมนูโปรไฟล์`} aria-haspopup="menu" aria-expanded={profileOpen} onClick={() => setProfileOpen((open) => !open)}>
@@ -220,7 +220,7 @@ function DataTable({ headers, rows }: { headers: string[]; rows: React.ReactNode
 }
 
 function RecentOrders({ orders }: { orders: RecentOrder[] }) {
-  const rows = orders.map((order) => [<span title={order.id} key="id">#{order.id.slice(0, 6)}</span>, order.tableNumber ?? "—", <span className={`rounded-full px-2 py-1 text-xs ${order.paid ? "bg-emerald-50 text-emerald-800" : "bg-amber-50 text-amber-800"}`} key="status">{orderStatus(order)}</span>, money(order.total), new Date(order.createdAt).toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" })]);
+  const rows = orders.map((order) => [<span title={order.id} key="id">#{order.id.slice(0, 6)}</span>, order.tableNumber ?? "—", <span className={`rounded-full px-2 py-1 text-xs ${order.paid ? "bg-emerald-50 text-emerald-800" : "bg-amber-50 text-amber-800"}`} key="status">{orderStatus(order)}</span>, money(order.total), new Date(order.createdAt).toLocaleTimeString("th-TH-u-ca-gregory", { hour: "2-digit", minute: "2-digit" })]);
   return <DataTable headers={["ออเดอร์", "โต๊ะ", "สถานะ", "ยอดรวม", "เวลา"]} rows={rows} />;
 }
 
@@ -244,7 +244,7 @@ function RevenueChart({ orders }: { orders: NonNullable<ReturnType<typeof useDas
 
 function LoadingState() { return <main className="grid min-h-full place-items-center p-6"><section className="rounded-2xl border border-slate-200 bg-white p-8 text-sm text-slate-600" role="status" aria-busy="true">กำลังโหลดภาพรวมร้านอาหาร…</section></main>; }
 function sameDay(first: Date | string, second: Date) { return new Date(first).toLocaleDateString("en-CA") === second.toLocaleDateString("en-CA"); }
-function shortDate(value: Date) { return new Intl.DateTimeFormat("th-TH", { day: "numeric", month: "short" }).format(value); }
+function shortDate(value: Date) { return new Intl.DateTimeFormat("th-TH-u-ca-gregory", { day: "numeric", month: "short" }).format(value); }
 function number(value: number) { return Number(value || 0).toLocaleString("th-TH"); }
 function money(value: number) { return new Intl.NumberFormat("th-TH", { style: "currency", currency: dashboardCurrency, maximumFractionDigits: dashboardCurrency === "LAK" ? 0 : 2 }).format(value); }
 function orderStatus(order: RecentOrder) { return order.paid ? "ชำระเงินแล้ว" : ({ pending: "รอทำ", ready: "พร้อมเสิร์ฟ", served: "เสิร์ฟแล้ว", cancelled: "ยกเลิก" }[order.status] || order.status); }

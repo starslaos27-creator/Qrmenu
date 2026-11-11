@@ -149,7 +149,31 @@ export function createAdminController(app, env) {
         const admin = await requirePlatformAdmin(request, reply, env);
         if (!admin)
             return;
-        const result = await app.db.query(`select
+        let result;
+        try {
+          result = await app.db.query(`with users_activity as (
+          select u.id, coalesce(nullif(u.display_name, ''), u.email) as display_name,
+                 u.email,
+                 coalesce(
+                   nullif(to_jsonb(u)->>'last_activity_at', '')::timestamptz,
+                   u.last_login_at,
+                   (select max(coalesce(s.last_used_at, s.created_at))
+                      from auth_refresh_sessions s where s.user_id = u.id),
+                   u.created_at
+                 ) as last_activity_at,
+                 to_jsonb(u) ? 'last_activity_at' as tracking_ready,
+                 u.disabled_at, u.disabled_reason,
+                 coalesce(string_agg(distinct r.name, ' · ' order by r.name)
+                   filter (where r.name is not null), '') as restaurant_names
+          from app_users u
+          left join restaurant_members m on m.user_id = u.id
+          left join restaurants r on r.id = m.restaurant_id
+          where not exists (
+            select 1 from app_admins a where a.user_id = u.id and a.active = true
+          )
+          group by u.id
+        )
+        select
          (select count(*) from restaurants)::int as restaurant_count,
          (select count(*) from restaurants where suspended_at is not null)::int as suspended_restaurant_count,
          (select count(*) from app_users)::int as user_count,
@@ -159,7 +183,72 @@ export function createAdminController(app, env) {
          (select count(*) from orders where created_at >= current_date)::int as today_order_count,
          coalesce((select sum(total) from orders
            where paid = true and paid_at >= current_date), 0)::text as today_revenue,
-         (select max(created_at) from orders) as last_order_at`);
+         (select max(created_at) from orders) as last_order_at,
+         jsonb_build_object(
+           'trackingReady', (select coalesce(bool_and(tracking_ready), true) from users_activity),
+           'onlineCount', (select count(*)::int from users_activity
+             where disabled_at is null and last_activity_at >= now() - interval '5 minutes'),
+           'onlineAccounts', coalesce((select jsonb_agg(jsonb_build_object(
+               'id', id, 'name', display_name, 'email', email,
+               'restaurants', restaurant_names, 'lastActivityAt', last_activity_at))
+             from (select * from users_activity where disabled_at is null
+               and last_activity_at >= now() - interval '5 minutes'
+               order by last_activity_at desc limit 6) recent), '[]'::jsonb),
+           'recentlyAwayCount', (select count(*)::int from users_activity
+             where disabled_at is null
+               and last_activity_at < now() - interval '5 minutes'
+               and last_activity_at >= now() - interval '1 hour'),
+           'pausedCount', (select count(*)::int from users_activity
+             where disabled_at is null and last_activity_at < now() - interval '1 hour'
+               and last_activity_at >= now() - interval '3 days'),
+           'pausedAccounts', coalesce((select jsonb_agg(jsonb_build_object(
+               'id', id, 'name', display_name, 'email', email,
+               'restaurants', restaurant_names, 'lastActivityAt', last_activity_at))
+             from (select * from users_activity where disabled_at is null
+               and last_activity_at < now() - interval '1 hour'
+               and last_activity_at >= now() - interval '3 days'
+               order by last_activity_at desc limit 6) recent), '[]'::jsonb),
+           'inactiveCount', (select count(*)::int from users_activity
+             where disabled_at is null and last_activity_at < now() - interval '3 days'),
+           'inactiveAccounts', coalesce((select jsonb_agg(jsonb_build_object(
+               'id', id, 'name', display_name, 'email', email,
+               'restaurants', restaurant_names, 'lastActivityAt', last_activity_at))
+             from (select * from users_activity where disabled_at is null
+               and last_activity_at < now() - interval '3 days'
+               order by last_activity_at asc limit 6) recent), '[]'::jsonb),
+           'suspendedInactiveCount', (select count(*)::int from users_activity
+             where disabled_reason = 'AUTOMATIC_INACTIVITY_365_DAYS'),
+           'suspendedInactiveAccounts', coalesce((select jsonb_agg(jsonb_build_object(
+               'id', id, 'name', display_name, 'email', email,
+               'restaurants', restaurant_names, 'lastActivityAt', last_activity_at))
+             from (select * from users_activity
+               where disabled_reason = 'AUTOMATIC_INACTIVITY_365_DAYS'
+               order by last_activity_at asc limit 6) recent), '[]'::jsonb)
+         ) as activity`);
+        } catch (error) {
+            request.log.error({ err: error }, "Could not load account activity summary; serving the base overview");
+            const fallback = await app.db.query(`select
+             (select count(*) from restaurants)::int as restaurant_count,
+             (select count(*) from restaurants where suspended_at is not null)::int as suspended_restaurant_count,
+             (select count(*) from app_users)::int as user_count,
+             (select count(*) from app_users where password_hash is not null)::int as migrated_user_count,
+             (select count(*) from app_users where password_hash is null)::int as pending_migration_count,
+             (select count(*) from app_users where disabled_at is not null)::int as disabled_user_count,
+             (select count(*) from orders where created_at >= current_date)::int as today_order_count,
+             coalesce((select sum(total) from orders where paid = true and paid_at >= current_date), 0)::text as today_revenue,
+             (select max(created_at) from orders) as last_order_at`);
+            const row = fallback.rows[0];
+            return reply.send({ ok: true, summary: {
+                ...row,
+                today_revenue: Number(row.today_revenue),
+                activity: {
+                    trackingReady: false,
+                    onlineCount: 0, onlineAccounts: [], recentlyAwayCount: 0,
+                    pausedCount: 0, pausedAccounts: [], inactiveCount: 0, inactiveAccounts: [],
+                    suspendedInactiveCount: 0, suspendedInactiveAccounts: [],
+                },
+            } });
+        }
         const row = result.rows[0];
         return reply.send({
             ok: true,
@@ -472,7 +561,7 @@ export function createAdminController(app, env) {
             return;
         const userId = request.params.userId;
         const userResult = await app.db.query(`select u.id, u.email, u.phone, u.phone_normalized, u.display_name,
-              u.email_verified_at, u.password_migrated_at, u.last_login_at,
+              u.email_verified_at, u.password_migrated_at, u.last_login_at, u.last_activity_at,
               u.disabled_at, u.disabled_reason, u.created_at, u.updated_at,
               a.role as admin_role, a.active as admin_active
        from app_users u
@@ -612,7 +701,8 @@ export function createAdminController(app, env) {
             await client.query("begin");
             const result = await client.query(`update app_users set
            disabled_at = case when $2 then now() else null end,
-           disabled_reason = case when $2 then $3 else null end
+           disabled_reason = case when $2 then $3 else null end,
+           last_activity_at = case when $2 then last_activity_at else now() end
          where id = $1 returning id, email, disabled_at, disabled_reason`, [request.params.userId, disabled, reason || null]);
             if (!result.rows[0]) {
                 await client.query("rollback");

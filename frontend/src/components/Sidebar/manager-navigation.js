@@ -1,5 +1,5 @@
 import {r as React, j as jsx} from './vendor-react-DCUvmuBu.js';
-import {e as api, j as navigate, n as logout} from './index-BjXGGWCT.js?v=20261104-remove-stock-deposits-menu-v9';
+import {e as api, j as navigate, n as logout} from './index-BjXGGWCT.js?v=20261111-account-activity-v1';
 
 const owner = ['owner'];
 const team = ['owner', 'cook', 'waiter', 'staff'];
@@ -59,7 +59,7 @@ function GlobalProfile(){
   const name=user?.display_name?.trim()||user?.email||'Profile';
   const initial=Array.from(name)[0]?.toUpperCase()||'P';
   const online=now-lastActive<5*60*1000;
-  const seen=new Intl.DateTimeFormat('th-TH',{hour:'2-digit',minute:'2-digit'}).format(new Date(lastActive));
+  const seen=new Intl.DateTimeFormat('th-TH-u-ca-gregory',{hour:'2-digit',minute:'2-digit'}).format(new Date(lastActive));
   function upload(event){const file=event.target.files?.[0];event.target.value='';if(!file)return;if(!['image/png','image/jpeg','image/webp'].includes(file.type)||file.size>1024*1024){setPhotoError('Choose PNG, JPG or WebP under 1 MB');return}const reader=new FileReader();reader.onload=()=>{try{const value=String(reader.result||'');localStorage.setItem('shopqr.profile-photo.'+(user?.id||'session'),value);setPhoto(value);setPhotoError('')}catch{setPhotoError('Could not save image; choose a smaller file')}};reader.onerror=()=>setPhotoError('Could not read image');reader.readAsDataURL(file)}
   async function signout(){setOpen(false);try{await logout()}finally{navigate('/login')}}
   return jsx.jsxs('div',{className:'global-profile',children:[jsx.jsx('button',{type:'button',className:'global-profile-trigger '+(online?'online':'idle'),title:online?'Online':'Offline - Last seen '+seen,'aria-label':name+' profile','aria-haspopup':'menu','aria-expanded':open,onClick:()=>setOpen(value=>!value),children:photo?jsx.jsx('img',{src:photo,alt:''}):jsx.jsx('span',{children:initial})}),open?jsx.jsxs('div',{className:'global-profile-menu',role:'menu',children:[jsx.jsxs('div',{className:'global-profile-user',children:[jsx.jsx('label',{className:'global-profile-photo',title:'Change profile photo',children:[photo?jsx.jsx('img',{src:photo,alt:''}):initial,jsx.jsx('input',{type:'file',accept:'image/png,image/jpeg,image/webp','aria-label':'Choose profile photo',onChange:upload})]}),jsx.jsxs('div',{className:'global-profile-info',children:[jsx.jsx('strong',{children:name}),jsx.jsx('small',{children:user?.email||user?.role||'Signed in'}),jsx.jsxs('small',{className:'global-profile-status '+(online?'online':'idle'),children:[jsx.jsx('i',{}),online?'Online':'Offline - Last seen '+seen]})]})]}),photoError?jsx.jsx('p',{className:'global-profile-error',role:'alert',children:photoError}):null,jsx.jsx('button',{role:'menuitem',onClick:()=>{setOpen(false);navigateDashboard('/dashboard/settings')},children:'ตั้งค่าระบบ'}),jsx.jsx('button',{role:'menuitem',className:'global-profile-upgrade',onClick:()=>{setOpen(false);navigateDashboard('/dashboard/settings')},children:'อัปเกรดโปร'}),jsx.jsx('button',{role:'menuitem',onClick:signout,children:'ออกจากระบบ'})]}):null]});
@@ -74,6 +74,25 @@ export function NavigationView() {
     function focusForm(){const form=document.getElementById('menu-add-form');if(form){form.scrollIntoView({block:'start'});form.querySelector('input')?.focus({preventScroll:true});observer.disconnect();}}
     observer.observe(document.getElementById('root'),{childList:true,subtree:true});focusForm();return()=>observer.disconnect();
   },[view]);
+  React.useEffect(()=>{
+    let lastPing=0;
+    const ping=()=>{
+      if(document.visibilityState==='hidden')return;
+      const now=Date.now();
+      if(now-lastPing<60_000)return;
+      lastPing=now;
+      api('/api/auth/activity',{method:'POST'}).catch(()=>{});
+    };
+    const onVisibility=()=>{if(document.visibilityState==='visible')ping()};
+    const events=['pointerdown','pointermove','keydown','touchstart','scroll','click'];
+    events.forEach(name=>window.addEventListener(name,ping,{passive:true}));
+    document.addEventListener('visibilitychange',onVisibility);
+    ping();
+    return()=>{
+      events.forEach(name=>window.removeEventListener(name,ping));
+      document.removeEventListener('visibilitychange',onVisibility);
+    };
+  },[]);
   // These pages already supply their own heading.
   const showGlobalProfile=!['/dashboard','/dashboard/home'].includes(location.pathname);
   if(location.pathname==='/dashboard/menu'||location.pathname==='/dashboard/finance'||(location.pathname==='/dashboard/inventory'&&view==='recipes')||(location.pathname==='/dashboard/kitchen'&&view==='new')||location.pathname==='/dashboard/stock-deposits')return showGlobalProfile?jsx.jsx(GlobalProfile,{}):null;

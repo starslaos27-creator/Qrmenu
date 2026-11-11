@@ -23,6 +23,6 @@ export default function useProPurchaseStatus() {
     return()=>{clearInterval(poll);clearInterval(tick);window.removeEventListener("focus",refresh);};
   },[refresh]);
   const active=state.expiresAt>state.serverTime+now-state.syncedAt;
-  const message=active?(state.trialActive?`สิทธิ์ทดลองโปรฟรีใช้งานได้ถึง ${new Date(state.expiresAt).toLocaleString("th-TH",{timeZone:"Asia/Bangkok"})}`:`แพ็กเกจโปรยังใช้งานได้ถึง ${new Date(state.expiresAt).toLocaleString("th-TH",{timeZone:"Asia/Bangkok"})}`):state.pending?"ท่านได้ส่งคำขอชำระแล้ว กำลังรอแอดมินอนุมัติ กรุณาอย่าส่งคำขอซ้ำ":"";
+  const message=active?(state.trialActive?`สิทธิ์ทดลองโปรฟรีใช้งานได้ถึง ${new Date(state.expiresAt).toLocaleString("th-TH-u-ca-gregory",{timeZone:"Asia/Bangkok"})}`:`แพ็กเกจโปรยังใช้งานได้ถึง ${new Date(state.expiresAt).toLocaleString("th-TH-u-ca-gregory",{timeZone:"Asia/Bangkok"})}`):state.pending?"ท่านได้ส่งคำขอชำระแล้ว กำลังรอแอดมินอนุมัติ กรุณาอย่าส่งคำขอซ้ำ":"";
   return {active,trialActive:state.trialActive,pending:state.pending,loading,error,message,refresh,blocked:active||state.pending||loading||!!error};
 }

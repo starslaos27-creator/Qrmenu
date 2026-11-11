@@ -21,5 +21,16 @@ export async function requireRestaurantAccess(request, reply, env, restaurantId,
         await reply.status(403).send({ ok: false, error: "FORBIDDEN" });
         return null;
     }
+    // Treat authenticated restaurant API activity as presence as well. This
+    // keeps status accurate even when a browser has cached the dashboard's
+    // optional client-side heartbeat module.
+    try {
+        await request.server.db.query(`update app_users
+         set last_activity_at = now()
+         where id = $1 and disabled_at is null
+           and last_activity_at < now() - interval '1 minute'`, [user.id]);
+    } catch (error) {
+        request.log.warn({ err: error }, "Could not update account activity timestamp");
+    }
     return { user, restaurantId, role: membership.role };
 }

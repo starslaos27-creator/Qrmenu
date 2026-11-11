@@ -4,7 +4,7 @@ export interface ProRequest {
   reviewed_at: string | null; reviewer_email: string | null; review_note: string;
 }
 export const requestStatus = { pending: "รอแอดมินอนุมัติ", approved: "อนุมัติแล้ว", rejected: "ไม่อนุมัติ" };
-const date = (value: string) => new Date(value).toLocaleString("th-TH", { timeZone: "Asia/Bangkok" });
+const date = (value: string) => new Date(value).toLocaleString("th-TH-u-ca-gregory", { timeZone: "Asia/Bangkok" });
 export default function ProRequestHistory({ requests }: { requests: ProRequest[] }) {
   return <section className="mt-6 rounded-2xl border border-[#dfcfb2] bg-[#fffaf1] p-6">
     <h2 className="text-xl font-bold">ประวัติคำขอแพ็กเกจ</h2>

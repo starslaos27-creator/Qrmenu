@@ -6,6 +6,8 @@ export const ADMIN_SECTIONS = [
   "monitor",
   "pro",
   "pro-pricing",
+  "finance-income",
+  "finance-expense",
 ] as const;
 
 export type AdminSection = (typeof ADMIN_SECTIONS)[number];
