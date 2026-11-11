@@ -57,6 +57,14 @@ export async function resetAdminPassword(token: string, newPassword: string) {
   }, false);
 }
 
+export async function changeAdminPassword(currentPassword: string, newPassword: string) {
+  return adminRequest<{ ok: boolean; reauthRequired: boolean }>("/api/auth/change-password", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ currentPassword, newPassword }),
+  });
+}
+
 export async function adminLogout() {
   try { await adminRequest("/api/auth/logout", { method: "POST" }); }
   finally { saveAccessToken(null); }

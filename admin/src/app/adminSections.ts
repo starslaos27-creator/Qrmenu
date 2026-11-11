@@ -8,6 +8,7 @@ export const ADMIN_SECTIONS = [
   "pro-pricing",
   "finance-income",
   "finance-expense",
+  "settings",
 ] as const;
 
 export type AdminSection = (typeof ADMIN_SECTIONS)[number];

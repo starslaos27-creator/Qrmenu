@@ -42,5 +42,7 @@ export function useAdminSession() {
     setAuth({ status: "login" });
   }, []);
 
-  return { auth, completeLogin, completeBootstrap: () => setAuth({ status: "login" }), signOut };
+  const requireLogin = useCallback(() => setAuth({ status: "login" }), []);
+
+  return { auth, completeLogin, completeBootstrap: () => setAuth({ status: "login" }), signOut, requireLogin };
 }

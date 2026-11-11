@@ -4,6 +4,7 @@ import { navigateToAdminSection, readAdminSection, type AdminSection } from "./a
 import { useAdminSession } from "./app/useAdminSession";
 import AdminBootstrapPage from "./pages/auth/AdminBootstrapPage";
 import AdminLoginPage from "./pages/auth/AdminLoginPage";
+import AdminSettingsPage from "./pages/settings/AdminSettingsPage";
 import PlatformAuditPage from "./pages/audit/PlatformAuditPage";
 import PlatformOverviewPage from "./pages/dashboard/PlatformOverviewPage";
 import SystemMonitorPage from "./pages/monitor/SystemMonitorPage";
@@ -14,7 +15,7 @@ import ShopManagementPage from "./pages/shops/ShopManagementPage";
 import UserManagementPage from "./pages/users/UserManagementPage";
 
 export default function App() {
-  const { auth, completeLogin, completeBootstrap, signOut } = useAdminSession();
+  const { auth, completeLogin, completeBootstrap, signOut, requireLogin } = useAdminSession();
   const [section, setSection] = useState<AdminSection>(() => readAdminSection());
 
   useEffect(() => {
@@ -33,7 +34,7 @@ export default function App() {
   if (auth.status === "login") return <AdminLoginPage onAuthenticated={(role) => void completeLogin(role)} />;
 
   const canManage = auth.session.adminRole === "super_admin" || auth.session.adminRole === "support";
-  return <AdminLayout activeSection={section} adminRole={auth.session.adminRole} onNavigate={navigate} onSignOut={() => void signOut()}>
+  return <AdminLayout activeSection={section} adminRole={auth.session.adminRole} onNavigate={navigate}>
     {section === "overview" && <PlatformOverviewPage onOpen={navigate} />}
     {section === "shops" && <ShopManagementPage canManage={canManage} />}
     {section === "users" && <UserManagementPage canManage={canManage} currentAdminId={auth.session.user.id} />}
@@ -43,5 +44,6 @@ export default function App() {
     {section === "pro-pricing" && <ProPricingPage canManage={canManage} />}
     {section === "finance-income" && <PlatformFinancePage kind="income" canManage={canManage} />}
     {section === "finance-expense" && <PlatformFinancePage kind="expense" canManage={canManage} />}
+    {section === "settings" && <AdminSettingsPage user={auth.session.user} adminRole={auth.session.adminRole} onRequireLogin={requireLogin} onSignOut={() => void signOut()} />}
   </AdminLayout>;
 }
