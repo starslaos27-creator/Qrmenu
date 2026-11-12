@@ -2613,5 +2613,11 @@
   "upgrade.trial.short_label": "ทดลองใช้ฟรี",
   "upgrade.plan.short_label": "โปรเหลือ",
   "upgrade.trial.expiry_prefix": "ทดลองโปรฟรีหมดอายุ",
-  "upgrade.plan.expiry_prefix": "ครบกำหนด"
+  "upgrade.plan.expiry_prefix": "ครบกำหนด",
+  "invite.role_description": "ตำแหน่งของคุณคือ {role} เมื่อสมัครแล้วจะเข้าเฉพาะหน้าที่ของตำแหน่งนี้",
+  "invite.member_role": "คุณเข้าสู่ระบบเป็นสมาชิกของร้านนี้อยู่แล้ว กรุณาออกจากระบบก่อนสมัครบัญชีใหม่สำหรับตำแหน่ง {role}",
+  "invite.join_as": "เข้าร่วมเป็น{role}",
+  "invite.signup_as": "สมัครและเข้าร่วมเป็น{role}",
+  "invite.account_exists": "อีเมลนี้มีบัญชีอยู่แล้ว กรุณาเข้าสู่ระบบ",
+  "invite.password_short": "รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร"
 }

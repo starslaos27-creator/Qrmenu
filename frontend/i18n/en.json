@@ -2613,5 +2613,11 @@
   "upgrade.trial.short_label": "Free trial",
   "upgrade.plan.short_label": "Pro time left",
   "upgrade.trial.expiry_prefix": "Free trial expires",
-  "upgrade.plan.expiry_prefix": "Expires"
+  "upgrade.plan.expiry_prefix": "Expires",
+  "invite.role_description": "Your role is {role}. After signing up, you can access the areas permitted for this role.",
+  "invite.member_role": "You are already signed in as a member of this restaurant. Sign out before creating a new account for the {role} role.",
+  "invite.join_as": "Join as {role}",
+  "invite.signup_as": "Sign up and join as {role}",
+  "invite.account_exists": "This email already has an account. Please sign in.",
+  "invite.password_short": "Password must be at least 6 characters."
 }

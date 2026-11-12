@@ -2613,5 +2613,11 @@
   "upgrade.trial.short_label": "Dùng thử miễn phí",
   "upgrade.plan.short_label": "Thời gian Pro còn lại",
   "upgrade.trial.expiry_prefix": "Dùng thử hết hạn",
-  "upgrade.plan.expiry_prefix": "Hết hạn"
+  "upgrade.plan.expiry_prefix": "Hết hạn",
+  "invite.role_description": "Vai trò của bạn là {role}. Sau khi đăng ký, bạn có thể truy cập các chức năng được cấp cho vai trò này.",
+  "invite.member_role": "Bạn đã đăng nhập với tư cách thành viên của nhà hàng. Hãy đăng xuất trước khi tạo tài khoản mới cho vai trò {role}.",
+  "invite.join_as": "Tham gia với vai trò {role}",
+  "invite.signup_as": "Đăng ký và tham gia với vai trò {role}",
+  "invite.account_exists": "Email này đã có tài khoản. Vui lòng đăng nhập.",
+  "invite.password_short": "Mật khẩu phải có ít nhất 6 ký tự."
 }

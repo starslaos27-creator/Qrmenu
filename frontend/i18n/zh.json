@@ -2613,5 +2613,11 @@
   "upgrade.trial.short_label": "免费试用",
   "upgrade.plan.short_label": "Pro 剩余时间",
   "upgrade.trial.expiry_prefix": "免费试用到期",
-  "upgrade.plan.expiry_prefix": "到期时间"
+  "upgrade.plan.expiry_prefix": "到期时间",
+  "invite.role_description": "您的角色是{role}。注册后，您可以使用该角色获准访问的功能。",
+  "invite.member_role": "您已作为本店成员登录。请先退出，再为{role}角色创建新账号。",
+  "invite.join_as": "以{role}身份加入",
+  "invite.signup_as": "注册并以{role}身份加入",
+  "invite.account_exists": "该邮箱已有账号，请登录。",
+  "invite.password_short": "密码至少需要 6 个字符。"
 }

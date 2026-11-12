@@ -7,7 +7,7 @@ function patchLegacyModuleImports(source) {
   // root instead of evaluating the whole application a second time.
   return source.replace(
     /(["'])\.\/index-BjXGGWCT\.js(?:\?[^"']*)?\1/g,
-    '$1./index-BjXGGWCT.js?v=20261104-remove-stock-deposits-menu-v9$1',
+    '$1./index-BjXGGWCT.js?v=20261112-invite-i18n-v1$1',
   );
 }
 
@@ -93,6 +93,41 @@ module.exports = function patchLegacyLanguageBundle(source) {
   const dictionaryEnd = source.indexOf(",de=", dictionaryStart);
   if (dictionaryStart < 0 || dictionaryEnd < 0) throw new Error("Legacy translation dictionary was not found");
   source = `${source.slice(0, dictionaryStart)}const K=${JSON.stringify(locales)}${source.slice(dictionaryEnd)}`;
+
+  // The legacy invitation form still renders several Thai literals and role
+  // names directly. Translate in React so dynamic sentences and API failures
+  // use the selected locale rather than relying on DOM text matching.
+  const inviteStart = source.indexOf('function st({token:t})');
+  const inviteEnd = source.indexOf('function nt()', inviteStart);
+  if (inviteStart < 0 || inviteEnd < 0) throw new Error('Legacy invitation form was not found');
+  let invite = source.slice(inviteStart, inviteEnd);
+  const inviteReplacements = [
+    ['y("ลิงก์เชิญนี้ไม่ถูกต้อง หรือไม่มีอยู่แล้ว")', 'y("INVITE_NOT_FOUND")'],
+    ['y("ลิงก์เชิญนี้ถูกยกเลิกแล้ว กรุณาขอลิงก์ใหม่จากเจ้าของร้าน")', 'y("INVITE_REVOKED")'],
+    ['y("ลิงก์เชิญนี้ถูกใช้ไปแล้ว กรุณาขอลิงก์ใหม่จากเจ้าของร้าน")', 'y("INVITE_ALREADY_USED")'],
+    ['y("บัญชีนี้เป็นสมาชิกของร้านนี้อยู่แล้ว กรุณาออกจากระบบก่อน แล้วเปิดลิงก์นี้เพื่อสมัครบัญชีพ่อครัว/พนักงานใหม่")', 'y("ALREADY_A_MEMBER")'],
+    ['y(j instanceof q?j.code:"ไม่สามารถเข้าร่วมร้านได้")', 'y(j instanceof q?j.code:"JOIN_FAILED")'],
+    ['y(a("set.pw.error.short"))', 'y("PASSWORD_TOO_SHORT")'],
+    ['y(Q instanceof q?Q.code:a("auth.signup.failed"))', 'y(Q instanceof q?Q.code:"SIGNUP_FAILED")'],
+    ['children:"เชิญพนักงาน"', 'children:a("invite.staff_title")'],
+    ['children:r?`เข้าร่วมร้าน ${r.restaurant_name}`:"เข้าร่วมทีมร้านอาหาร"', 'children:r?a("join.title",{restaurant:r.restaurant_name}):a("invite.team_title")'],
+    ['children:r?`ตำแหน่งของคุณคือ ${B(r.role)} เมื่อสมัครแล้วจะเข้าเฉพาะหน้าที่ของตำแหน่งนี้`:"กำลังตรวจสอบลิงก์เชิญ"', 'children:r?a("invite.role_description",{role:a("role."+r.role)}):a("invite.checking")'],
+    ['children:"กำลังตรวจสอบลิงก์เชิญ..."', 'children:a("invite.checking_ellipsis")'],
+    ['children:k}', 'children:a(({INVITE_NOT_FOUND:"invite.invalid",INVALID_INVITE:"invite.invalid",INVITE_REVOKED:"invite.cancelled",INVITE_ALREADY_USED:"invite.used",ALREADY_A_MEMBER:"invite.already_member",ACCOUNT_EXISTS:"invite.account_exists",PASSWORD_TOO_SHORT:"invite.password_short",SIGNUP_FAILED:"auth.signup.failed",JOIN_FAILED:"invite.join_failed"})[k]||"invite.join_failed")}'],
+    ['children:["ตอนนี้คุณล็อกอินเป็นสมาชิกของร้านนี้อยู่แล้ว กรุณาออกจากระบบก่อน แล้วสมัครบัญชีใหม่จากลิงก์นี้สำหรับตำแหน่ง"," ",B(r.role)]', 'children:a("invite.member_role",{role:a("role."+r.role)})'],
+    ['children:"ออกจากระบบเพื่อสมัครทีมงาน"', 'children:a("invite.logout_to_join")'],
+    ['children:_?"กำลังเข้าร่วม...":`เข้าร่วมเป็น${B(r.role)}`', 'children:_?a("invite.joining"):a("invite.join_as",{role:a("role."+r.role)})'],
+    ['children:"กลับแดชบอร์ด"', 'children:a("common.back_dashboard")'],
+    ['children:_?"กำลังสมัคร...":`สมัครและเข้าร่วมเป็น${B(r.role)}`', 'children:_?a("auth.signup.submitting"):a("invite.signup_as",{role:a("role."+r.role)})'],
+    ['children:["มีบัญชีอยู่แล้ว? เปิดลิงก์นี้หลังจากล็อกอิน หรือ"," ",', 'children:[a("invite.have_account")," ",'],
+    ['children:"เข้าสู่ระบบ"', 'children:a("auth.login.submit")'],
+  ];
+  for (const [before, after] of inviteReplacements) {
+    if (invite.includes(after)) continue;
+    if (!invite.includes(before)) throw new Error(`Legacy invitation translation anchor missing: ${before.slice(0, 60)}`);
+    invite = invite.replace(before, after);
+  }
+  source = source.slice(0, inviteStart) + invite + source.slice(inviteEnd);
   return source;
 };
 

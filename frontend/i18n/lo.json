@@ -2613,5 +2613,11 @@
   "upgrade.trial.short_label": "ທົດລອງຟຣີ",
   "upgrade.plan.short_label": "Pro ເຫຼືອເວລາ",
   "upgrade.trial.expiry_prefix": "ທົດລອງຟຣີໝົດອາຍຸ",
-  "upgrade.plan.expiry_prefix": "ໝົດກຳນົດ"
+  "upgrade.plan.expiry_prefix": "ໝົດກຳນົດ",
+  "invite.role_description": "ຕຳແໜ່ງຂອງທ່ານແມ່ນ {role} ຫຼັງສະໝັກທ່ານຈະເຂົ້າໃຊ້ຕາມສິດຂອງຕຳແໜ່ງນີ້",
+  "invite.member_role": "ທ່ານເຂົ້າລະບົບເປັນສະມາຊິກຂອງຮ້ານນີ້ແລ້ວ ກະລຸນາອອກຈາກລະບົບກ່ອນສະໝັກບັນຊີໃໝ່ສຳລັບຕຳແໜ່ງ {role}",
+  "invite.join_as": "ເຂົ້າຮ່ວມເປັນ {role}",
+  "invite.signup_as": "ສະໝັກ ແລະ ເຂົ້າຮ່ວມເປັນ {role}",
+  "invite.account_exists": "ອີເມວນີ້ມີບັນຊີແລ້ວ ກະລຸນາເຂົ້າລະບົບ",
+  "invite.password_short": "ລະຫັດຜ່ານຕ້ອງມີຢ່າງໜ້ອຍ 6 ຕົວອັກສອນ"
 }
