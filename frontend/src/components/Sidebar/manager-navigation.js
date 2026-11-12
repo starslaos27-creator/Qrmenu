@@ -28,7 +28,7 @@ export function ManagerNavigation({role, restaurantId, navigate, current, existi
   const routeName = href => String(href || '').split(/[?#]/,1)[0].replace(/\/+$/,'').split('/').pop();
   const preserved = existing.filter(item=>!managedRoutes.has(routeName(item.href)));
   return jsx.jsxs('div',{className:'manager-navigation','data-restaurant-id':restaurantId,children:[
-    ...preserved.filter(item=>item.href==='/dashboard').map(item=>button({...item,label:translate(item.labelKey),icon:'🏠'})),
+    ...preserved.filter(item=>item.href==='/dashboard').map(item=>button({...item,href:'/dashboard/home',label:translate(item.labelKey),icon:'🏠'})),
     ...groups.map(group=>{
       if(!group.items) { if(group.href==='/dashboard/finance') { const billsItem=existing.find(item=>item.href.split('?')[0]==='/dashboard/bills'); return jsx.jsxs(React.Fragment,{children:[billsItem?button({...billsItem,label:translate(billsItem.labelKey),icon:'🧾'}):null,(group.roles.includes(role)||financeAccess)?button(group):null]},'bills-finance'); } return group.roles.includes(role)?button(group):null; }
       const items=group.items.filter(item=>item.roles.includes(role));
