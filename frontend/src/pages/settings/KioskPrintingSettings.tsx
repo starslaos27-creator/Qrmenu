@@ -1,5 +1,6 @@
 export default function KioskPrintingSettings() {
-  const kitchenUrl = `${window.location.origin}/dashboard/kitchen`;
+  const publicOrigin = (window as Window & { SHOPQR_PUBLIC_URL?: string }).SHOPQR_PUBLIC_URL || window.location.origin;
+  const kitchenUrl = `${publicOrigin.replace(/\/$/, "")}/dashboard/kitchen`;
   return <details className="group rounded-xl border border-slate-200 bg-white shadow-sm">
     <summary className="cursor-pointer list-none px-4 py-3 text-sm font-medium text-slate-800"><span className="mr-2 inline-block transition-transform group-open:rotate-90">›</span>ตั้งค่าการพิมพ์อัตโนมัติสำหรับเครื่องครัว</summary>
     <div className="space-y-3 border-t border-slate-100 px-4 py-4 text-xs text-slate-600">

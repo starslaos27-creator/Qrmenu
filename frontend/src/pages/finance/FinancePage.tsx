@@ -25,6 +25,7 @@ export default function FinancePage({ onLogin }: { onLogin: () => void }) {
   const [role, setRole] = useState("");
   const [sessionError, setSessionError] = useState("");
   const [tab, setTab] = useState<Tab>(() => readTab());
+  const [visitedTabs, setVisitedTabs] = useState<Set<Tab>>(() => new Set([readTab()]));
   const [from, setFrom] = useState(() => new URLSearchParams(location.search).get("from") || `${localDate().slice(0, 7)}-01`);
   const [to, setTo] = useState(() => new URLSearchParams(location.search).get("to") || localDate());
   const [range, setRange] = useState(() => new URLSearchParams(location.search).get("range") || "month");
@@ -56,7 +57,11 @@ export default function FinancePage({ onLogin }: { onLogin: () => void }) {
     const syncUrl = () => {
       const params = new URLSearchParams(window.location.search);
       const nextTab = params.get("view");
-      if (tabs.some(([key]) => key === nextTab)) setTab(nextTab as Tab);
+      if (tabs.some(([key]) => key === nextTab)) {
+        const next = nextTab as Tab;
+        setTab(next);
+        setVisitedTabs((visited) => new Set(visited).add(next));
+      }
       if (params.has("from")) setFrom(params.get("from") ?? "");
       if (params.has("to")) setTo(params.get("to") ?? "");
       if (params.has("range")) setRange(params.get("range") ?? "custom");
@@ -68,6 +73,7 @@ export default function FinancePage({ onLogin }: { onLogin: () => void }) {
   const refresh = useCallback(() => setRefreshKey((value) => value + 1), []);
   function selectTab(next: Tab) {
     setTab(next); setPage(1);
+    setVisitedTabs((visited) => new Set(visited).add(next));
     const url = new URL(window.location.href); url.searchParams.set("view", next); url.searchParams.set("from", from); url.searchParams.set("to", to); url.searchParams.set("range", range);
     window.history.pushState({}, "", url);
   }
@@ -120,12 +126,12 @@ export default function FinancePage({ onLogin }: { onLogin: () => void }) {
     {(data.error || error) && <Notice tone="error">{error || data.error} {data.error && <button onClick={refresh} className="ml-2 underline">ลองอีกครั้ง</button>}</Notice>}
     {accessDenied && <Notice tone="error">เจ้าของร้านสามารถกำหนดสิทธิ์การเงินในแท็บตั้งค่าได้</Notice>}
     {workspace && ledger && <>{ledger.summary.incompleteCostOrders > 0 && <Notice tone="warning">{ledger.summary.incompleteCostOrders} ออเดอร์มีต้นทุนไม่ครบ กำไรหักเฉพาะต้นทุนที่ทราบ</Notice>}{ledger.summary.possibleDuplicateCostExpenses > 0 && <Notice tone="warning">พบรายจ่ายวัตถุดิบที่อาจซ้ำกับต้นทุนขาย กรุณาตรวจสอบประเภทค่าใช้จ่าย</Notice>}
-      {tab === "dashboard" && <FinanceOverview workspace={workspace} ledger={ledger} />}
-      {(["income", "expense", "cost", "profit", "transactions"].includes(tab)) && <FinanceLedgerView tab={tab} workspace={workspace} ledger={ledger} canEdit={data.access?.edit ?? false} loading={data.loading} onAdd={(kind) => setForm({ kind })} onReplace={(entry) => setForm({ kind: entry.kind === "expense" ? "expense" : "income", previous: entry })} onVoid={setVoiding} onReceipt={showReceipt} page={page} maxPage={maxPage} count={tab === "cost" ? workspace.costs.length : ledger.count} setPage={setPage} />}
-      {tab === "reports" && <FinanceReports workspace={workspace} ledger={ledger} />}
-      {tab === "accounts" && <FinanceAccountsPanel restaurantId={restaurantId!} workspace={workspace} refresh={refresh} canEdit={data.access?.edit ?? false} isOwner={data.access?.owner ?? role === "owner"} />}
-      {tab === "closing" && <FinanceClosingPanel restaurantId={restaurantId!} workspace={workspace} refresh={refresh} canEdit={data.access?.edit ?? false} />}
-      {tab === "settings" && <FinanceSettingsPanel restaurantId={restaurantId!} workspace={workspace} refresh={refresh} />}
+      {visitedTabs.has("dashboard") && <div hidden={tab !== "dashboard"}><FinanceOverview workspace={workspace} ledger={ledger} /></div>}
+      {(["income", "expense", "cost", "profit", "transactions"] as const).map((ledgerTab) => visitedTabs.has(ledgerTab) && <div key={ledgerTab} hidden={tab !== ledgerTab}><FinanceLedgerView tab={ledgerTab} workspace={workspace} ledger={ledger} canEdit={data.access?.edit ?? false} loading={data.loading} onAdd={(kind) => setForm({ kind })} onReplace={(entry) => setForm({ kind: entry.kind === "expense" ? "expense" : "income", previous: entry })} onVoid={setVoiding} onReceipt={showReceipt} page={page} maxPage={maxPage} count={ledgerTab === "cost" ? workspace.costs.length : ledger.count} setPage={setPage} /></div>)}
+      {visitedTabs.has("reports") && <div hidden={tab !== "reports"}><FinanceReports workspace={workspace} ledger={ledger} /></div>}
+      {visitedTabs.has("accounts") && <div hidden={tab !== "accounts"}><FinanceAccountsPanel restaurantId={restaurantId!} workspace={workspace} refresh={refresh} canEdit={data.access?.edit ?? false} isOwner={data.access?.owner ?? role === "owner"} /></div>}
+      {visitedTabs.has("closing") && <div hidden={tab !== "closing"}><FinanceClosingPanel restaurantId={restaurantId!} workspace={workspace} refresh={refresh} canEdit={data.access?.edit ?? false} /></div>}
+      {visitedTabs.has("settings") && <div hidden={tab !== "settings"}><FinanceSettingsPanel restaurantId={restaurantId!} workspace={workspace} refresh={refresh} /></div>}
     </>}
     {data.loading && !workspace && <p role="status" className="rounded-xl bg-white p-8 text-center text-slate-500">กำลังโหลดข้อมูลการเงิน…</p>}
     {form && restaurantId && workspace && <FinanceEntryForm key={form.previous?.entryId ?? form.kind} restaurantId={restaurantId} kind={form.kind} previous={form.previous} config={workspace.config} onClose={() => { setForm(null); setError(""); }} onSaved={() => { setForm(null); refresh(); }} />}

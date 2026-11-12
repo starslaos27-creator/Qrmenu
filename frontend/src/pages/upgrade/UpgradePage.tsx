@@ -25,7 +25,7 @@ export default function UpgradePage() {
     window.location.assign(`/dashboard/upgrade/checkout?months=${proPackages[index].paid}`);
   }
 
-  return <main className="min-h-screen bg-[#f2e8d8] px-4 py-8 text-[#174a34] sm:px-8 lg:py-12">
+  return <main className="min-h-screen bg-[#f2e8d8] px-4 py-8 font-sans text-[#174a34] sm:px-8 lg:py-12">
     <div className="mx-auto max-w-screen-2xl">
       <a href="/dashboard" className="text-sm font-semibold underline underline-offset-4">← กลับหน้าภาพรวม</a>
       <a href="/dashboard/upgrade/checkout?months=1" className="float-right text-sm font-semibold underline underline-offset-4">ประวัติคำขอ</a>

@@ -90,9 +90,11 @@ function legacyUi(): Plugin {
         }
         if (url.pathname === "/runtime-config.js") {
           const requestOrigin = `${request.headers["x-forwarded-proto"] || "http"}://${request.headers.host || "localhost:5173"}`;
+          const requestHost = new URL(requestOrigin).hostname;
+          const defaultPublicOrigin = ["localhost", "127.0.0.1", "::1"].includes(requestHost) ? "https://starsmenu.org" : requestOrigin;
           response.setHeader("Content-Type", "text/javascript; charset=utf-8");
           response.setHeader("Cache-Control", "no-store");
-          response.end(`window.SHOPQR_PUBLIC_URL = ${JSON.stringify(process.env.SHOPQR_PUBLIC_URL || requestOrigin)};`);
+          response.end(`window.SHOPQR_PUBLIC_URL = ${JSON.stringify(process.env.SHOPQR_PUBLIC_URL || defaultPublicOrigin)};`);
           return;
         }
         const assetPath = decodeURIComponent(url.pathname);
