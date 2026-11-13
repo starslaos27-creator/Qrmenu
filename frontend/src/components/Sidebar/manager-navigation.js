@@ -6,9 +6,9 @@ const team = ['owner', 'cook', 'waiter', 'staff'];
 const link = (label, page, view, roles = owner) => ({label, href: `/dashboard/${page}${view ? `?view=${view}` : ''}`, roles});
 export const groups = [
   {label:'▦ หลังบ้านร้าน', href:'/dashboard/backend', roles:owner},
-  {label:'📦 สต็อก', items:[{label:'ฝากสินค้า', href:'/dashboard/stock-deposits', roles:team},link('จัดการเมนู และ สต็อก','menu'),link('ประวัติขายออก และ ตัดสต็อก','menu','outgoing-history'),link('สต็อกวัตถุดิบ และ สูตรอาหาร','inventory','recipes'),{...link('\u0e42\u0e1b\u0e23\u0e42\u0e21\u0e0a\u0e31\u0e19','promotions'),key:'promotions'},link('วิเคราะห์สินค้า','close-shop')]},
+  {label:'📦 สต็อกสินค้า', items:[{label:'ฝากสินค้า', href:'/dashboard/stock-deposits', roles:team},link('จัดการเมนู และ สต็อก','menu'),link('ประวัติขายออก และ ตัดสต็อก','menu','outgoing-history'),link('สต็อกวัตถุดิบ และ สูตรอาหาร','inventory','recipes'),{...link('\u0e42\u0e1b\u0e23\u0e42\u0e21\u0e0a\u0e31\u0e19','promotions'),key:'promotions'},link('วิเคราะห์สินค้า','close-shop')]},
   
-  {label:'🪑 โต๊ะ', href:'/dashboard/tables', roles:team},{label:'🧾 ออเดอร์', href:'/dashboard/kitchen?view=new', roles:team, badge:'kitchen'},
+  {label:'🪑 โต๊ะ & QR Code', href:'/dashboard/tables', roles:team},{label:'🧾 ออเดอร์', href:'/dashboard/kitchen?view=new', roles:team, badge:'kitchen'},
   {label:'👨‍🍳 ห้องครัว', href:'/dashboard/kitchen', roles:team, badge:'kitchen'},
   {label:'💰 การเงิน', href:'/dashboard/finance', roles:owner},
 ];
