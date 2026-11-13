@@ -40,17 +40,17 @@ export default function LoginPage() {
     <div className="absolute right-4 top-4 z-10 sm:right-8 sm:top-6"><LanguageControl inline /></div>
     <div className="mx-auto grid min-h-[calc(100vh-4rem)] w-full max-w-6xl items-center gap-8 sm:min-h-[calc(100vh-6rem)] lg:grid-cols-[1fr_470px] lg:gap-14">
       <section className="hidden max-w-2xl text-white drop-shadow-lg sm:block">
-        <a href="/" className="inline-flex items-center gap-3" aria-label="STAR Restaurant home">
+        <a href="/" className="inline-flex items-center gap-3" aria-label="STARS Restaurant home">
           <span className="grid h-14 w-14 place-items-center rounded-full border-2 border-[#ffd16a] bg-[#14543b] text-3xl text-[#ffd16a]">★</span>
-          <span className="leading-[0.95]"><strong className="block text-3xl font-black tracking-tight">STAR</strong><small className="mt-1 block font-serif text-base font-bold italic text-[#ffd16a]">Restaurant</small></span>
+          <span className="leading-[0.95]"><strong className="block text-3xl font-black tracking-tight">STARS</strong><small className="mt-1 block font-serif text-base font-bold italic text-[#ffd16a]">Restaurant</small></span>
         </a>
         <p className="mt-10 text-sm font-black uppercase tracking-[0.2em] text-[#ffd16a]">Restaurant management</p>
         <h1 className="mt-3 text-4xl font-black leading-tight lg:text-5xl">จัดการร้านของคุณ<br/><span className="text-[#ffd16a]">ได้ง่ายในที่เดียว</span></h1>
-        <p className="mt-4 max-w-lg text-base leading-7 text-white/85">สำหรับเจ้าของร้าน พนักงาน และผู้ดูแลระบบ STAR Restaurant</p>
+        <p className="mt-4 max-w-lg text-base leading-7 text-white/85">สำหรับเจ้าของร้าน พนักงาน และผู้ดูแลระบบ STARS Restaurant</p>
       </section>
 
       <section className="mx-auto w-full max-w-[470px] rounded-[28px] border border-white/75 bg-[#fffdf8]/95 p-6 shadow-[0_24px_70px_rgba(0,0,0,0.32)] backdrop-blur-xl sm:p-8">
-        <a href="/" className="mb-5 inline-flex items-center gap-2 text-sm font-extrabold text-[#14543b] sm:hidden"><span className="text-lg text-[#c88b29]">★</span> STAR Restaurant</a>
+        <a href="/" className="mb-5 inline-flex items-center gap-2 text-sm font-extrabold text-[#14543b] sm:hidden"><span className="text-lg text-[#c88b29]">★</span> STARS Restaurant</a>
         <div className="mb-6 text-center">
           <span className="mx-auto grid h-16 w-16 place-items-center rounded-[22px] bg-[#eaf2ec] text-3xl font-black text-[#14543b] shadow-inner">★</span>
           <h2 className="mt-3 text-2xl font-black tracking-tight text-[#14543b]">{t("auth.login.title")}</h2>
