@@ -55,7 +55,8 @@ async function send(path: string, init: RequestInit, auth: boolean) {
   const headers = new Headers(init.headers);
   if (auth && accessToken) headers.set("Authorization", `Bearer ${accessToken}`);
 
-  const apiUrl = import.meta.env.VITE_API_URL?.replace(/\/+$/, "") ?? "";
+  const isLocalHost = typeof window !== "undefined" && ["localhost", "127.0.0.1", "::1"].includes(window.location.hostname);
+  const apiUrl = isLocalHost ? "" : import.meta.env.VITE_API_URL?.replace(/\/+$/, "") ?? "";
   return fetch(`${apiUrl}${path}`, {
     ...init,
     headers,

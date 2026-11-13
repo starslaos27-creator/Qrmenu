@@ -9,10 +9,10 @@ const options: { value: Locale; label: string }[] = [
   { value: "zh", label: "中文" },
 ];
 
-export default function LanguageControl() {
+export default function LanguageControl({ inline = false }: { inline?: boolean }) {
   const { locale, setLocale } = useLanguage();
   return (
-    <label data-language-ui className="fixed right-28 top-3 z-[10000] flex items-center gap-2 rounded-xl border border-emerald-200 bg-white/95 px-2.5 py-1.5 text-xs font-semibold text-emerald-950 shadow-md backdrop-blur">
+    <label data-language-ui className={`${inline ? "relative z-10" : "fixed right-28 top-3 z-[10000]"} flex items-center gap-2 rounded-xl border border-emerald-200 bg-white/95 px-2.5 py-1.5 text-xs font-semibold text-emerald-950 shadow-md backdrop-blur`}>
       <span className="sr-only">Language</span>
       <select
         aria-label="Language"

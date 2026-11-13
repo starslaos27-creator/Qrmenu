@@ -4,6 +4,7 @@ import LanguageControl from "../shared/i18n/LanguageControl";
 import LanguageTranslation from "../shared/i18n/LanguageTranslation";
 
 const LoginPage = lazy(() => import("../pages/auth/LoginPage"));
+const HomePage = lazy(() => import("../pages/Frontpage/Home"));
 const LegacyApplicationPage = lazy(() => import("../pages/LegacyApplicationPage"));
 const UpgradePage = lazy(() => import("../pages/upgrade/UpgradePage"));
 const UpgradeCheckoutPage = lazy(() => import("../pages/upgrade/UpgradeCheckoutPage"));
@@ -25,7 +26,7 @@ export default function App() {
 
   return <>
     <LanguageTranslation frameRef={frame} />
-    <LanguageControl />
+    {path !== "/" && path !== "/login" && <LanguageControl />}
     <Suspense fallback={<PageLoading />}>
       {renderPage({ path, frame })}
     </Suspense>
@@ -40,7 +41,8 @@ function renderPage({ path, frame }: {
   // Keep the original restaurant UI, including authentication and navigation.
   if (path === "/dashboard/upgrade") return <UpgradePage />;
   if (path === "/dashboard/upgrade/checkout") return <UpgradeCheckoutPage />;
-  // Render login directly so authentication does not depend on the legacy iframe.
+  // The public restaurant site and the staff login have separate entry points.
+  if (path === "/") return <HomePage />;
   if (path === "/login") return <LoginPage />;
   // Keep a single dashboard UI for every menu destination. In particular,
   // do not switch to the unfinished source layout when a navigation link drops
