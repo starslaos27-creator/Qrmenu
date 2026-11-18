@@ -2,6 +2,13 @@ const fs = require("node:fs");
 const path = require("node:path");
 
 function patchLegacyModuleImports(source) {
+  const designImport = 'import { applyPrintDesign as shopqrApplyPrintDesign, getPrintLocale as shopqrGetPrintLocale } from "./receipt-design.js?v=20261118-v3";\n';
+  if (source.includes('function Ce(t)') && source.includes('A.open(),A.write($),A.close()') && !source.includes('shopqrApplyPrintDesign')) {
+    source = designImport + source.replace('function de(t){var r;', 'function de(t){t={...t,locale:shopqrGetPrintLocale(t.locale)};var r;').replace('A.open(),A.write($),A.close()', 'A.open(),A.write(shopqrApplyPrintDesign($,"receipt")),A.close()');
+  }
+  if (source.includes('function st(t)') && source.includes('x.open(),x.write(u),x.close()') && !source.includes('shopqrApplyPrintDesign')) {
+    source = designImport + source.replace('function st(t){var _;', 'function st(t){t={...t,locale:shopqrGetPrintLocale(t.locale)};var _;').replace('x.open(),x.write(u),x.close()', 'x.open(),x.write(shopqrApplyPrintDesign(u,"kitchen")),x.close()');
+  }
   // Legacy route chunks import this bundle for its shared API helpers. Keep
   // those imports on the exact entry URL so they reuse the existing React
   // root instead of evaluating the whole application a second time.
@@ -13,6 +20,7 @@ function patchLegacyModuleImports(source) {
 
 module.exports = function patchLegacyLanguageBundle(source) {
   source = patchLegacyModuleImports(source);
+  source = source.replace(/(BillsPage-BRVBEE_B\.js|KitchenPage-BWBFK9t3\.js)(?:\?[^"']*)?/g, '$1?v=20261118-print-design-v3');
   // Keep the dashboard shell mounted while routes change. Keying this
   // Suspense boundary by the URL tears down and recreates its whole subtree
   // on every menu click, which makes the page flash during navigation.
