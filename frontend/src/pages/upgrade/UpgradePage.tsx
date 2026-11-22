@@ -10,6 +10,14 @@ export const proPackages = [
   { paid: 12, free: 2 },
 ].map(p => ({ ...p, total: p.paid + p.free, discount: p.free / (p.paid + p.free) * 100 }));
 
+const packageColors = [
+  "border-t-[#2f8b67] bg-[#effaf4]",
+  "border-t-[#5285c5] bg-[#f0f6ff]",
+  "border-t-[#8d72b9] bg-[#f7f2ff]",
+  "border-t-[#d28d38] bg-[#fff7e8]",
+  "border-t-[#c46974] bg-[#fff1f2]",
+];
+
 export default function UpgradePage() {
   const {price,loading,error} = useProPricing();
   const purchase = useProPurchaseStatus();
@@ -42,7 +50,7 @@ export default function UpgradePage() {
       {purchase.message && <p role="status" className="mb-5 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-900">{purchase.message}</p>}
       {purchase.error && <p role="alert" className="mb-5 text-sm text-red-800">{purchase.error} <button onClick={()=>void purchase.refresh()} className="underline">ลองใหม่</button></p>}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
-        <article className={`relative flex flex-col rounded-2xl border bg-[#fffaf1] p-5 ${purchase.trialActive ? "border-emerald-700 ring-2 ring-emerald-700" : "border-[#dfcfb2]"}`}>
+        <article className={`relative flex flex-col rounded-2xl border border-t-4 border-t-[#20a779] bg-[#e8faf1] p-5 shadow-sm ${purchase.trialActive ? "border-emerald-700 ring-2 ring-emerald-700" : "border-[#b7e4ca]"}`}>
           <span className="mb-3 self-start rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-900">ฟรีสำหรับร้านใหม่</span>
           <h2 className="text-xl font-bold">3 เดือน</h2>
           <p className="mb-5 mt-2 min-h-6 text-sm font-semibold text-emerald-700">ทดลองใช้โปรฟรี</p>
@@ -55,7 +63,7 @@ export default function UpgradePage() {
           <p className="mb-5 text-sm font-bold">เริ่มนับทันทีเมื่อเปิดร้านใหม่</p>
           <button type="button" disabled className="mt-auto w-full rounded-xl border border-[#174a34] px-3 py-3 text-sm font-bold text-[#174a34] disabled:opacity-60">{purchase.trialActive ? "กำลังทดลองใช้ฟรี" : purchase.loading ? "ตรวจสอบสิทธิ์…" : "สิทธิ์สำหรับร้านใหม่เท่านั้น"}</button>
         </article>
-        {proPackages.map((p, index) => <article key={p.paid} className={`relative flex flex-col rounded-2xl border bg-[#fffaf1] p-5 ${selected === index ? "border-[#174a34] ring-2 ring-[#174a34]" : "border-[#dfcfb2]"}`}>
+        {proPackages.map((p, index) => <article key={p.paid} className={`relative flex flex-col rounded-2xl border border-t-4 p-5 shadow-sm ${selected === index ? "border-[#174a34] ring-2 ring-[#174a34]" : "border-[#dfcfb2]"} ${packageColors[index]}`}>
           {index === 4 && <span className="mb-3 self-start rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-900">คุ้มค่าที่สุด</span>}
           <h2 className="text-xl font-bold">{p.paid} เดือน</h2>
           <p className="mb-5 mt-2 min-h-6 text-sm font-semibold text-emerald-700">{p.free ? `แถม ${p.free} เดือน` : "แพ็กเกจปกติ"}</p>

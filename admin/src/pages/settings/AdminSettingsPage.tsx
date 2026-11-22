@@ -1,5 +1,5 @@
-import { useState, type FormEvent } from "react";
-import { AdminApiError, changeAdminPassword, saveAccessToken, type AdminUser } from "../../shared/adminApi";
+import { useEffect, useState, type FormEvent } from "react";
+import { adminRequest, AdminApiError, changeAdminPassword, saveAccessToken, type AdminUser } from "../../shared/adminApi";
 
 type SettingsTab = "account" | "password";
 
@@ -16,6 +16,18 @@ export default function AdminSettingsPage({ user, adminRole, onRequireLogin, onS
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [changed, setChanged] = useState(false);
+  const [qr, setQr] = useState<string | null>(null);
+  const [qrMessage, setQrMessage] = useState("");
+  const [qrBusy, setQrBusy] = useState(false);
+  useEffect(() => { void adminRequest<{qrUrl:string|null}>("/api/pro-payment-qr",{},false).then(data=>setQr(data.qrUrl)).catch(()=>setQrMessage("โหลด QR ไม่สำเร็จ")); }, []);
+  async function uploadQr(file: File | undefined) {
+    if (!file) return;
+    if (file.size > 5*1024*1024) { setQrMessage("รูปต้องมีขนาดไม่เกิน 5 MB"); return; }
+    setQrBusy(true); setQrMessage("");
+    try { const form = new FormData(); form.set("file",file); const data=await adminRequest<{qrUrl:string}>("/api/admin/pro-payment-qr",{method:"PUT",body:form}); setQr(data.qrUrl); setQrMessage("บันทึก QR สำหรับชำระแพ็กเกจแล้ว"); }
+    catch { setQrMessage("อัปโหลดไม่สำเร็จ กรุณาตรวจสอบไฟล์และการตั้งค่า R2"); }
+    finally { setQrBusy(false); }
+  }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -55,6 +67,13 @@ export default function AdminSettingsPage({ user, adminRole, onRequireLogin, onS
       <h1 className="mt-2 text-2xl font-semibold">ตั้งค่า</h1>
       <p className="mt-1 text-sm text-slate-500">จัดการบัญชีและความปลอดภัยของผู้ดูแลแพลตฟอร์ม</p>
     </header>
+
+    <section className="mb-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <h2 className="text-lg font-semibold">QR รับชำระแพ็กเกจโปร</h2><p className="mt-1 text-sm text-slate-500">QR นี้จะแสดงให้ร้านค้าในหน้าชำระแพ็กเกจ</p>
+      {qr && <img src={qr} alt="QR รับชำระแพ็กเกจโปร" className="mt-4 max-h-56 max-w-full rounded-lg border object-contain" />}
+      {adminRole !== "viewer" && <label className="mt-4 block text-sm font-medium">{qrBusy ? "กำลังอัปโหลด…" : "เลือกรูป QR (JPG, PNG, WebP ไม่เกิน 5 MB)"}<input disabled={qrBusy} className="mt-2 block" type="file" accept="image/jpeg,image/png,image/webp" onChange={event => { void uploadQr(event.target.files?.[0]); event.target.value=""; }} /></label>}
+      {qrMessage && <p role="status" className="mt-3 text-sm">{qrMessage}</p>}
+    </section>
 
     <div className="grid gap-5 md:grid-cols-[220px_minmax(0,1fr)]">
       <nav className="flex gap-2 overflow-x-auto md:grid md:content-start" aria-label="เมนูตั้งค่า">

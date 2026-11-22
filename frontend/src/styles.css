@@ -9,3 +9,13 @@
     @apply m-0 h-full min-w-[320px] w-full;
   }
 }
+@keyframes promotion-color-flash {
+  0%, 100% { color: #103e2d; }
+  33% { color: #8b1724; }
+  66% { color: #2d285e; }
+}
+
+.promotion-color-flash { animation: promotion-color-flash 1.2s steps(1, end) infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .promotion-color-flash { animation: none; }
+}

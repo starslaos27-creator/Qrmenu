@@ -4,7 +4,7 @@ export const ADMIN_SECTIONS = [
   "users",
   "audit",
   "monitor",
-  "pro",
+  "contact-messages",
   "pro-pricing",
   "finance-income",
   "finance-expense",
@@ -15,6 +15,7 @@ export type AdminSection = (typeof ADMIN_SECTIONS)[number];
 
 export function readAdminSection(search = window.location.search): AdminSection {
   const value = new URLSearchParams(search).get("section");
+  if (value === "pro") return "shops";
   return ADMIN_SECTIONS.includes(value as AdminSection) ? value as AdminSection : "overview";
 }
 

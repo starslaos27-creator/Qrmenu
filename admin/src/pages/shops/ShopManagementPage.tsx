@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useState } from "react";
 import { adminRequest, AdminApiError } from "../../shared/adminApi";
 import { PageState } from "../dashboard/PlatformOverviewPage";
+import ProRequestsPage from "../pro/ProRequestsPage";
 
 interface Restaurant {
   id: string;
   name: string;
   owner_email: string | null;
+  owner_phone?: string | null;
   suspended_at: string | null;
   suspension_reason: string | null;
   created_at: string;
@@ -43,8 +45,12 @@ interface RestaurantDetail {
 }
 
 export default function ShopManagementPage({ canManage }: { canManage: boolean }) {
+  const [view, setView] = useState<"shops" | "requests">(() => { const params = new URLSearchParams(window.location.search); return params.get("section") === "pro" || params.get("view") === "requests" ? "requests" : "shops"; });
+  const [requestRestaurant, setRequestRestaurant] = useState<{id:string;name:string} | null>(null);
+  const [pendingCount, setPendingCount] = useState(0);
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [search, setSearch] = useState("");
+  const [searchInput, setSearchInput] = useState("");
   const [status, setStatus] = useState("all");
   const [offset, setOffset] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -79,6 +85,12 @@ export default function ShopManagementPage({ canManage }: { canManage: boolean }
   }, [search, status, offset]);
 
   useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    const updateCount = () => { void adminRequest<{count:number}>("/api/admin/pro-requests/count").then(data => setPendingCount(data.count)).catch(() => {}); };
+    const reviewed = () => { updateCount(); void load(); };
+    updateCount(); const timer = window.setInterval(updateCount, 30000); window.addEventListener("pro-requests-changed", reviewed);
+    return () => { window.clearInterval(timer); window.removeEventListener("pro-requests-changed", reviewed); };
+  }, [load]);
   useEffect(() => {
     const timer = window.setInterval(() => setClockNow(Date.now()), 60_000);
     return () => window.clearInterval(timer);
@@ -170,8 +182,16 @@ export default function ShopManagementPage({ canManage }: { canManage: boolean }
   return (
     <div className="mx-auto max-w-[1600px] space-y-5">
       <header><p className="text-xs font-bold uppercase tracking-[.18em] text-emerald-800">RESTAURANTS</p><h1 className="mt-1 text-2xl font-semibold">จัดการร้านค้า</h1><p className="mt-1 text-sm text-slate-500">ค้นหาร้าน ตรวจสอบการใช้งาน และจัดการสถานะบัญชีร้าน</p></header>
+      <nav className="flex flex-wrap gap-2 rounded-xl border border-slate-200 bg-white p-2" aria-label="จัดการร้านค้าและคำขอชำระ">
+        <button type="button" aria-current={view === "shops" ? "page" : undefined} onClick={() => setView("shops")} className={`rounded-lg px-4 py-2 text-sm font-semibold ${view === "shops" ? "bg-emerald-800 text-white" : "text-slate-700 hover:bg-slate-100"}`}>ร้านค้าทั้งหมด</button>
+        <button type="button" aria-current={view === "requests" ? "page" : undefined} onClick={() => { setRequestRestaurant(null); setView("requests"); }} className={`rounded-lg px-4 py-2 text-sm font-semibold ${view === "requests" ? "bg-emerald-800 text-white" : "text-slate-700 hover:bg-slate-100"}`}>ตรวจสอบการชำระ {pendingCount > 0 && <span className="ml-1 rounded-full bg-red-600 px-2 py-0.5 text-xs text-white">{pendingCount}</span>}</button>
+      </nav>
+      {view === "requests" ? <ProRequestsPage key={requestRestaurant?.id || "all"} canManage={canManage} restaurantId={requestRestaurant?.id} restaurantName={requestRestaurant?.name} onClearRestaurant={() => setRequestRestaurant(null)} /> : <>
       <section className="flex flex-wrap items-end gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-        <label className="grid min-w-56 flex-1 gap-1 text-xs text-slate-500">ค้นหาร้านหรืออีเมลเจ้าของ<input className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900" value={search} onChange={(event) => { setOffset(0); setSearch(event.target.value); }} /></label>
+        <form className="flex min-w-56 flex-1 flex-wrap items-end gap-2" onSubmit={(event) => { event.preventDefault(); setOffset(0); setSearch(searchInput.trim()); }}>
+          <label className="grid min-w-56 flex-1 gap-1 text-xs text-slate-500">ค้นหาด้วยชื่อร้าน เบอร์โทร หรืออีเมลเจ้าของ<input className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900" value={searchInput} onChange={(event) => setSearchInput(event.target.value)} /></label>
+          <button className="rounded-lg bg-emerald-800 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-900 disabled:opacity-50" type="submit" disabled={loading}>ค้นหา</button>
+        </form>
         <label className="grid gap-1 text-xs text-slate-500">สถานะ<select className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900" value={status} onChange={(event) => { setOffset(0); setStatus(event.target.value); }}><option value="all">ทั้งหมด</option><option value="active">ใช้งาน</option><option value="suspended">ถูกระงับ</option><option value="migration_pending">รอย้ายบัญชี</option></select></label>
       </section>
       {notice && <p className="rounded-xl bg-emerald-50 p-3 text-sm text-emerald-800" role="status">{notice}</p>}
@@ -187,14 +207,14 @@ export default function ShopManagementPage({ canManage }: { canManage: boolean }
               <tbody className="divide-y divide-slate-100">{restaurants.map((restaurant) => {
                 const remaining = proRemainingMs(restaurant, clockNow);
                 return <tr className="align-middle" key={restaurant.id}>
-                  <td className="px-3 py-2.5"><button className="max-w-full truncate text-left font-semibold text-emerald-900 hover:underline" type="button" title={restaurant.name} onClick={() => void openDetail(restaurant.id)}>{restaurant.name}</button><span className="block truncate text-xs text-slate-500" title={restaurant.owner_email || "ไม่ระบุเจ้าของ"}>{restaurant.owner_email || "ไม่ระบุเจ้าของ"}</span><span className="block truncate font-mono text-[10px] text-slate-400" title={restaurant.id}>{restaurant.id}</span></td>
+                  <td className="px-3 py-2.5"><button className="max-w-full truncate text-left font-semibold text-emerald-900 hover:underline" type="button" title={restaurant.name} onClick={() => void openDetail(restaurant.id)}>{restaurant.name}</button><span className="block truncate text-xs text-slate-500" title={restaurant.owner_email || "ไม่ระบุอีเมลเจ้าของ"}>{restaurant.owner_email || "ไม่ระบุอีเมลเจ้าของ"}</span><span className="block truncate text-xs text-slate-500">{restaurant.owner_phone || "ไม่มีเบอร์โทร"}</span><span className="block truncate font-mono text-[10px] text-slate-400" title={restaurant.id}>{restaurant.id}</span></td>
                   <td className="whitespace-nowrap px-3 py-2.5 text-xs text-slate-600">{formatSignupDate(restaurant.created_at)}</td>
                   <td className="px-3 py-2.5 text-center tabular-nums">{restaurant.migrated_member_count}/{restaurant.member_count}</td>
                   <td className="px-3 py-2.5 text-center tabular-nums">{restaurant.menu_count} / {restaurant.table_count}</td>
                   <td className="px-3 py-2.5 text-center tabular-nums">{restaurant.order_count.toLocaleString("th-TH")}</td>
                   <td className="whitespace-nowrap px-3 py-2.5 text-right font-semibold tabular-nums text-emerald-900">{formatCurrency(Number(restaurant.today_revenue), restaurant.currency_code)}</td>
                   <td className="px-3 py-2.5 text-center"><span className={`inline-flex whitespace-nowrap rounded-full px-2 py-1 text-xs ${restaurant.suspended_at ? "bg-red-50 text-red-700" : "bg-emerald-50 text-emerald-800"}`}>{restaurant.suspended_at ? "ถูกระงับ" : "ใช้งาน"}</span></td>
-                  <td className="px-3 py-2.5 text-xs" title={restaurant.pro_expires_at ? formatSignupDate(restaurant.pro_expires_at) : undefined}>{restaurant.pro_request_pending ? <span className="font-medium text-amber-700">รออนุมัติคำขอ</span> : remaining !== null && remaining > 0 ? <span className={`${proCountdownClass(restaurant, clockNow)} whitespace-nowrap`}>{formatProCountdown(restaurant, clockNow)}</span> : <div className="flex flex-col items-start gap-1"><span className="whitespace-nowrap font-semibold text-red-700">หมดอายุแล้ว</span>{canManage && <button className="whitespace-nowrap rounded-lg bg-emerald-800 px-2.5 py-1.5 text-[11px] font-semibold text-white hover:bg-emerald-900" type="button" onClick={() => void openProPurchase(restaurant)}>เลือกแพ็กเกจโปร</button>}</div>}</td>
+                  <td className="px-3 py-2.5 text-xs" title={restaurant.pro_expires_at ? formatSignupDate(restaurant.pro_expires_at) : undefined}>{restaurant.pro_request_pending ? <button type="button" className="font-semibold text-amber-700 underline" onClick={() => { setRequestRestaurant({id:restaurant.id,name:restaurant.name}); setView("requests"); }}>รอตรวจสอบการชำระ</button> : remaining !== null && remaining > 0 ? <span className={`${proCountdownClass(restaurant, clockNow)} whitespace-nowrap`}>{formatProCountdown(restaurant, clockNow)}</span> : <div className="flex flex-col items-start gap-1"><span className="whitespace-nowrap font-semibold text-red-700">หมดอายุแล้ว</span>{canManage && <button className="whitespace-nowrap rounded-lg bg-emerald-800 px-2.5 py-1.5 text-[11px] font-semibold text-white hover:bg-emerald-900" type="button" onClick={() => void openProPurchase(restaurant)}>เลือกแพ็กเกจโปร</button>}</div>}</td>
                   <td className="px-3 py-2.5 text-right">{canManage && <button className="whitespace-nowrap rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs hover:bg-slate-50" type="button" onClick={() => void changeStatus(restaurant)}>{restaurant.suspended_at ? "คืนสถานะ" : "ระงับ"}</button>}</td>
                 </tr>;
               })}</tbody>
@@ -203,6 +223,7 @@ export default function ShopManagementPage({ canManage }: { canManage: boolean }
           <div className="flex justify-end gap-2 border-t border-slate-100 p-3"><button className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs disabled:opacity-40" type="button" disabled={offset === 0} onClick={() => setOffset((value) => Math.max(0, value - 50))}>ก่อนหน้า</button><button className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs disabled:opacity-40" type="button" disabled={restaurants.length < 50} onClick={() => setOffset((value) => value + 50)}>ถัดไป</button></div>
         </section>
       )}
+      </>}
       {selected && <RestaurantDetailDialog detail={selected} onClose={() => setSelected(null)} />}
       {purchaseTarget && <ProPurchaseDialog
         restaurant={purchaseTarget}
@@ -245,15 +266,30 @@ function ProPurchaseDialog({
   onConfirm: () => void;
   onClose: () => void;
 }) {
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    const previousPaddingRight = document.body.style.paddingRight;
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+    document.body.style.overflow = "hidden";
+    if (scrollbarWidth > 0) {
+      const currentPadding = Number.parseFloat(window.getComputedStyle(document.body).paddingRight) || 0;
+      document.body.style.paddingRight = `${currentPadding + scrollbarWidth}px`;
+    }
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.body.style.paddingRight = previousPaddingRight;
+    };
+  }, []);
+
   const monthly = Number(pricing?.monthly_usd || "");
   const validPrice = Number.isFinite(monthly) && monthly > 0;
   const chosen = proPackages.find((item) => item.paid === selectedMonths) ?? proPackages[0];
   const usd = (amount: number) => amount.toLocaleString("en-US", { style: "currency", currency: "USD" });
 
-  return <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/50 p-3" onClick={onClose}>
-    <section className="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-2xl bg-white p-5 shadow-xl" role="dialog" aria-modal="true" aria-labelledby="pro-purchase-title" onClick={(event) => event.stopPropagation()}>
+  return <div className="fixed inset-0 z-50 grid place-items-center overscroll-contain bg-slate-950/50 p-3">
+    <section className="max-h-[90vh] w-full max-w-xl overflow-y-auto overscroll-contain rounded-2xl bg-white p-5 shadow-xl" role="dialog" aria-modal="true" aria-labelledby="pro-purchase-title">
       <header className="flex items-start justify-between gap-4">
-        <div><p className="text-xs font-bold uppercase tracking-wider text-emerald-800">ADMIN PRO PURCHASE</p><h2 id="pro-purchase-title" className="mt-1 text-xl font-semibold">เลือกแพ็กเกจโปรให้ร้าน</h2><p className="mt-1 text-sm text-slate-500">{restaurant.name} · {restaurant.owner_email || "ไม่ระบุอีเมล"}</p></div>
+        <div><p className="text-xs font-bold uppercase tracking-wider text-emerald-800">ADMIN PRO PURCHASE</p><h2 id="pro-purchase-title" className="mt-1 text-xl font-semibold">เลือกแพ็กเกจโปรให้ร้าน</h2><p className="mt-1 text-sm font-semibold text-slate-700">ร้าน: {restaurant.name}</p><p className="text-sm text-slate-500">อีเมลเจ้าของ: {restaurant.owner_email || "ไม่ระบุ"} · โทร: {restaurant.owner_phone || "ไม่ระบุ"}</p></div>
         <button className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm disabled:opacity-40" type="button" disabled={busy} onClick={onClose}>ปิด</button>
       </header>
       {loading ? <p role="status" className="mt-5 text-sm text-slate-500">กำลังโหลดราคาแพ็กเกจ…</p> : <>

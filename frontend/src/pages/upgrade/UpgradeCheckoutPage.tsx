@@ -19,6 +19,9 @@ export default function UpgradeCheckoutPage() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [qrUrl, setQrUrl] = useState<string | null>(null);
+  const [slip, setSlip] = useState<File | null>(null);
+  useEffect(() => { void apiRequest<{qrUrl: string | null}>("/api/pro-payment-qr").then(data => setQrUrl(data.qrUrl)).catch(() => setError("โหลด QR ชำระเงินไม่สำเร็จ กรุณาลองใหม่")); }, []);
   const [offset, setOffset] = useState(0);
   const [requestKey, setRequestKey] = useState(() => {
     const key = `shopqr.pro.request.${months}.${monthly}`;
@@ -45,15 +48,16 @@ export default function UpgradeCheckoutPage() {
     return () => { active = false; };
   }, [offset]);
   async function pay() {
-    if (busy || !restaurantId || !chosen || purchase.blocked) return;
+    if (busy || !restaurantId || !chosen || purchase.blocked || !slip || !qrUrl) return;
     setBusy(true); setError(""); setMessage("");
     try {
       try { sessionStorage.setItem(`shopqr.pro.request.${months}.${monthly}`, requestKey); } catch { /* The request remains retryable in this page. */ }
-      const result = await apiRequest<{request: ProRequest}>(`/api/restaurants/${restaurantId}/pro-requests`, {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({requestKey,paidMonths:chosen.paid,monthlyUsd:monthly.toFixed(2)})});
+      const form = new FormData(); form.set("requestKey",requestKey); form.set("paidMonths",String(chosen.paid)); form.set("monthlyUsd",monthly.toFixed(2)); form.set("file",slip);
+      const result = await apiRequest<{request: ProRequest}>(`/api/restaurants/${restaurantId}/pro-requests`, {method:"POST",body:form});
       try { sessionStorage.removeItem(`shopqr.pro.request.${months}.${monthly}`); } catch { /* The server still deduplicates this key. */ }
       setRequestKey(crypto.randomUUID());
       setRequests(previous => [result.request, ...previous.filter(row => row.id !== result.request.id)]);
-      setMessage("ส่งคำขอสำเร็จ รอแอดมินอนุมัติ บันทึกประวัติแล้วโดยไม่มีการเรียกเก็บเงิน");
+      setSlip(null); setMessage("ส่งสลิปและคำขอแล้ว กรุณารอแอดมินตรวจสอบและอนุมัติ");
       setOffset(0);
       void purchase.refresh();
       await loadHistory(restaurantId, 0).catch(() => setError("ส่งคำขอแล้ว แต่โหลดประวัติล่าสุดไม่สำเร็จ กรุณารีเฟรชสถานะ"));
@@ -80,7 +84,7 @@ export default function UpgradeCheckoutPage() {
             <div className="flex justify-between gap-4"><dt>เฉลี่ยต่อเดือนที่ใช้งาน</dt><dd>{validPrice ? usd(monthly * chosen.paid / chosen.total) : "—"}</dd></div>
             <div className="flex justify-between gap-4 border-t border-[#dfcfb2] pt-5 text-lg"><dt className="font-bold">ยอดรวม</dt><dd className="font-bold">{validPrice ? usd(monthly * chosen.paid) : "—"}</dd></div>
           </dl>
-          <p className="mt-5 text-xs leading-6 text-[#756247]">ราคากำหนดโดยแอดมิน กดชำระเงินเพื่อส่งคำขออนุมัติและเก็บประวัติ ไม่ต้องแนบสลิปและไม่มีการเรียกเก็บเงินจริง</p>
+          <p className="mt-5 text-xs leading-6 text-[#756247]">สแกน QR เพื่อชำระเงิน แล้วแนบสลิปส่งให้แอดมินตรวจสอบก่อนเปิดแพ็กเกจ</p>
           <section aria-label="บัญชีรับเงินค่าแพ็กเกจโปร" className="mt-5 rounded-xl border border-[#dfcfb2] bg-white/60 p-4 sm:p-5">
             <h3 className="font-bold">บัญชีรับเงินค่าแพ็กเกจโปร</h3>
             <dl className="mt-4 space-y-3 text-sm">
@@ -89,8 +93,15 @@ export default function UpgradeCheckoutPage() {
               <div className="flex flex-wrap justify-between gap-2"><dt className="text-[#756247]">ชื่อบัญชี</dt><dd className="break-words font-semibold">{proPaymentAccount.accountName || "รอระบุชื่อบัญชีผู้รับเงิน"}</dd></div>
             </dl>
           </section>
+          <section className="mt-5 rounded-xl border border-[#dfcfb2] bg-white/60 p-5">
+            <h3 className="font-bold">QR สำหรับชำระแพ็กเกจ</h3>
+            {qrUrl ? <img src={qrUrl} alt="QR สำหรับชำระแพ็กเกจ" className="mx-auto mt-4 max-h-72 max-w-full rounded-lg object-contain" /> : <p className="mt-3 text-sm text-amber-800">ยังไม่มี QR ชำระเงิน กรุณาติดต่อผู้ดูแลระบบ</p>}
+            <label className="mt-5 block text-sm font-semibold">แนบสลิปการโอน (JPG, PNG หรือ WebP ไม่เกิน 5 MB)
+              <input type="file" accept="image/jpeg,image/png,image/webp" className="mt-2 block w-full text-sm" onChange={event => { const file = event.target.files?.[0] || null; if (file && file.size > 5*1024*1024) { setError("สลิปต้องมีขนาดไม่เกิน 5 MB"); setSlip(null); event.target.value = ""; } else { setError(""); setSlip(file); } }} />
+            </label>
+          </section>
         <div className="mt-4 flex justify-end">
-          <button type="button" onClick={() => void pay()} disabled={purchase.blocked || !validPrice || pricingLoading || !restaurantId || busy || loading || requests.some(row => row.status === "pending")} className="rounded-xl bg-[#174a34] px-7 py-3 text-sm font-bold text-white transition hover:bg-emerald-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-800 disabled:cursor-not-allowed disabled:opacity-50">{purchase.active ? "ชำระแล้ว" : purchase.pending ? "รออนุมัติ" : busy ? "กำลังส่งคำขอ…" : requests.some(row => row.status === "pending") ? "รอแอดมินอนุมัติ" : "ชำระเงิน"}</button>
+          <button type="button" onClick={() => void pay()} disabled={!slip || !qrUrl || purchase.blocked || !validPrice || pricingLoading || !restaurantId || busy || loading || requests.some(row => row.status === "pending")} className="rounded-xl bg-[#174a34] px-7 py-3 text-sm font-bold text-white transition hover:bg-emerald-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-800 disabled:cursor-not-allowed disabled:opacity-50">{purchase.active ? "ชำระแล้ว" : purchase.pending ? "รออนุมัติ" : busy ? "กำลังส่งคำขอ…" : requests.some(row => row.status === "pending") ? "รอแอดมินอนุมัติ" : "ส่งหลักฐานการชำระ"}</button>
         </div>
         {message && <p role="status" className="mt-3 text-sm leading-6 text-emerald-800">{message}</p>}
           {pricingLoading ? <p role="status" className="mt-4 text-sm">กำลังโหลดราคา…</p> : pricingError && <p role="alert" className="mt-4 text-sm text-red-700">{pricingError}</p>}

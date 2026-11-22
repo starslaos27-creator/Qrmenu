@@ -9,17 +9,25 @@ import PlatformAuditPage from "./pages/audit/PlatformAuditPage";
 import PlatformOverviewPage from "./pages/dashboard/PlatformOverviewPage";
 import SystemMonitorPage from "./pages/monitor/SystemMonitorPage";
 import ProPricingPage from "./pages/pro/ProPricingPage";
-import ProRequestsPage from "./pages/pro/ProRequestsPage";
 import PlatformFinancePage from "./pages/finance/PlatformFinancePage";
 import ShopManagementPage from "./pages/shops/ShopManagementPage";
 import UserManagementPage from "./pages/users/UserManagementPage";
+import ContactMessagesPage from "./pages/contact/ContactMessagesPage";
 
 export default function App() {
   const { auth, completeLogin, completeBootstrap, signOut, requireLogin } = useAdminSession();
   const [section, setSection] = useState<AdminSection>(() => readAdminSection());
 
   useEffect(() => {
-    const handlePopState = () => setSection(readAdminSection());
+    const handlePopState = () => {
+      const url = new URL(window.location.href);
+      if (url.searchParams.get("section") === "pro") {
+        url.searchParams.set("section", "shops"); url.searchParams.set("view", "requests");
+        window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
+      }
+      setSection(readAdminSection());
+    };
+    handlePopState();
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
   }, []);
@@ -40,7 +48,7 @@ export default function App() {
     {section === "users" && <UserManagementPage canManage={canManage} currentAdminId={auth.session.user.id} />}
     {section === "audit" && <PlatformAuditPage />}
     {section === "monitor" && <SystemMonitorPage />}
-    {section === "pro" && <ProRequestsPage canManage={canManage} />}
+    {section === "contact-messages" && <ContactMessagesPage canManage={canManage} />}
     {section === "pro-pricing" && <ProPricingPage canManage={canManage} />}
     {section === "finance-income" && <PlatformFinancePage kind="income" canManage={canManage} />}
     {section === "finance-expense" && <PlatformFinancePage kind="expense" canManage={canManage} />}

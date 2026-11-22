@@ -1,5 +1,7 @@
 import { requireRestaurantAccess } from "../security/authorization.js";
 import { requirePlatformAdmin } from "../admin/authorization.js";
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { randomUUID } from "node:crypto";
 
 const uuid = (value) => typeof value === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 const joins = `from pro_requests p join restaurants r on r.id=p.restaurant_id
@@ -7,6 +9,45 @@ const joins = `from pro_requests p join restaurants r on r.id=p.restaurant_id
 const columns = `p.*, r.name as restaurant_name, u.email as requester_email, a.email as reviewer_email`;
 
 export function createProRequestController(app, env) {
+  const validImage = (type, data) => type === "image/jpeg" ? data.subarray(0, 3).equals(Buffer.from([0xff, 0xd8, 0xff])) : type === "image/png" ? data.subarray(0, 8).equals(Buffer.from([137,80,78,71,13,10,26,10])) : type === "image/webp" && data.subarray(0, 4).toString() === "RIFF" && data.subarray(8, 12).toString() === "WEBP";
+  async function readImage(request, reply) {
+    if (!request.isMultipart()) { reply.code(400).send({error:"IMAGE_REQUIRED"}); return null; }
+    const part = await request.file({limits:{fileSize:5*1024*1024,files:1}});
+    if (!part) { reply.code(400).send({error:"IMAGE_REQUIRED"}); return null; }
+    let data;
+    try { data = await part.toBuffer(); } catch { reply.code(413).send({error:"IMAGE_TOO_LARGE"}); return null; }
+    if (part.file.truncated || !validImage(part.mimetype, data)) { reply.code(400).send({error:"INVALID_IMAGE"}); return null; }
+    return {data, type:part.mimetype, fields:part.fields};
+  }
+  const get_api_pro_payment_qr = async (_request, reply) => {
+    const row = (await app.db.query("select qr_url from pro_payment_settings where id=true")).rows[0];
+    reply.header("Cache-Control", "no-store");
+    return {qrUrl:row?.qr_url || null};
+  };
+  const put_api_admin_pro_payment_qr = async (request, reply) => {
+    const admin = await requirePlatformAdmin(request, reply, env, ["super_admin", "support"]); if (!admin) return;
+    if (env.imageStorageDriver !== "r2" || !env.r2AccountId || !env.r2AccessKeyId || !env.r2SecretAccessKey || !env.r2BucketName || !env.r2PublicBaseUrl) return reply.code(503).send({error:"STORAGE_NOT_CONFIGURED"});
+    const image = await readImage(request, reply); if (!image) return;
+    const key = `platform-pro-qr/${randomUUID()}.${image.type === "image/png" ? "png" : image.type === "image/webp" ? "webp" : "jpg"}`;
+    const client = new S3Client({region:"auto",endpoint:`https://${env.r2AccountId}.r2.cloudflarestorage.com`,credentials:{accessKeyId:env.r2AccessKeyId,secretAccessKey:env.r2SecretAccessKey}});
+    await client.send(new PutObjectCommand({Bucket:env.r2BucketName,Key:key,Body:image.data,ContentType:image.type,CacheControl:"public, max-age=31536000, immutable"}));
+    const qrUrl = `${env.r2PublicBaseUrl.replace(/\/+$/, "")}/${key}`;
+    await app.db.query(`insert into pro_payment_settings(id,qr_url,updated_by) values(true,$1,$2) on conflict(id) do update set qr_url=excluded.qr_url,updated_by=excluded.updated_by,updated_at=now()`,[qrUrl,admin.user.id]);
+    return {qrUrl};
+  };
+  const get_api_admin_pro_request_slip = async (request, reply) => {
+    if (!await requirePlatformAdmin(request, reply, env)) return;
+    if (!uuid(request.params.id)) return reply.code(400).send({error:"INVALID_REQUEST"});
+    const row = (await app.db.query("select content_type,image_data from pro_payment_slips where pro_request_id=$1",[request.params.id])).rows[0];
+    if (!row) return reply.code(404).send({error:"NOT_FOUND"});
+    reply.header("Cache-Control","private, no-store");
+    return {contentType:row.content_type, data:row.image_data.toString("base64")};
+  };
+  const get_api_admin_pro_request_count = async (request, reply) => {
+    if (!await requirePlatformAdmin(request, reply, env)) return;
+    const row = (await app.db.query("select count(*)::int as count from pro_requests where status='pending'")).rows[0];
+    reply.header("Cache-Control","no-store"); return row;
+  };
   async function readPricing(reply) {
     if (!app.db) return reply.code(503).send({error:"DATABASE_NOT_CONFIGURED"});
     const result = await app.db.query("select monthly_usd,version,updated_at from pro_pricing where id=true");
@@ -65,7 +106,9 @@ export function createProRequestController(app, env) {
   };
   const post_api_restaurants_restaurantId_pro_requests = async (request, reply) => {
     const auth = await owner(request, reply); if (!auth) return;
-    const body = request.body || {};
+    const image = await readImage(request, reply); if (!image) return;
+    const field = (name) => image.fields[name]?.value;
+    const body = {requestKey:field("requestKey"), paidMonths:Number(field("paidMonths")), monthlyUsd:field("monthlyUsd")};
     if (!uuid(body.requestKey) || ![1,3,6,9,12].includes(body.paidMonths) ||
         typeof body.monthlyUsd !== "string" || !/^\d{1,7}(\.\d{1,2})?$/.test(body.monthlyUsd) ||
         Number(body.monthlyUsd) <= 0 || Number(body.monthlyUsd) > 1000000) {
@@ -97,6 +140,7 @@ export function createProRequestController(app, env) {
       }
       const result = await client.query(`insert into pro_requests (request_key,restaurant_id,requested_by,paid_months,free_months,monthly_usd,total_usd)
         values ($1,$2,$3,$4::integer,$5,$6::numeric,$6::numeric*$4::integer) returning *`, [body.requestKey,auth.restaurantId,auth.user.id,body.paidMonths,free,pricing.monthly_usd]);
+      await client.query("insert into pro_payment_slips(pro_request_id,content_type,image_data) values($1,$2,$3)",[result.rows[0].id,image.type,image.data]);
       await client.query("commit");
       return reply.code(201).send({request:result.rows[0]});
     } catch (error) { await client.query("rollback"); throw error; }
@@ -106,11 +150,13 @@ export function createProRequestController(app, env) {
     if (!await requirePlatformAdmin(request, reply, env)) return;
     const status = request.query.status || "all";
     if (!["all","pending","approved","rejected"].includes(status)) return reply.code(400).send({error:"INVALID_STATUS"});
+    const restaurantId = request.query.restaurantId || null;
+    if (restaurantId && !uuid(restaurantId)) return reply.code(400).send({error:"INVALID_RESTAURANT"});
     const offset = Math.max(0, Math.min(100000, Number(request.query.offset) || 0)) | 0;
-    const result = await app.db.query(`select ${columns},
+    const result = await app.db.query(`select ${columns}, exists(select 1 from pro_payment_slips s where s.pro_request_id=p.id) as has_slip,
       exists(select 1 from platform_admin_audit_logs l
         where l.target_type='pro_request' and l.target_id=p.id and l.action='pro_purchase.activated') as admin_purchase
-      ${joins} where ($1='all' or p.status=$1) order by p.created_at desc,p.id desc limit 50 offset $2`, [status,offset]);
+      ${joins} where ($1='all' or p.status=$1) and ($3::uuid is null or p.restaurant_id=$3) order by p.created_at desc,p.id desc limit 50 offset $2`, [status,offset,restaurantId]);
     return { requests:result.rows };
   };
   const post_api_admin_restaurants_restaurantId_pro_purchases = async (request, reply) => {
@@ -214,14 +260,19 @@ export function createProRequestController(app, env) {
       }
       await client.query("select id from restaurants where id=$1 for update", [row.restaurant_id]);
       const result = await client.query(`update pro_requests set status=$2,reviewed_by=$3,reviewed_at=now(),review_note=$4 where id=$1 returning *`, [row.id,body.status,admin.user.id,body.note?.trim() || ""]);
+      if (body.status === "approved") {
+        const restaurant = (await client.query("select name from restaurants where id=$1",[row.restaurant_id])).rows[0];
+        await client.query(`insert into platform_finance_entries (request_key,kind,entry_date,category,description,amount,currency_code,payment_method,reference,source,restaurant_id,pro_request_id,created_by,created_at)
+          values ($1,'income',(clock_timestamp() at time zone 'Asia/Bangkok')::date,'แพ็กเกจ Pro',$2,$3::numeric,'USD','transfer','','pro_package',$4,$5,$6,clock_timestamp())`,[row.request_key,`แพ็กเกจ Pro · ${restaurant.name} · ${row.paid_months} เดือน`,row.total_usd,row.restaurant_id,row.id,admin.user.id]);
+      }
       await client.query(`insert into platform_admin_audit_logs (admin_user_id,action,target_type,target_id,restaurant_id,reason,details,ip_address)
-        values ($1,$2,'pro_request',$3,$4,$5,$6::jsonb,$7)`, [admin.user.id,`pro_request.${body.status}`,row.id,row.restaurant_id,body.note?.trim() || "",JSON.stringify({paidMonths:row.paid_months,totalUsd:row.total_usd,currency:"USD",mode:"history_only"}),request.ip]);
+        values ($1,$2,'pro_request',$3,$4,$5,$6::jsonb,$7)`, [admin.user.id,`pro_request.${body.status}`,row.id,row.restaurant_id,body.note?.trim() || "",JSON.stringify({paidMonths:row.paid_months,totalUsd:row.total_usd,currency:"USD",mode:body.status === "approved" ? "payment_review" : "rejected"}),request.ip]);
       await client.query("commit");
       return {request:result.rows[0]};
     } catch (error) { await client.query("rollback"); throw error; }
     finally { client.release(); }
   };
-  return { get_api_pro_pricing, get_api_admin_pro_pricing, put_api_admin_pro_pricing, get_api_restaurants_restaurantId_pro_countdown, get_api_restaurants_restaurantId_pro_requests, post_api_restaurants_restaurantId_pro_requests, get_api_admin_pro_requests, post_api_admin_restaurants_restaurantId_pro_purchases, post_api_admin_pro_requests_id_review };
+  return { get_api_pro_payment_qr, put_api_admin_pro_payment_qr, get_api_admin_pro_request_slip, get_api_admin_pro_request_count, get_api_pro_pricing, get_api_admin_pro_pricing, put_api_admin_pro_pricing, get_api_restaurants_restaurantId_pro_countdown, get_api_restaurants_restaurantId_pro_requests, post_api_restaurants_restaurantId_pro_requests, get_api_admin_pro_requests, post_api_admin_restaurants_restaurantId_pro_purchases, post_api_admin_pro_requests_id_review };
 }
 
 

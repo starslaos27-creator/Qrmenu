@@ -48,3 +48,11 @@
 
 
 .manager-navigation-icon { display:inline-flex; width:18px; flex:0 0 18px; align-items:center; justify-content:center; font-size:14px; line-height:1; }
+
+/* Larger, consistent targets for owners and invited staff. */
+.manager-navigation > button,
+.manager-navigation-group > button[aria-expanded] { min-height:34px; padding:5px 12px !important; line-height:20px !important; gap:10px !important; }
+.manager-navigation-group > button:not([aria-expanded]) { min-height:30px; padding:4px 12px 4px 44px !important; line-height:20px !important; }
+.manager-navigation-icon { width:20px; flex-basis:20px; }
+.manager-navigation-icon svg { width:20px; height:20px; display:block; }
+.manager-navigation-group { margin-bottom:4px !important; }
