@@ -1,6 +1,6 @@
 import {r as React} from './vendor-react-DCUvmuBu.js';
-import {e as api, j as navigate, n as logout} from './index-BjXGGWCT.js?v=20261104-remove-stock-deposits-menu-v9';
-import {f as money} from './format-Bw_5pJ49.js';
+import {e as api, j as navigate, n as logout} from './index-BjXGGWCT.js?v=20261120-currency-v1';
+import {f as money} from './format-Bw_5pJ49.js?v=20261120-restaurant-currency-v1';
 
 const h=React.createElement;
 const number=value=>Number(value||0).toLocaleString('th-TH');

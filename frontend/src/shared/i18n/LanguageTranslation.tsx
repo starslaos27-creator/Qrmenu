@@ -255,7 +255,7 @@ function translateDynamicText(text: string, locale: Locale) {
     [/^⭐ ทดลองใช้ฟรี (\d+) วัน (.+)$/, (m) => en ? `⭐ Free Pro trial: ${m[1]} days left ${m[2]}` : `⭐ ທົດລອງ Pro ຟຣີ ເຫຼືອ ${m[1]} ມື້ ${m[2]}`],
     [/^⭐ อัปเกรดโปร$/, () => en ? "⭐ Upgrade to Pro" : "⭐ ອັບເກຣດ Pro"],
     [/^สิทธิ์ทดลองโปรฟรีใช้งานได้ถึง (.+)$/, (m) => en ? `Your free Pro trial is active until ${m[1]}` : `ສິດທົດລອງ Pro ຟຣີໃຊ້ໄດ້ຮອດ ${m[1]}`],
-    [/^แพ็กเกจโปรยังใช้งานได้ถึง (.+)$/, (m) => en ? `Your Pro plan is active until ${m[1]}` : `ແພັກເກດ Pro ຂອງທ່ານໃຊ້ໄດ້ຮອດ ${m[1]}`],
+    [/^แพ็กเกจรายเดือนยังใช้งานได้ถึง (.+)$/, (m) => en ? `Your Pro plan is active until ${m[1]}` : `ແພັກເກດ Pro ຂອງທ່ານໃຊ້ໄດ້ຮອດ ${m[1]}`],
     [/^สิทธิ์โปรของร้านยังไม่หมดอายุ จึงยังส่งคำขอแพ็กเกจใหม่ไม่ได้$/, () => en ? "Your shop still has active Pro access and cannot submit a new package request yet" : "ສິດ Pro ຂອງຮ້ານຍັງບໍ່ໝົດອາຍຸ ຈຶ່ງຍັງສົ່ງຄຳຂໍແພັກເກດໃໝ່ບໍ່ໄດ້"],
     [/^ครบกำหนด (.+)$/, (m) => en ? `Expires ${m[1]}` : `ໝົດອາຍຸ ${m[1]}`],
     [/^ท่านได้ชำระแล้ว แพ็กเกจยังไม่หมดอายุ ใช้งานได้ถึง (.+)$/, (m) => en ? `Already paid. Your plan is active until ${m[1]}` : `ຊຳລະແລ້ວ ແພັກເກດໃຊ້ໄດ້ເຖິງ ${m[1]}`],

@@ -1,5 +1,5 @@
 import {r as React,j as h} from './vendor-react-DCUvmuBu.js';
-import {e as api} from './index-BjXGGWCT.js?v=20261104-remove-stock-deposits-menu-v9';
+import {e as api} from './index-BjXGGWCT.js?v=20261120-currency-v1';
 import {downloadKitchenCsv} from './kitchen-csv.js';
 const today=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Vientiane',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
 export function useKitchenFilters({restaurantId,setOrders,setHistory,onNewOrder}) {

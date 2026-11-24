@@ -1,40 +1,49 @@
 import {r as React, j as jsx} from './vendor-react-DCUvmuBu.js';
-import {e as api, j as navigate, n as logout} from './index-BjXGGWCT.js?v=20261104-remove-stock-deposits-menu-v9';
+import {e as api, j as navigate, n as logout} from './index-BjXGGWCT.js?v=20261120-currency-v1';
 
 const owner = ['owner'];
 const team = ['owner', 'cook', 'waiter', 'staff'];
 const link = (label, page, view, roles = owner) => ({label, href: `/dashboard/${page}${view ? `?view=${view}` : ''}`, roles});
 export const groups = [
-  {label:'▦ หลังบ้านร้าน', href:'/dashboard/backend', roles:owner},
-  {label:'📦 สต็อกสินค้า', items:[{label:'ฝากสินค้า', href:'/dashboard/stock-deposits', roles:team},link('จัดการเมนู และ สต็อก','menu'),link('ประวัติขายออก และ ตัดสต็อก','menu','outgoing-history'),link('สต็อกวัตถุดิบ และ สูตรอาหาร','inventory','recipes'),{...link('\u0e42\u0e1b\u0e23\u0e42\u0e21\u0e0a\u0e31\u0e19','promotions'),key:'promotions'},link('วิเคราะห์สินค้า','close-shop')]},
+  {label:'หลังบ้านร้าน', href:'/dashboard/backend', roles:owner},
+  {label:'สต็อกสินค้า', items:[{label:'ฝากสินค้า', href:'/dashboard/stock-deposits', roles:team},link('จัดการเมนู และ สต็อก','menu'),link('ประวัติขายออก และ ตัดสต็อก','menu','outgoing-history'),link('สต็อกวัตถุดิบ และ สูตรอาหาร','inventory','recipes'),{...link('\u0e42\u0e1b\u0e23\u0e42\u0e21\u0e0a\u0e31\u0e19','promotions'),key:'promotions'},link('วิเคราะห์สินค้า','close-shop')]},
   
-  {label:'🪑 โต๊ะ & QR Code', href:'/dashboard/tables', roles:team},{label:'🧾 ออเดอร์', href:'/dashboard/kitchen?view=new', roles:team, badge:'kitchen'},
-  {label:'👨‍🍳 ห้องครัว', href:'/dashboard/kitchen', roles:team, badge:'kitchen'},
-  {label:'💰 การเงิน', href:'/dashboard/finance', roles:owner},
+  {label:'โต๊ะ & QR Code', href:'/dashboard/tables', roles:team},{label:'ออเดอร์', href:'/dashboard/kitchen?view=new', roles:team, badge:'kitchen'},
+  {label:'ห้องครัว', href:'/dashboard/kitchen', roles:team, badge:'kitchen'},
+  {label:'การเงิน', href:'/dashboard/finance', roles:owner},
 ];
+const iconPaths={home:'M3 10.5 12 3l9 7.5M5 9.5V21h14V9.5M9 21v-7h6v7',backend:'M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z',stock:'m3 7 9-4 9 4-9 4-9-4Zm0 0v10l9 4 9-4V7M12 11v10',tables:'M4 5h16v8H4zM7 13v6m10-6v6M3 19h18',orders:'M7 3h10l3 3v15H4V3h3Zm1 6h8M8 13h8M8 17h5',kitchen:'M4 10a3 3 0 0 1 3-3 4 4 0 0 1 7-2 4 4 0 0 1 6 4 3 3 0 0 1 0 5v6H5v-6a3 3 0 0 1-1-4Zm1 6h15',finance:'M3 6h18v13H3zM3 9h18M16 14h3',bills:'M6 3h12v18l-3-2-3 2-3-2-3 2V3Zm3 5h6M9 12h6M9 16h4',audit:'M5 4h14v17H5zM8 8h8M8 12h8M8 16h5',feedback:'M4 5h16v11H9l-5 4V5Zm4 4h8m-8 3h5',settings:'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm0-5v2m0 14v2M3 12h2m14 0h2M5.6 5.6 7 7m10 10 1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4',default:'M5 5h14v14H5zM8 9h8M8 13h8'};
+function navIcon(name){return jsx.jsx('svg',{viewBox:'0 0 24 24',width:20,height:20,fill:'none',stroke:'currentColor',strokeWidth:1.7,strokeLinecap:'round',strokeLinejoin:'round','aria-hidden':true,children:jsx.jsx('path',{d:iconPaths[name]||iconPaths.default})});}
+function iconFor(item){const path=String(item.href||'');if(path.includes('view=new'))return 'orders';if(path.includes('/kitchen'))return 'kitchen';return ({home:'home',backend:'backend',tables:'tables',finance:'finance',bills:'bills',audit:'audit',feedback:'feedback',settings:'settings'})[path.split('?')[0].split('/').pop()]||'default';}
 export function ManagerNavigation({role, restaurantId, navigate, current, existing, translate, badges}) {
   const [financeAccess,setFinanceAccess]=React.useState(false);
   React.useEffect(()=>{let stopped=false;setFinanceAccess(false);if(role!=='owner'&&restaurantId)api(`/api/restaurants/${restaurantId}/finance/access`).then(v=>{if(!stopped)setFinanceAccess(v.view);}).catch(()=>{});return()=>{stopped=true;};},[role,restaurantId]);
+  const [orderFeeBilling,setOrderFeeBilling]=React.useState(null);
+  React.useEffect(()=>{if(!restaurantId){setOrderFeeBilling(null);return}let stopped=false;const refresh=()=>api(`/api/restaurants/${restaurantId}/order-fee-status`).then(v=>{if(!stopped)setOrderFeeBilling(v.billing||null)}).catch(()=>{});refresh();const timer=setInterval(refresh,60000);return()=>{stopped=true;clearInterval(timer)}},[restaurantId]);
+  const feeRestricted=Boolean(orderFeeBilling?.restricted);
+  const feeRestrictedHref=href=>feeRestricted&&/^\/dashboard\/(?:menu|inventory|categories|tables|kitchen|bills|stock-deposits|promotions)(?:\/|$)/.test(String(href||'').split('?')[0]);
   const [stockExpanded,setStockExpanded]=React.useState(true);
   const currentRoute = new URL(current, window.location.origin);
   currentRoute.searchParams.delete('ui');
   const normalizedCurrent = `${currentRoute.pathname}${currentRoute.search}`;
   const active = href => normalizedCurrent === href || (href === '/dashboard/finance' && normalizedCurrent.split('?')[0] === href) || (href === '/dashboard/menu' && normalizedCurrent === '/dashboard/menu?view=add');
-  const button = (item, child=false) => jsx.jsx('button', {type:'button', onClick:event=>{if(child)event.stopPropagation();if(item.action==='staff-chat')window.dispatchEvent(new Event('shopqr:open-staff-chat'));else{window.dispatchEvent(new Event('shopqr:before-dashboard-navigation'));navigateDashboard(item.href,navigate);}}, 'aria-current':active(item.href)?'page':undefined,
-    style:{display:'flex',alignItems:'center',gap:6,width:'100%',textAlign:'left',padding:child?'2px 10px 2px 42px':'7px 10px',lineHeight:child?'18px':'20px',borderRadius:8,fontSize:14,color:active(item.href)?'#174a34':'#f7ead2',background:active(item.href)?'#f4e4bd':'transparent'},
-    children:[item.icon?jsx.jsx('span',{className:'manager-navigation-icon','aria-hidden':true,children:item.icon},'icon'):null,jsx.jsx('span',{style:{flex:1},children:item.label},'label'),item.badge && badges[item.badge]>0?jsx.jsx('span',{className:'manager-nav-badge',children:badges[item.badge]},'badge'):null]
-  },item.key||item.href);
+  const button = (item, child=false) => {const locked=feeRestrictedHref(item.href);return jsx.jsx('button', {type:'button',disabled:locked,title:locked?'\u0e40\u0e21\u0e19\u0e39\u0e16\u0e39\u0e01\u0e08\u0e33\u0e01\u0e31\u0e14\u0e0a\u0e31\u0e48\u0e27\u0e04\u0e23\u0e32\u0e27 \u0e40\u0e19\u0e37\u0e48\u0e2d\u0e07\u0e08\u0e32\u0e01\u0e04\u0e49\u0e32\u0e07\u0e04\u0e48\u0e32\u0e1a\u0e23\u0e34\u0e01\u0e32\u0e23\u0e2d\u0e2d\u0e40\u0e14\u0e2d\u0e23\u0e4c':undefined,
+    onClick:event=>{if(locked)return;if(child)event.stopPropagation();if(item.action==='staff-chat')window.dispatchEvent(new Event('shopqr:open-staff-chat'));else{window.dispatchEvent(new Event('shopqr:before-dashboard-navigation'));navigateDashboard(item.href,navigate);}}, 'aria-current':active(item.href)?'page':undefined,
+    style:{display:'flex',alignItems:'center',gap:6,width:'100%',textAlign:'left',padding:child?'2px 10px 2px 42px':'7px 10px',lineHeight:child?'18px':'20px',borderRadius:8,fontSize:14,color:locked?'#91a39b':active(item.href)?'#174a34':'#f7ead2',background:active(item.href)?'#f4e4bd':'transparent',cursor:locked?'not-allowed':'pointer',opacity:locked ? .65 : 1},
+    children:[!child?jsx.jsx('span',{className:'manager-navigation-icon','aria-hidden':true,children:navIcon(iconFor(item))},'icon'):null,jsx.jsx('span',{style:{flex:1},children:item.label},'label'),item.badge && badges[item.badge]>0?jsx.jsx('span',{className:'manager-nav-badge',children:badges[item.badge]},'badge'):null]
+  },item.key||item.href)};
   const managedRoutes = new Set(['finance','menu','categories','inventory','tables','kitchen','stats','close-shop','promotions','bills','settings','stock-deposits']);
   const routeName = href => String(href || '').split(/[?#]/,1)[0].replace(/\/+$/,'').split('/').pop();
   const preserved = existing.filter(item=>!managedRoutes.has(routeName(item.href)));
   return jsx.jsxs('div',{className:'manager-navigation','data-restaurant-id':restaurantId,children:[
-    ...preserved.filter(item=>item.href==='/dashboard').map(item=>button({...item,href:'/dashboard/home',label:translate(item.labelKey),icon:'🏠'})),
+    feeRestricted?jsx.jsx('div',{role:'alert',style:{margin:'0 0 10px',padding:'10px 12px',borderRadius:8,background:'#fff1f0',color:'#a32018',fontSize:12,lineHeight:1.5},children:'\u0e04\u0e49\u0e32\u0e07\u0e0a\u0e33\u0e23\u0e30\u0e40\u0e01\u0e34\u0e19 48 \u0e0a\u0e31\u0e48\u0e27\u0e42\u0e21\u0e07 \u0e40\u0e21\u0e19\u0e39\u0e2a\u0e15\u0e47\u0e2d\u0e01 \u0e42\u0e15\u0e4a\u0e30/QR \u0e2d\u0e2d\u0e40\u0e14\u0e2d\u0e23\u0e4c \u0e04\u0e23\u0e31\u0e27 \u0e41\u0e25\u0e30\u0e40\u0e0a\u0e47\u0e04\u0e1a\u0e34\u0e25\u0e16\u0e39\u0e01\u0e08\u0e33\u0e01\u0e31\u0e14\u0e0a\u0e31\u0e48\u0e27\u0e04\u0e23\u0e32\u0e27 \u0e01\u0e23\u0e38\u0e13\u0e32\u0e0a\u0e33\u0e23\u0e30\u0e04\u0e48\u0e32\u0e1a\u0e23\u0e34\u0e01\u0e32\u0e23\u0e41\u0e25\u0e30\u0e23\u0e2d\u0e41\u0e2d\u0e14\u0e21\u0e34\u0e19\u0e2d\u0e19\u0e38\u0e21\u0e31\u0e15\u0e34'}):null,
+    ...preserved.filter(item=>item.href==='/dashboard').map(item=>button({...item,href:'/dashboard/home',label:translate(item.labelKey)})),
     ...groups.map(group=>{
-      if(!group.items) { if(group.href==='/dashboard/finance') { const billsItem=existing.find(item=>item.href.split('?')[0]==='/dashboard/bills'); return jsx.jsxs(React.Fragment,{children:[billsItem?button({...billsItem,label:translate(billsItem.labelKey),icon:'🧾'}):null,(group.roles.includes(role)||financeAccess)?button(group):null]},'bills-finance'); } return group.roles.includes(role)?button(group):null; }
+      if(!group.items) { if(group.href==='/dashboard/finance') { const billsItem=existing.find(item=>item.href.split('?')[0]==='/dashboard/bills'); return jsx.jsxs(React.Fragment,{children:[billsItem?button({...billsItem,label:translate(billsItem.labelKey)}):null,(group.roles.includes(role)||financeAccess)?button(group):null]},'bills-finance'); } return group.roles.includes(role)?button(group):null; }
       const items=group.items.filter(item=>item.roles.includes(role));
-      return items.length?jsx.jsxs('div',{className:'manager-navigation-group',style:{marginBottom:0},children:[jsx.jsx('button',{type:'button','aria-expanded':stockExpanded,onClick:()=>setStockExpanded(value=>!value),style:{display:'flex',alignItems:'center',gap:8,width:'100%',textAlign:'left',padding:'3px 10px',lineHeight:'18px',fontWeight:600,fontSize:14,color:'#fff8e8',background:'transparent',border:0,cursor:'pointer'},children:[jsx.jsx('span',{children:group.label}),jsx.jsx('span',{className:'manager-navigation-arrow','aria-hidden':true,style:{transform:stockExpanded?'rotate(90deg)':'rotate(0deg)'},children:'\u203a'})]}),stockExpanded?items.map(item=>button(item,true)):null ]},group.label):null;
+      return items.length?jsx.jsxs('div',{className:'manager-navigation-group',style:{marginBottom:0},children:[jsx.jsxs('button',{type:'button','aria-expanded':stockExpanded,onClick:()=>setStockExpanded(value=>!value),style:{display:'flex',alignItems:'center',gap:10,width:'100%',textAlign:'left',fontWeight:600,fontSize:14,color:'#fff8e8',background:'transparent',border:0,cursor:'pointer'},children:[jsx.jsx('span',{className:'manager-navigation-icon',children:navIcon('stock')}),jsx.jsx('span',{children:group.label}),jsx.jsx('span',{className:'manager-navigation-arrow','aria-hidden':true,style:{transform:stockExpanded?'rotate(90deg)':'rotate(0deg)'},children:'\u203a'})]}),stockExpanded?items.map(item=>button(item,true)):null ]},group.label):null;
     }),
-    ...preserved.filter(item=>item.href!=='/dashboard').map(item=>button({...item,label:translate(item.labelKey),icon:({bills:'🧾',audit:'📝',feedback:'💬',settings:'⚙️'})[item.href.split('?')[0].split('/').pop()]}))
+    ...preserved.filter(item=>item.href!=='/dashboard').map(item=>button({...item,label:translate(item.labelKey)}))
   ]});
 }
 

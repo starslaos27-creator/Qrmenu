@@ -17,7 +17,7 @@
       label = `⭐ ${trialActive ? 'ทดลองใช้ฟรี' : 'โปรเหลือ'} ${days} วัน ${clock}`;
     }
     if (link.textContent !== label) link.textContent = label;
-    link.title = remaining > 0 ? `${trialActive ? 'ทดลองโปรฟรีหมดอายุ' : 'ครบกำหนด'} ${new Date(expiresAt).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' })}` : 'เลือกแพ็กเกจโปร';
+    link.title = remaining > 0 ? `${trialActive ? 'ทดลองโปรฟรีหมดอายุ' : 'ครบกำหนด'} ${new Date(expiresAt).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' })}` : 'เลือกแพ็กเกจรายเดือน';
   }
   async function api(path) {
     const send = () => {

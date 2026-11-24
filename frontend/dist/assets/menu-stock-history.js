@@ -1,5 +1,5 @@
 import {r as React} from './vendor-react-DCUvmuBu.js';
-import {e as api} from './index-BjXGGWCT.js?v=20261104-remove-stock-deposits-menu-v9';
+import {e as api} from './index-BjXGGWCT.js?v=20261120-currency-v1';
 
 const h = React.createElement;
 const number = value => value == null ? '—' : Number(value).toLocaleString('th-TH', {maximumFractionDigits:3});

@@ -71,7 +71,7 @@ export default function UpgradeCheckoutPage() {
   return <main className="min-h-screen bg-[#f2e8d8] px-4 py-10 text-[#174a34] sm:px-8">
     <div className="mx-auto max-w-xl">
       <a href="/dashboard/upgrade" className="text-sm font-semibold underline underline-offset-4">← เปลี่ยนแพ็กเกจ</a>
-      <header className="mb-8 mt-8"><p className="text-xs font-bold tracking-widest">QR MENU PRO</p><h1 className="mt-3 text-3xl font-bold">ชำระเงินแพ็กเกจโปร</h1><p className="mt-3 text-[#756247]">ตรวจสอบแพ็กเกจและยอดชำระของคุณ</p></header>
+      <header className="mb-8 mt-8"><p className="text-xs font-bold tracking-widest">QR MENU PRO</p><h1 className="mt-3 text-3xl font-bold">ชำระเงินแพ็กเกจรายเดือน</h1><p className="mt-3 text-[#756247]">ตรวจสอบแพ็กเกจและยอดชำระของคุณ</p></header>
       {purchase.message && <p role="status" className="mb-5 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-900">{purchase.message}</p>}
       {purchase.error && <p role="alert" className="mb-5 text-sm text-red-800">{purchase.error} <button onClick={()=>void purchase.refresh()} className="underline">ลองใหม่</button></p>}
       {!chosen ? <section role="alert" className="rounded-2xl border border-[#dfcfb2] bg-[#fffaf1] p-6"><h2 className="font-bold">ไม่พบแพ็กเกจที่เลือก</h2><a href="/dashboard/upgrade" className="mt-4 inline-block underline">กลับไปเลือกแพ็กเกจ</a></section> :
@@ -85,8 +85,8 @@ export default function UpgradeCheckoutPage() {
             <div className="flex justify-between gap-4 border-t border-[#dfcfb2] pt-5 text-lg"><dt className="font-bold">ยอดรวม</dt><dd className="font-bold">{validPrice ? usd(monthly * chosen.paid) : "—"}</dd></div>
           </dl>
           <p className="mt-5 text-xs leading-6 text-[#756247]">สแกน QR เพื่อชำระเงิน แล้วแนบสลิปส่งให้แอดมินตรวจสอบก่อนเปิดแพ็กเกจ</p>
-          <section aria-label="บัญชีรับเงินค่าแพ็กเกจโปร" className="mt-5 rounded-xl border border-[#dfcfb2] bg-white/60 p-4 sm:p-5">
-            <h3 className="font-bold">บัญชีรับเงินค่าแพ็กเกจโปร</h3>
+          <section aria-label="บัญชีรับเงินค่าแพ็กเกจรายเดือน" className="mt-5 rounded-xl border border-[#dfcfb2] bg-white/60 p-4 sm:p-5">
+            <h3 className="font-bold">บัญชีรับเงินค่าแพ็กเกจรายเดือน</h3>
             <dl className="mt-4 space-y-3 text-sm">
               <div className="flex flex-wrap justify-between gap-2"><dt className="text-[#756247]">ธนาคาร</dt><dd className="font-semibold">{proPaymentAccount.bank || "รอระบุธนาคาร"}</dd></div>
               <div className="flex flex-wrap justify-between gap-2"><dt className="text-[#756247]">เลขบัญชี</dt><dd className="break-all font-bold tracking-wide">{proPaymentAccount.accountNumber || "รอระบุเลขบัญชี"}</dd></div>

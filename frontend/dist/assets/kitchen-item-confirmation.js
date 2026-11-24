@@ -1,5 +1,5 @@
 import {r as React,j as jsx} from './vendor-react-DCUvmuBu.js';
-import {e as request,u as useLocale} from './index-BjXGGWCT.js?v=20261104-remove-stock-deposits-menu-v9';
+import {e as request,u as useLocale} from './index-BjXGGWCT.js?v=20261120-currency-v1';
 
 export function ItemConfirmation({order,index,canConfirm,editing=false,disabled=false}) {
   const {locale}=useLocale();

@@ -1,6 +1,6 @@
 import {BillPrinterPreferences} from "./bill-printer-preferences.js";
 import {r as React,j as h} from './vendor-react-DCUvmuBu.js';
-import {j as navigate} from './index-BjXGGWCT.js?v=20261104-remove-stock-deposits-menu-v9';
+import {j as navigate} from './index-BjXGGWCT.js?v=20261120-currency-v1';
 function PrinterDialog({controls,onClose,labels}){
   const ref=React.useRef(null);
   React.useEffect(()=>{const dialog=ref.current;dialog.showModal();return()=>dialog.close()},[]);

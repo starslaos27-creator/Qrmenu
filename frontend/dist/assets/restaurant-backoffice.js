@@ -1,6 +1,6 @@
 import {r as React} from './vendor-react-DCUvmuBu.js';
-import {e as api,j as navigate} from './index-BjXGGWCT.js?v=20261104-remove-stock-deposits-menu-v9';
-import {f as money} from './format-Bw_5pJ49.js';
+import {e as api,j as navigate} from './index-BjXGGWCT.js?v=20261120-currency-v1';
+import {f as money} from './format-Bw_5pJ49.js?v=20261120-restaurant-currency-v1';
 const h=React.createElement;
 const modules=[['01','เมนูอาหาร','เลือกโต๊ะ และสั่งอาหารให้ลูกค้า','order-menu'],['02','โต๊ะ & QR Code','เพิ่มโต๊ะ ย้ายโต๊ะ และจัดการ QR','tables'],['03','ออเดอร์ & ห้องครัว','รับออเดอร์ เตรียมอาหาร และเสิร์ฟ','kitchen'],['04','เช็คบิล','รับชำระเงิน และพิมพ์ใบเสร็จ','bills'],['05','สต็อกสินค้า','รายการสินค้า / ตรวจสต็อก','menu'],['06','การเงิน','รายรับ รายจ่าย ต้นทุน และกำไร','finance'],['07','พนักงาน & ตั้งค่า','จัดการทีม สิทธิ์ และข้อมูลร้าน','settings'],['08','บันทึกการใช้งาน','ตรวจสอบการทำงานย้อนหลัง','audit']];
 const moduleImages=['/images/menu-samples/papaya-salad-banner.jpg','/images/dashboard-modules/qr-table.jpg','/images/dashboard-modules/kitchen-team.jpg','/images/dashboard-modules/receipt-pos.jpg','/images/dashboard-modules/food-stock.jpg','/images/dashboard-modules/business-analytics.jpg','/images/dashboard-modules/restaurant-staff.jpg','/images/manager-qr-banner.png'];

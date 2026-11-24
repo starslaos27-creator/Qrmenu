@@ -1,5 +1,5 @@
 import {r as React,j as h} from './vendor-react-DCUvmuBu.js';
-import {e as api} from './index-BjXGGWCT.js?v=20261104-remove-stock-deposits-menu-v9';
+import {e as api} from './index-BjXGGWCT.js?v=20261120-currency-v1';
 import {p as menuName} from './localized-xOm72Hzm.js';
 export const stageOf = order => order.status === 'ready' ? 'ready' : order.accepted_at ? 'cooking' : 'new';
 const stages = [['new','รอรับออเดอร์'],['cooking','กำลังทำ'],['ready','พร้อมเสิร์ฟ'],['history','ประวัติ']];

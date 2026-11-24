@@ -1,5 +1,5 @@
 import {r as React} from './vendor-react-DCUvmuBu.js';
-import {e as api} from './index-BjXGGWCT.js?v=20261104-remove-stock-deposits-menu-v9';
+import {e as api} from './index-BjXGGWCT.js?v=20261120-currency-v1';
 import {Trend} from './finance-page.js?v=20261016-chart-content-combined';
 import {MoneyInput} from './money-input.js';
 const h=React.createElement;

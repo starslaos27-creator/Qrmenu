@@ -1,6 +1,6 @@
 import {MoneyInput} from "./money-input.js";
 import {r as React} from './vendor-react-DCUvmuBu.js';
-import {e as api} from './index-BjXGGWCT.js?v=20261104-remove-stock-deposits-menu-v9';
+import {e as api} from './index-BjXGGWCT.js?v=20261120-currency-v1';
 const h=React.createElement;
 const today=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Vientiane',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
 const cash=value=>`${Number(value||0).toLocaleString('th-TH',{maximumFractionDigits:2})} ₭`;

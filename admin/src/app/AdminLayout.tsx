@@ -4,7 +4,7 @@ import { adminRequest } from "../shared/adminApi";
 import type { AdminSection } from "./adminSections";
 
 const navigation = [
-  { id: "pro-pricing", label: "ตั้งราคาแพ็กเกจโปร" },
+  { id: "pro-pricing", label: "ตั้งราคาแพ็กเกจรายเดือน" },
   { id: "overview", label: "ภาพรวม" },
   { id: "shops", label: "จัดการร้านค้า" },
   { id: "users", label: "จัดการผู้ใช้ทั้งหมด" },

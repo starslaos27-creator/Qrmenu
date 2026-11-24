@@ -69,8 +69,8 @@ export default function AdminSettingsPage({ user, adminRole, onRequireLogin, onS
     </header>
 
     <section className="mb-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="text-lg font-semibold">QR รับชำระแพ็กเกจโปร</h2><p className="mt-1 text-sm text-slate-500">QR นี้จะแสดงให้ร้านค้าในหน้าชำระแพ็กเกจ</p>
-      {qr && <img src={qr} alt="QR รับชำระแพ็กเกจโปร" className="mt-4 max-h-56 max-w-full rounded-lg border object-contain" />}
+      <h2 className="text-lg font-semibold">QR รับชำระแพ็กเกจรายเดือน</h2><p className="mt-1 text-sm text-slate-500">QR นี้จะแสดงให้ร้านค้าในหน้าชำระแพ็กเกจ</p>
+      {qr && <img src={qr} alt="QR รับชำระแพ็กเกจรายเดือน" className="mt-4 max-h-56 max-w-full rounded-lg border object-contain" />}
       {adminRole !== "viewer" && <label className="mt-4 block text-sm font-medium">{qrBusy ? "กำลังอัปโหลด…" : "เลือกรูป QR (JPG, PNG, WebP ไม่เกิน 5 MB)"}<input disabled={qrBusy} className="mt-2 block" type="file" accept="image/jpeg,image/png,image/webp" onChange={event => { void uploadQr(event.target.files?.[0]); event.target.value=""; }} /></label>}
       {qrMessage && <p role="status" className="mt-3 text-sm">{qrMessage}</p>}
     </section>

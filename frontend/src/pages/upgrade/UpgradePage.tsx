@@ -94,7 +94,7 @@ export default function UpgradePage() {
             <div><dt className="text-[#756247]">เฉลี่ยต่อเดือนที่ใช้งาน</dt><dd className="mt-1 font-semibold">{money(p.paid / p.total)}</dd></div>
           </dl>
           <p className="mb-5 text-sm font-bold">{p.free ? `ประหยัด ${format(p.discount)}%` : "ราคาปกติ · ไม่มีเดือนแถม"}</p>
-          <button type="button" disabled={!hasPrice||loading||purchase.blocked} onClick={() => checkout(index)} className={`mt-auto w-full rounded-xl border border-[#174a34] px-3 py-3 text-sm font-bold transition hover:bg-emerald-100 disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-800 ${selected === index ? "bg-[#174a34] text-white hover:bg-emerald-900" : "text-[#174a34]"}`}>{purchase.active ? purchase.trialActive ? "กำลังทดลองใช้ฟรี" : "แพ็กเกจโปรยังไม่หมดอายุ" : purchase.pending ? "รออนุมัติ" : purchase.loading ? "ตรวจสอบสถานะ…" : "เลือกแพ็กเกจ"}</button>
+          <button type="button" disabled={!hasPrice||loading||purchase.blocked} onClick={() => checkout(index)} className={`mt-auto w-full rounded-xl border border-[#174a34] px-3 py-3 text-sm font-bold transition hover:bg-emerald-100 disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-800 ${selected === index ? "bg-[#174a34] text-white hover:bg-emerald-900" : "text-[#174a34]"}`}>{purchase.active ? purchase.trialActive ? "กำลังทดลองใช้ฟรี" : "แพ็กเกจรายเดือนยังไม่หมดอายุ" : purchase.pending ? "รออนุมัติ" : purchase.loading ? "ตรวจสอบสถานะ…" : "เลือกแพ็กเกจ"}</button>
         </article>)}
       </div>
       <section aria-live="polite" className="mt-7 rounded-2xl bg-[#174a34] p-6 text-white">

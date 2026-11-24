@@ -1,5 +1,5 @@
 import {r as React,j as jsx} from './vendor-react-DCUvmuBu.js';
-import {e as request,u as useLocale,c as useToast} from './index-BjXGGWCT.js?v=20261104-remove-stock-deposits-menu-v9';
+import {e as request,u as useLocale,c as useToast} from './index-BjXGGWCT.js?v=20261120-currency-v1';
 
 export function KitchenPaperSettings({restaurantId,width,onSaved,canManage}) {
   const {t}=useLocale(),toast=useToast();

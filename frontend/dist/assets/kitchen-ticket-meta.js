@@ -1,4 +1,4 @@
-import {r as getSession} from './index-BjXGGWCT.js?v=20261104-remove-stock-deposits-menu-v9';
+import {r as getSession} from './index-BjXGGWCT.js?v=20261120-currency-v1';
 
 export async function withTicketOperator(ticket) {
   try {

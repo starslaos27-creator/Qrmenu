@@ -178,7 +178,7 @@ export default function ShopManagementPage({ canManage }: { canManage: boolean }
           paymentReference: purchaseReference.trim(),
         }),
       });
-      setNotice(`เปิดแพ็กเกจโปรให้ร้าน ${purchaseTarget.name} แล้ว`);
+      setNotice(`เปิดแพ็กเกจรายเดือนให้ร้าน ${purchaseTarget.name} แล้ว`);
       setPurchaseTarget(null);
       await load();
     } catch (cause) {
@@ -190,7 +190,7 @@ export default function ShopManagementPage({ canManage }: { canManage: boolean }
           : code === "PRICE_CHANGED"
             ? "ราคาแพ็กเกจเปลี่ยนแล้ว กรุณาปิดหน้าต่างและเปิดใหม่เพื่อตรวจสอบราคา"
             : code === "PRICE_NOT_CONFIGURED"
-              ? "ยังไม่ได้กำหนดราคาแพ็กเกจโปร"
+              ? "ยังไม่ได้กำหนดราคาแพ็กเกจรายเดือน"
               : `เปิดแพ็กเกจไม่สำเร็จ${code ? ` (${code})` : " กรุณาลองใหม่"}`);
     } finally {
       setPurchaseBusy(false);
@@ -236,7 +236,7 @@ export default function ShopManagementPage({ canManage }: { canManage: boolean }
                   <td className="px-3 py-2.5 text-center tabular-nums">{restaurant.order_count.toLocaleString("th-TH")}</td>
                   <td className="whitespace-nowrap px-3 py-2.5 text-right font-semibold tabular-nums text-emerald-900">{formatCurrency(Number(restaurant.today_revenue), restaurant.currency_code)}</td>
                   <td className="px-3 py-2.5 text-center"><span className={`inline-flex whitespace-nowrap rounded-full px-2 py-1 text-xs ${restaurant.suspended_at ? "bg-red-50 text-red-700" : "bg-emerald-50 text-emerald-800"}`}>{restaurant.suspended_at ? "ถูกระงับ" : "ใช้งาน"}</span></td>
-                  <td className="px-3 py-2.5 text-xs" title={restaurant.pro_expires_at ? formatSignupDate(restaurant.pro_expires_at) : undefined}>{restaurant.pro_request_pending ? <button type="button" className="font-semibold text-amber-700 underline" onClick={() => { setRequestRestaurant({id:restaurant.id,name:restaurant.name}); setView("requests"); }}>รอตรวจสอบการชำระ</button> : remaining !== null && remaining > 0 ? <span className={`${proCountdownClass(restaurant, clockNow)} whitespace-nowrap`}>{formatProCountdown(restaurant, clockNow)}</span> : <div className="flex flex-col items-start gap-1"><span className="whitespace-nowrap font-semibold text-red-700">หมดอายุแล้ว</span>{canManage && <button className="whitespace-nowrap rounded-lg bg-emerald-800 px-2.5 py-1.5 text-[11px] font-semibold text-white hover:bg-emerald-900 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600 disabled:hover:bg-slate-300" type="button" disabled={orderFeeOutstanding} title={orderFeeOutstanding ? "ร้านนี้มียอดค่าบริการออเดอร์ค้างชำระ" : undefined} onClick={() => void openProPurchase(restaurant)}>เลือกแพ็กเกจโปร</button>}</div>}</td>
+                  <td className="px-3 py-2.5 text-xs" title={restaurant.pro_expires_at ? formatSignupDate(restaurant.pro_expires_at) : undefined}>{restaurant.pro_request_pending ? <button type="button" className="font-semibold text-amber-700 underline" onClick={() => { setRequestRestaurant({id:restaurant.id,name:restaurant.name}); setView("requests"); }}>รอตรวจสอบการชำระ</button> : remaining !== null && remaining > 0 ? <span className={`${proCountdownClass(restaurant, clockNow)} whitespace-nowrap`}>{formatProCountdown(restaurant, clockNow)}</span> : <div className="flex flex-col items-start gap-1"><span className="whitespace-nowrap font-semibold text-red-700">หมดอายุแล้ว</span>{canManage && <button className="whitespace-nowrap rounded-lg bg-emerald-800 px-2.5 py-1.5 text-[11px] font-semibold text-white hover:bg-emerald-900 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600 disabled:hover:bg-slate-300" type="button" disabled={orderFeeOutstanding} title={orderFeeOutstanding ? "ร้านนี้มียอดค่าบริการออเดอร์ค้างชำระ" : undefined} onClick={() => void openProPurchase(restaurant)}>เลือกแพ็กเกจรายเดือน</button>}</div>}</td>
                   <td className="px-3 py-2.5 text-center text-xs"><div className="flex flex-col items-center gap-1"><button type="button" disabled={paidPackageActive} title={paidPackageActive?"ร้านนี้มีแพ็กเกจรายเดือนที่ยังไม่หมดอายุ":!orderFeeCycle?"เริ่มนับรอบเมื่อมีบิลชำระสำเร็จใบแรก":!orderFeeCycle.ready?"รอบยังไม่ถึงกำหนดชำระ สามารถเปิดดูสรุปได้":""} onClick={()=>setOrderPaymentTarget(restaurant)} className="inline-flex rounded-lg bg-emerald-800 px-3 py-1.5 font-semibold text-white hover:bg-emerald-900 disabled:cursor-not-allowed disabled:bg-emerald-800 disabled:text-white disabled:opacity-100 disabled:hover:bg-emerald-800" style={orderFeeCycle&&!orderFeeCycle.ready?{backgroundColor:"#cbd5e1",color:"#111827"}:undefined} aria-label={`ชำระยอดค่าบริการออเดอร์ร้าน ${restaurant.name}`}>{orderFeeCycle&&!orderFeeCycle.ready?formatOrderFeeCountdown(orderFeeCycle.cutoff,shopNow):"ชำระยอด"}</button><span className="whitespace-nowrap font-semibold tabular-nums text-slate-700">{restaurant.currency_code === "LAK" && orderFeeExchangeRate ? (Number(restaurant.order_fee_due_lak || 0) / (orderFeeExchangeRate.rate + 287)).toLocaleString("en-US", { style: "currency", currency: "USD" }) : "—"}</span></div>{restaurant.order_fee_status && <button type="button" className="mt-1 block w-full text-[10px] text-slate-500 underline" onClick={()=>{setRequestRestaurant({id:restaurant.id,name:restaurant.name,orderFeeStatus:restaurant.order_fee_status || "all"});setView("requests");}}>{({pending:"รอตรวจสอบ",approved:"อนุมัติแล้ว",rejected:"ไม่อนุมัติ",reversed:"ย้อนอนุมัติ"})[restaurant.order_fee_status]}{restaurant.order_fee_is_test ? " (ทดลอง)" : ""}</button>}</td>
                   <td className="px-3 py-2.5 text-right">{canManage && <div className="flex justify-end gap-2"><button className="whitespace-nowrap rounded-lg border border-amber-400 px-2.5 py-1.5 text-xs text-amber-900 hover:bg-amber-50" type="button" onClick={()=>setCancelTarget(restaurant)}>ยกเลิกโปร</button><button className="whitespace-nowrap rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs hover:bg-slate-50" type="button" onClick={() => void changeStatus(restaurant)}>{restaurant.suspended_at ? "คืนสถานะ" : "ระงับ"}</button></div>}</td>
                 </tr>;
@@ -248,7 +248,7 @@ export default function ShopManagementPage({ canManage }: { canManage: boolean }
       )}
       </>}
       {selected && <RestaurantDetailDialog detail={selected} onClose={() => setSelected(null)} />}
-      {cancelTarget && <ProCancelDialog restaurant={cancelTarget} onClose={()=>setCancelTarget(null)} onCancelled={()=>{setNotice(`ยกเลิกแพ็กเกจโปรของร้าน ${cancelTarget.name} แล้ว`);void load();}} />}
+      {cancelTarget && <ProCancelDialog restaurant={cancelTarget} onClose={()=>setCancelTarget(null)} onCancelled={()=>{setNotice(`ยกเลิกแพ็กเกจรายเดือนของร้าน ${cancelTarget.name} แล้ว`);void load();}} />}
       {orderPaymentTarget && <OrderFeePaymentDialog restaurant={orderPaymentTarget} canManage={canManage} onClose={()=>setOrderPaymentTarget(null)} onSubmitted={()=>void load()} />}
       {purchaseTarget && <ProPurchaseDialog
         restaurant={purchaseTarget}
@@ -314,11 +314,11 @@ function ProPurchaseDialog({
   return <div className="fixed inset-0 z-50 grid place-items-center overscroll-contain bg-slate-950/50 p-3">
     <section className="max-h-[90vh] w-full max-w-xl overflow-y-auto overscroll-contain rounded-2xl bg-white p-5 shadow-xl" role="dialog" aria-modal="true" aria-labelledby="pro-purchase-title">
       <header className="flex items-start justify-between gap-4">
-        <div><p className="text-xs font-bold uppercase tracking-wider text-emerald-800">ADMIN PRO PURCHASE</p><h2 id="pro-purchase-title" className="mt-1 text-xl font-semibold">เลือกแพ็กเกจโปรให้ร้าน</h2><p className="mt-1 text-sm font-semibold text-slate-700">ร้าน: {restaurant.name}</p><p className="text-sm text-slate-500">อีเมลเจ้าของ: {restaurant.owner_email || "ไม่ระบุ"} · โทร: {restaurant.owner_phone || "ไม่ระบุ"}</p></div>
+        <div><p className="text-xs font-bold uppercase tracking-wider text-emerald-800">ADMIN PRO PURCHASE</p><h2 id="pro-purchase-title" className="mt-1 text-xl font-semibold">เลือกแพ็กเกจรายเดือนให้ร้าน</h2><p className="mt-1 text-sm font-semibold text-slate-700">ร้าน: {restaurant.name}</p><p className="text-sm text-slate-500">อีเมลเจ้าของ: {restaurant.owner_email || "ไม่ระบุ"} · โทร: {restaurant.owner_phone || "ไม่ระบุ"}</p></div>
         <button className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm disabled:opacity-40" type="button" disabled={busy} onClick={onClose}>ปิด</button>
       </header>
       {loading ? <p role="status" className="mt-5 text-sm text-slate-500">กำลังโหลดราคาแพ็กเกจ…</p> : <>
-        {!validPrice && <p role="alert" className="mt-5 rounded-lg bg-amber-50 p-3 text-sm text-amber-900">ยังไม่ได้กำหนดราคาแพ็กเกจโปร</p>}
+        {!validPrice && <p role="alert" className="mt-5 rounded-lg bg-amber-50 p-3 text-sm text-amber-900">ยังไม่ได้กำหนดราคาแพ็กเกจรายเดือน</p>}
         {validPrice && <fieldset className="mt-5 space-y-2">
           <legend className="mb-2 text-sm font-semibold text-slate-700">เลือกแพ็กเกจ (ราคาต่อเดือน {usd(monthly)})</legend>
           {proPackages.map((item) => <label key={item.paid} className={`flex cursor-pointer items-center justify-between gap-3 rounded-xl border p-3 transition ${selectedMonths === item.paid ? "border-emerald-700 bg-emerald-50" : "border-slate-200 hover:bg-slate-50"}`}>

@@ -1,5 +1,5 @@
 import {r as React} from './vendor-react-DCUvmuBu.js';
-import {e as api,j as navigate} from './index-BjXGGWCT.js?v=20261104-remove-stock-deposits-menu-v9';
+import {e as api,j as navigate} from './index-BjXGGWCT.js?v=20261120-currency-v1';
 import {OrderMenuHeader,OrderMenuContent} from './CustomerMenuPage-B97eVEYj.js';
 const h=React.createElement;
 export function StaffOrderPage({restaurantId}) {

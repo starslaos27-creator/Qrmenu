@@ -1,5 +1,5 @@
 import {r as React,j as e} from "./vendor-react-DCUvmuBu.js";
-import {u as useLocale} from "./index-BjXGGWCT.js?v=20261104-remove-stock-deposits-menu-v9";
+import {u as useLocale} from "./index-BjXGGWCT.js?v=20261120-currency-v1";
 
 // Collapsed Chrome setup instructions, available from the Settings page.
 export function KioskPrintingSettings(){

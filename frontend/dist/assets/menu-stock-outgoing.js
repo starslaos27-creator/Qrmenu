@@ -1,5 +1,5 @@
 import {r as React} from './vendor-react-DCUvmuBu.js';
-import {e as api} from './index-BjXGGWCT.js?v=20261104-remove-stock-deposits-menu-v9';
+import {e as api} from './index-BjXGGWCT.js?v=20261120-currency-v1';
 const h=React.createElement;
 const types={sale:'ขายจากออเดอร์',issue:'ตัดออกด้วยมือ',waste:'ของเสีย / หมดอายุ',return_out:'ส่งคืนผู้จัดส่ง',adjustment:'ปรับยอดลดลง',transfer_out:'โอนออก',sale_return:'คืนจากยกเลิกออเดอร์',legacy:'ออเดอร์เก่า (ข้อมูลจำกัด)'};
 const number=v=>v==null?'—':Number(v).toLocaleString('th-TH',{maximumFractionDigits:3});
