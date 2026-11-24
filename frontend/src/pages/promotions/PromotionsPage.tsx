@@ -97,7 +97,7 @@ export default function PromotionsPage({ onLogin }: { onLogin: () => void }) {
       setImage(null);
       setNotice("เพิ่มโปรโมชั่นแล้ว");
     } catch (cause) {
-      setError(cause instanceof ApiError ? `บันทึกโปรโมชั่นไม่สำเร็จ (${cause.code})` : cause instanceof Error && cause.message === "IMAGE_TOO_LARGE" ? "รูปภาพต้องมีขนาดไม่เกิน 5 MB" : cause instanceof Error && cause.message === "UNSUPPORTED_IMAGE_TYPE" ? "รองรับรูปแบบ JPEG, PNG, WebP, GIF และ SVG" : "บันทึกโปรโมชั่นไม่สำเร็จ");
+      setError(cause instanceof ApiError && (cause.code === "IMAGE_CONTENT_NOT_ALLOWED" || cause.code === "TEXT_CONTENT_NOT_ALLOWED") ? "ระบบ AI ตรวจพบภาพหรือข้อความที่ไม่เหมาะสม จึงไม่สามารถเผยแพร่ได้" : cause instanceof ApiError && cause.code === "CONTENT_MODERATION_UNAVAILABLE" ? "ระบบตรวจสอบเนื้อหายังไม่พร้อม กรุณาลองใหม่ภายหลัง" : cause instanceof ApiError ? `บันทึกโปรโมชั่นไม่สำเร็จ (${cause.code})` : cause instanceof Error && cause.message === "IMAGE_TOO_LARGE" ? "รูปภาพต้องมีขนาดไม่เกิน 5 MB" : cause instanceof Error && cause.message === "UNSUPPORTED_IMAGE_TYPE" ? "รองรับรูปแบบ JPEG, PNG และ WebP" : "บันทึกโปรโมชั่นไม่สำเร็จ");
     } finally {
       setSaving(false);
     }
@@ -167,7 +167,7 @@ export default function PromotionsPage({ onLogin }: { onLogin: () => void }) {
             </div>
             <label className="grid gap-2 text-sm font-medium">รูปภาพ <span className="font-normal text-slate-400">(ไม่บังคับ, สูงสุด 5 MB)</span>
               {imagePreview && <img src={imagePreview} alt="ตัวอย่างรูปโปรโมชั่น" className="h-24 w-24 rounded-xl border border-slate-200 object-contain" />}
-              <input type="file" accept="image/jpeg,image/png,image/webp,image/gif,image/svg+xml" onChange={(event) => setImage(event.target.files?.[0] ?? null)} className="block w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-slate-100 file:px-3 file:py-2 file:text-sm file:font-medium" />
+              <input type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => setImage(event.target.files?.[0] ?? null)} className="block w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-slate-100 file:px-3 file:py-2 file:text-sm file:font-medium" />
             </label>
             <button type="submit" disabled={saving} className="w-full rounded-xl bg-emerald-800 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-900 disabled:cursor-wait disabled:opacity-50">{saving ? "กำลังบันทึก…" : "เพิ่มโปรโมชั่น"}</button>
           </form>}

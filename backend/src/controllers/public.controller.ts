@@ -1,4 +1,5 @@
 import {isWithinWeeklyHours} from "../security/weekly-hours.js";
+import {getOrderFeeBillingState} from "../security/order-fee-billing.js";
 interface PublicMenuRow {
     id: string;
     name: string;
@@ -106,6 +107,12 @@ export function createPublicController(app, env) {
             if (!table.is_open || !table.accepting_orders || table.suspended_at || !isWithinWeeklyHours(table.weekly_hours)) {
                 await client.query("rollback");
                 return reply.status(409).send({ ok: false, error: "ORDERING_CLOSED" });
+            }
+            const testMode = env.nodeEnv !== "production" && process.env.ORDER_FEE_TEST_MODE === "true" && (() => { try { return ["127.0.0.1", "localhost", "::1", "[::1]"].includes(new URL(env.databaseUrl).hostname); } catch { return false; } })();
+            const billing = await getOrderFeeBillingState(client, table.restaurant_id, testMode);
+            if (billing.restricted) {
+                await client.query("rollback");
+                return reply.status(409).send({ ok: false, error: "ORDER_FEE_OVERDUE" });
             }
             if (clientRequestId) {
                 const existing = await client.query(`select * from orders

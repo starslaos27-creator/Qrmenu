@@ -4,6 +4,7 @@ import LanguageControl from "../shared/i18n/LanguageControl";
 import LanguageTranslation from "../shared/i18n/LanguageTranslation";
 
 const LoginPage = lazy(() => import("../pages/auth/LoginPage"));
+const SignupPage = lazy(() => import("../pages/auth/SignupPage"));
 const HomePage = lazy(() => import("../pages/Frontpage/Home"));
 const LegacyApplicationPage = lazy(() => import("../pages/LegacyApplicationPage"));
 const UpgradePage = lazy(() => import("../pages/upgrade/UpgradePage"));
@@ -26,7 +27,7 @@ export default function App() {
 
   return <>
     <LanguageTranslation frameRef={frame} />
-    {path !== "/" && path !== "/login" && <LanguageControl />}
+    {path !== "/" && path !== "/login" && path !== "/signup" && <LanguageControl />}
     <Suspense fallback={<PageLoading />}>
       {renderPage({ path, frame })}
     </Suspense>
@@ -44,6 +45,7 @@ function renderPage({ path, frame }: {
   // The public restaurant site and the staff login have separate entry points.
   if (path === "/") return <HomePage />;
   if (path === "/login") return <LoginPage />;
+  if (path === "/signup") return <SignupPage />;
   // Keep a single dashboard UI for every menu destination. In particular,
   // do not switch to the unfinished source layout when a navigation link drops
   // the optional `ui=source` query parameter.

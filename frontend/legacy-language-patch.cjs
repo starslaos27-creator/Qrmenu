@@ -2,7 +2,16 @@ const fs = require("node:fs");
 const path = require("node:path");
 
 function patchLegacyModuleImports(source) {
-  const designImport = 'import { applyPrintDesign as shopqrApplyPrintDesign, getPrintLocale as shopqrGetPrintLocale } from "./receipt-design.js?v=20261118-v3";\n';
+  source = source.replace(/(format-Bw_5pJ49\.js)(?:\?[^"']*)?/g, '$1?v=20261120-restaurant-currency-v1');
+  source = source.replace(/(bill-payment-form\.js)(?:\?[^"']*)?/g, '$1?v=20261120-restaurant-currency-v1');
+  source = source.replace(/(bills-table\.js)(?:\?[^"']*)?/g, '$1?v=20261120-bill-removal-v1');
+  source = source.replace(/(kiosk-printing-settings\.js)(?:\?[^"']*)?/g, '$1?v=20261120-isolated-profile-v1');
+  if (source.includes('function xt({restaurantId:t,restaurantName:r,') && source.includes('o("kit.calls.section"')) {
+    source = source.replace('initialCalls:A,canAct:N,canManageSettings:k})', 'initialCalls:A,canAct:N,canManageSettings:k,userRole:shopqrUserRole})');
+    source = source.replace('initialCalls:a.calls,canAct:m,canManageSettings:r==="owner"', 'initialCalls:a.calls,canAct:m,userRole:r,canManageSettings:r==="owner"');
+    source = source.replace('children:[p.length>0&&e.jsxs("section",{className:"mb-4 rounded-2xl border border-amber-200 bg-amber-50/70 p-4"', 'children:[shopqrUserRole!=="cook"&&p.length>0&&e.jsxs("section",{className:"mb-4 rounded-2xl border border-amber-200 bg-amber-50/70 p-4"');
+  }
+  const designImport = 'import { applyPrintDesign as shopqrApplyPrintDesign, getPrintLocale as shopqrGetPrintLocale } from "./receipt-design.js?v=20261120-receipt-top-margin-v1";\n';
   if (source.includes('function Ce(t)') && source.includes('A.open(),A.write($),A.close()') && !source.includes('shopqrApplyPrintDesign')) {
     source = designImport + source.replace('function de(t){var r;', 'function de(t){t={...t,locale:shopqrGetPrintLocale(t.locale)};var r;').replace('A.open(),A.write($),A.close()', 'A.open(),A.write(shopqrApplyPrintDesign($,"receipt")),A.close()');
   }
@@ -14,13 +23,15 @@ function patchLegacyModuleImports(source) {
   // root instead of evaluating the whole application a second time.
   return source.replace(
     /(["'])\.\/index-BjXGGWCT\.js(?:\?[^"']*)?\1/g,
-    '$1./index-BjXGGWCT.js?v=20261112-invite-i18n-v1$1',
+    '$1./index-BjXGGWCT.js?v=20261120-currency-v1$1',
   );
 }
 
 module.exports = function patchLegacyLanguageBundle(source) {
   source = patchLegacyModuleImports(source);
-  source = source.replace(/(BillsPage-BRVBEE_B\.js|KitchenPage-BWBFK9t3\.js)(?:\?[^"']*)?/g, '$1?v=20261118-print-design-v3');
+  source = source.replace(/(BillsPage-BRVBEE_B\.js|KitchenPage-BWBFK9t3\.js|CustomerMenuPage-B97eVEYj\.js)(?:\?[^"']*)?/g, '$1?v=20261120-restaurant-currency-v1');
+  source = source.replace(/(finance-workspace\.js)(?:\?[^"']*)?/g, '$1?v=20261120-finance-icons-v1');
+  source = source.replace(/(SettingsPage-BxuQXgL0\.js)(?:\?[^"']*)?/g, '$1?v=20261120-isolated-profile-v1');
   // Keep the dashboard shell mounted while routes change. Keying this
   // Suspense boundary by the URL tears down and recreates its whole subtree
   // on every menu click, which makes the page flash during navigation.
@@ -87,10 +98,11 @@ module.exports = function patchLegacyLanguageBundle(source) {
     source = source.slice(0, refreshStart) + safeCrossTabRefresh + source.slice(refreshEnd);
   }
   for (const [before, after] of [[oldApiRequest, newApiRequest]]) {
-    if (source.includes(after)) continue;
+    if (source.includes(after) || source.includes('window.shopqrRestaurantCurrency=code')) continue;
     if (!source.includes(before)) throw new Error("Legacy auth refresh changed; cross-tab session lock patch did not apply");
     source = source.replace(before, after);
   }
+  source = source.replace('return n.status===401&&r&&await ve(l)?G(await X(t,a,!0)):G(n)', 'const result=await(n.status===401&&r&&await ve(l)?G(await X(t,a,!0)):G(n));if(typeof t==="string"&&(/^(?:\\/api\\/auth\\/me|\\/api\\/restaurants\\/[^/?]+|\\/api\\/public\\/menu\\/)/.test(t))){const code=result?.restaurant?.currency_code??result?.membership?.currency_code;if(["LAK","THB","USD"].includes(code))window.shopqrRestaurantCurrency=code}return result');
 
   // Use the same up-to-date dictionaries in both the legacy and source screens.
   const locales = {};

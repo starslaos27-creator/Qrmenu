@@ -1,4 +1,5 @@
 import { requireRestaurantAccess } from "../security/authorization.js";
+import { checkImageUrl, sendModerationFailure } from "../security/content-moderation.js";
 export function createInventoryController(app, env) {
     const get_api_restaurants_restaurantId_stock_locations = async (request, reply) => {
         const access = await requireInventoryAccess(app, request, reply, env);
@@ -83,6 +84,9 @@ export function createInventoryController(app, env) {
                 (!Number.isFinite(body.minimum_stock) || body.minimum_stock < 0))) {
             return invalidBody(reply);
         }
+        const imageModeration = await checkImageUrl(env, body.image_url);
+        if (sendModerationFailure(reply, imageModeration))
+            return;
         try {
             const result = await app.db.query(`insert into inventory_items
           (restaurant_id, name, sku, barcode, unit, minimum_stock,
@@ -120,6 +124,11 @@ export function createInventoryController(app, env) {
             (body.minimum_stock !== undefined &&
                 (!Number.isFinite(body.minimum_stock) || body.minimum_stock < 0))) {
             return invalidBody(reply);
+        }
+        if ("image_url" in body) {
+            const imageModeration = await checkImageUrl(env, body.image_url);
+            if (sendModerationFailure(reply, imageModeration))
+                return;
         }
         try {
             const result = await app.db.query(`update inventory_items set

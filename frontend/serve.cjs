@@ -52,7 +52,7 @@ const compressedFiles = new Map();
       let body = fs.readFileSync(file);
       if (url.pathname === '/assets/index-BjXGGWCT.js') {
         body = Buffer.from(patchLegacyLanguageBundle(body.toString('utf8')));
-      } else if (/^\/assets\/(BillsPage-BRVBEE_B|KitchenPage-BWBFK9t3)\.js$/.test(url.pathname)) {
+      } else if (/^\/assets\/(BillsPage-BRVBEE_B|KitchenPage-BWBFK9t3|SettingsPage-BxuQXgL0)\.js$/.test(url.pathname)) {
         body = Buffer.from(patchLegacyLanguageBundle.patchLegacyModuleImports(body.toString('utf8')));
       }
       const ext = path.extname(file);

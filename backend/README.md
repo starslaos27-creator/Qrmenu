@@ -4,6 +4,25 @@ ShopQR Fastify API for Node.js, with PostgreSQL and optional Supabase/storage
 integrations. The API, routes, security helpers, database setup and environment
 configuration are TypeScript source under `src/`.
 
+## AI content moderation
+
+Image uploads and image URLs saved for menus, promotions, inventory items, and
+payment QR codes are checked before they are stored or published. Menu and
+promotion text is also checked. The checks block sexual content, nudity,
+firearms, military weapons, explosives, war, and graphic violence. Static JPEG,
+PNG, and WebP images are supported; animated images and other formats are
+rejected.
+
+Set `OPENAI_API_KEY` in the backend environment to enable moderation. The
+backend sends submitted image data and applicable menu/promotion text to the
+OpenAI Moderation and Responses APIs for classification. If no key is
+configured, moderation is skipped and normal save/upload flows remain available.
+If a key is configured but either API is unavailable, the backend rejects the
+save/upload with `CONTENT_MODERATION_UNAVAILABLE` so unreviewed content is not
+published.
+`CONTENT_VISION_MODEL` can override the image-classifier model; the default is
+`gpt-5.4-mini`.
+
 ## Structure
 
 ```text

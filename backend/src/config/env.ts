@@ -46,6 +46,8 @@ export function loadEnv() {
         adminBootstrapToken: readOptional("ADMIN_BOOTSTRAP_TOKEN"),
         adminBootstrapEmail: readOptional("ADMIN_BOOTSTRAP_EMAIL"),
         resendApiKey: readOptional("RESEND_API_KEY"),
+        openAiApiKey: readOptional("OPENAI_API_KEY"),
+        contentVisionModel: process.env.CONTENT_VISION_MODEL?.trim() || "gpt-5.4-mini",
         mailFrom: readOptional("MAIL_FROM"),
         adminPublicUrl: readOptional("ADMIN_PUBLIC_URL") ?? ((process.env.NODE_ENV ?? "development") === "production" ? null : "http://localhost:5176"),
         authIssuer: process.env.AUTH_ISSUER?.trim() || "shopqr",

@@ -125,7 +125,7 @@ export default function MenuPage({ onLogin }: { onLogin: () => void }) {
 
 function Summary({ label, value }: { label: string; value: number }) { return <div className="rounded-xl border border-slate-200 bg-white p-4"><p className="text-sm text-slate-500">{label}</p><p className="mt-1 text-2xl font-bold text-slate-900">{value}</p></div>; }
 function Alert({ children }: { children: ReactNode }) { return <p role="alert" className="rounded-lg bg-rose-50 p-3 text-sm text-rose-800">{children}</p>; }
-function messageFor(cause: unknown) { return cause instanceof ApiError && cause.code === "INVALID_CATEGORY" ? "หมวดหมู่ที่เลือกไม่ถูกต้อง กรุณาเลือกใหม่" : "บันทึกเมนูไม่สำเร็จ กรุณาตรวจสอบข้อมูล"; }
+function messageFor(cause: unknown) { return cause instanceof ApiError && cause.code === "INVALID_CATEGORY" ? "หมวดหมู่ที่เลือกไม่ถูกต้อง กรุณาเลือกใหม่" : cause instanceof ApiError && (cause.code === "IMAGE_CONTENT_NOT_ALLOWED" || cause.code === "TEXT_CONTENT_NOT_ALLOWED") ? "ระบบ AI ตรวจพบภาพหรือข้อความที่ไม่เหมาะสม จึงไม่สามารถบันทึกได้" : cause instanceof ApiError && cause.code === "CONTENT_MODERATION_UNAVAILABLE" ? "ระบบตรวจสอบเนื้อหายังไม่พร้อม กรุณาลองใหม่ภายหลัง" : "บันทึกเมนูไม่สำเร็จ กรุณาตรวจสอบข้อมูล"; }
 const jsonHeaders = { "Content-Type": "application/json" };
 const input = "rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100";
 const primary = "rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800";

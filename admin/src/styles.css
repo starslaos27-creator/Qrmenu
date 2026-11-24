@@ -2,6 +2,24 @@
 @tailwind components;
 @tailwind utilities;
 
+@font-face {
+  font-family: "ShopQR Noto Lao";
+  src: url("/fonts/noto-sans-lao-regular.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 100 500;
+  font-display: swap;
+  unicode-range: U+0E80-0EFF;
+}
+@font-face {
+  font-family: "ShopQR Noto Lao";
+  src: url("/fonts/noto-sans-lao-bold.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 600 900;
+  font-display: swap;
+  unicode-range: U+0E80-0EFF;
+}
+html, body, body * { font-family: "ShopQR Noto Lao", "Noto Sans Thai", system-ui, sans-serif !important; }
+
 @layer base {
   html,
   body,

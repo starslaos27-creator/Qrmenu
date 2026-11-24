@@ -11,6 +11,16 @@ export function createAuthController(app, env) {
         const password = request.body?.password ?? "";
         const restaurantName = request.body?.restaurantName?.trim() ?? "";
         const currencyCode = request.body?.currencyCode ?? "LAK";
+        const restaurantType = request.body?.restaurantType?.trim() ?? "";
+        const restaurantDescription = request.body?.restaurantDescription?.trim() ?? "";
+        const address = {
+            street: request.body?.street?.trim() ?? "",
+            village: request.body?.village?.trim() ?? "",
+            city: request.body?.city?.trim() ?? "",
+            province: request.body?.province?.trim() ?? "",
+        };
+        const latitude = request.body?.latitude ?? null;
+        const longitude = request.body?.longitude ?? null;
         const phone = request.body?.phone?.trim() || null;
         const phoneNormalized = normalizePhone(phone);
         const inviteToken = request.body?.inviteToken?.trim() || null;
@@ -29,6 +39,18 @@ export function createAuthController(app, env) {
         if (!inviteToken && !["LAK", "THB", "USD"].includes(currencyCode)) {
             return reply.status(400).send({ ok: false, error: "INVALID_CURRENCY" });
         }
+        if (Object.values(address).some((value) => value.length > 200)) {
+            return reply.status(400).send({ ok: false, error: "INVALID_ADDRESS" });
+        }
+        if (restaurantType.length > 100 || restaurantDescription.length > 1000 ||
+            (!inviteToken && !["thai", "lao", "cafe", "made_to_order", "seafood", "buffet", "other"].includes(restaurantType))) {
+            return reply.status(400).send({ ok: false, error: "INVALID_RESTAURANT_DETAILS" });
+        }
+        if ((latitude === null) !== (longitude === null) ||
+            (latitude !== null && (!Number.isFinite(latitude) || latitude < -90 || latitude > 90)) ||
+            (longitude !== null && (!Number.isFinite(longitude) || longitude < -180 || longitude > 180))) {
+            return reply.status(400).send({ ok: false, error: "INVALID_LOCATION" });
+        }
         const passwordHash = await hashPassword(password);
         const client = await app.db.connect();
         try {
@@ -40,7 +62,7 @@ export function createAuthController(app, env) {
             const user = userResult.rows[0];
             const membership = inviteToken
                 ? await createInvitedMembership(client, user, inviteToken, phone)
-                : await createOwnerRestaurant(client, user, restaurantName, phone, currencyCode);
+                : await createOwnerRestaurant(client, user, restaurantName, phone, currencyCode, address, latitude, longitude, restaurantType, restaurantDescription);
             const session = await createRefreshSession(client, user.id, request, env);
             const accessToken = await signAccessToken(env, user);
             await client.query("commit");
@@ -411,10 +433,11 @@ export function createAuthController(app, env) {
   return { post_api_auth_signup, post_api_auth_login, post_api_auth_refresh, post_api_auth_logout, get_api_auth_me, post_api_auth_activity, post_api_auth_change_password, get_api_auth_invites_token, post_api_auth_accept_invite, post_api_auth_forgot_password, get_api_auth_password_reset_token, post_api_auth_reset_password };
 }
 
-async function createOwnerRestaurant(client, user, restaurantName, phone, currencyCode = "LAK") {
-    const restaurant = await client.query(`insert into restaurants (user_id, name, currency_code)
-     values ($1, $2, $3)
-     returning id, name, currency_code`, [user.id, restaurantName, currencyCode]);
+async function createOwnerRestaurant(client, user, restaurantName, phone, currencyCode = "LAK", address = { street: "", village: "", city: "", province: "" }, latitude = null, longitude = null, restaurantType = "", restaurantDescription = "") {
+    const restaurant = await client.query(`insert into restaurants
+     (user_id, name, currency_code, address_street, address_village, address_city, address_province, latitude, longitude, restaurant_type, description)
+     values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+     returning id, name, currency_code`, [user.id, restaurantName, currencyCode, address.street || null, address.village || null, address.city || null, address.province || null, latitude, longitude, restaurantType || null, restaurantDescription || null]);
     const row = restaurant.rows[0];
     await client.query(`with trial_start as (select clock_timestamp() as starts_at)
       insert into restaurant_pro_trials (restaurant_id, starts_at, expires_at)
@@ -427,7 +450,7 @@ async function createOwnerRestaurant(client, user, restaurantName, phone, curren
     await client.query(`insert into stock_locations (restaurant_id, name, is_default)
      values ($1, 'Main', true)`, [row.id]);
     await client.query(`insert into finance_settings (restaurant_id, config)
-     values ($1, jsonb_build_object('currency', $2))`, [row.id, row.currency_code]);
+     values ($1, jsonb_build_object('currency', $2::text))`, [row.id, row.currency_code]);
     return {
         restaurant_id: row.id,
         restaurant_name: row.name,

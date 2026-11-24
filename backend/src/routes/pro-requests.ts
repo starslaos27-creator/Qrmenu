@@ -8,11 +8,25 @@ export async function registerProRequestRoutes(app, env) {
   app.get("/api/admin/pro-requests/:id/slip", controller.get_api_admin_pro_request_slip);
   app.get("/api/pro-pricing", controller.get_api_pro_pricing);
   app.get("/api/admin/pro-pricing", controller.get_api_admin_pro_pricing);
+  app.get("/api/admin/pro-exchange-rate", controller.get_admin_pro_exchange_rate);
+  app.get("/api/admin/restaurants/:restaurantId/order-bills-summary", controller.get_admin_order_bills_summary);
   app.put("/api/admin/pro-pricing", controller.put_api_admin_pro_pricing);
   app.get("/api/restaurants/:restaurantId/pro-countdown", controller.get_api_restaurants_restaurantId_pro_countdown);
   app.get("/api/restaurants/:restaurantId/pro-requests", controller.get_api_restaurants_restaurantId_pro_requests);
+  app.get("/api/restaurants/:restaurantId/pro-order-bills", controller.get_api_restaurants_restaurantId_pro_order_bills);
+  app.get("/api/restaurants/:restaurantId/pro-exchange-rate", controller.get_api_restaurants_restaurantId_pro_exchange_rate);
+  app.get("/api/restaurants/:restaurantId/order-fee-requests", controller.get_order_fee_requests);
+  app.get("/api/restaurants/:restaurantId/order-fee-status", controller.get_order_fee_billing_status);
+  app.post("/api/restaurants/:restaurantId/order-fee-requests", controller.post_order_fee_request);
+  app.post("/api/admin/restaurants/:restaurantId/order-fee-requests", controller.post_admin_order_fee_request);
+  app.get("/api/admin/order-fee-requests", controller.get_admin_order_fee_requests);
+  app.get("/api/admin/order-fee-requests/:id/slip", controller.get_admin_order_fee_slip);
+  app.post("/api/admin/order-fee-requests/:id/review", controller.post_admin_order_fee_review);
+  app.post("/api/admin/order-fee-requests/:id/reverse", controller.post_admin_order_fee_reverse);
   app.post("/api/restaurants/:restaurantId/pro-requests", controller.post_api_restaurants_restaurantId_pro_requests);
   app.get("/api/admin/pro-requests", controller.get_api_admin_pro_requests);
   app.post("/api/admin/restaurants/:restaurantId/pro-purchases", controller.post_api_admin_restaurants_restaurantId_pro_purchases);
   app.post("/api/admin/pro-requests/:id/review", controller.post_api_admin_pro_requests_id_review);
+  app.post("/api/admin/pro-requests/:id/cancel", controller.post_admin_pro_cancel);
+  app.get("/api/admin/restaurants/:restaurantId/active-pro-packages", controller.get_admin_active_pro_packages);
 }

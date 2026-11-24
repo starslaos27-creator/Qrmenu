@@ -1,12 +1,11 @@
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { requireAuth } from "../security/auth.js";
+import { checkUploadedImage, rememberApprovedImage, sendModerationFailure } from "../security/content-moderation.js";
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
 const ALLOWED_TYPES = new Set([
     "image/jpeg",
     "image/png",
     "image/webp",
-    "image/gif",
-    "image/svg+xml",
 ]);
 const PUBLIC_BUCKET_PREFIX = {
     "menu-images": "menu",
@@ -71,6 +70,9 @@ export function createStorageController(app, env) {
         if (membership.rows[0]?.role !== "owner") {
             return reply.status(403).send({ error: "Forbidden" });
         }
+        const moderation = await checkUploadedImage(env, part.mimetype, body);
+        if (sendModerationFailure(reply, moderation))
+            return;
         const client = new S3Client({
             region: "auto",
             endpoint: `https://${r2.accountId}.r2.cloudflarestorage.com`,
@@ -87,7 +89,9 @@ export function createStorageController(app, env) {
             ContentType: part.mimetype || "application/octet-stream",
             CacheControl: "public, max-age=31536000, immutable",
         }));
-        return reply.send({ publicUrl: `${r2.publicBaseUrl}/${key}` });
+        const publicUrl = `${r2.publicBaseUrl}/${key}`;
+        rememberApprovedImage(publicUrl);
+        return reply.send({ publicUrl });
     };
     return { post_api_storage_upload };
 }

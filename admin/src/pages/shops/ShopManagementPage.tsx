@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from "react";
 import { adminRequest, AdminApiError } from "../../shared/adminApi";
 import { PageState } from "../dashboard/PlatformOverviewPage";
 import ProRequestsPage from "../pro/ProRequestsPage";
+import ProCancelDialog from "../pro/ProCancelDialog";
+import OrderFeePaymentDialog from "./OrderFeePaymentDialog";
 
 interface Restaurant {
   id: string;
@@ -20,13 +22,19 @@ interface Restaurant {
   order_count: number;
   last_order_at: string | null;
   pro_expires_at?: string | null;
+  paid_pro_expires_at?: string | null;
   server_now?: string;
   trial_active?: boolean;
   pro_request_pending?: boolean;
+  order_fee_status?: "pending" | "approved" | "rejected" | "reversed" | null;
+  order_fee_is_test?: boolean | null;
+  order_fee_due_lak?: string | null;
+  order_fee_first_bill_at?: string | null;
   clockOffsetMs?: number;
 }
 
 interface ProPricing { monthly_usd: string | null; version: number }
+interface OrderFeeExchangeRate { rate: number; date: string }
 const proPackages = [
   { paid: 1, free: 0 },
   { paid: 3, free: 0 },
@@ -46,7 +54,7 @@ interface RestaurantDetail {
 
 export default function ShopManagementPage({ canManage }: { canManage: boolean }) {
   const [view, setView] = useState<"shops" | "requests">(() => { const params = new URLSearchParams(window.location.search); return params.get("section") === "pro" || params.get("view") === "requests" ? "requests" : "shops"; });
-  const [requestRestaurant, setRequestRestaurant] = useState<{id:string;name:string} | null>(null);
+  const [requestRestaurant, setRequestRestaurant] = useState<{id:string;name:string;orderFeeStatus?:string} | null>(null);
   const [pendingCount, setPendingCount] = useState(0);
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [search, setSearch] = useState("");
@@ -68,6 +76,9 @@ export default function ShopManagementPage({ canManage }: { canManage: boolean }
   const [purchaseLoading, setPurchaseLoading] = useState(false);
   const [purchaseBusy, setPurchaseBusy] = useState(false);
   const [purchaseError, setPurchaseError] = useState("");
+  const [cancelTarget,setCancelTarget]=useState<Restaurant|null>(null);
+  const [orderPaymentTarget,setOrderPaymentTarget]=useState<Restaurant|null>(null);
+  const [orderFeeExchangeRate,setOrderFeeExchangeRate]=useState<OrderFeeExchangeRate|null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -85,6 +96,13 @@ export default function ShopManagementPage({ canManage }: { canManage: boolean }
   }, [search, status, offset]);
 
   useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    let active = true;
+    const refresh = () => { void adminRequest<OrderFeeExchangeRate>("/api/admin/pro-exchange-rate").then((rate) => { if (active) setOrderFeeExchangeRate(rate); }).catch(() => { if (active) setOrderFeeExchangeRate(null); }); };
+    refresh();
+    const timer = window.setInterval(refresh, 600_000);
+    return () => { active = false; window.clearInterval(timer); };
+  }, []);
   useEffect(() => {
     const updateCount = () => { void adminRequest<{count:number}>("/api/admin/pro-requests/count").then(data => setPendingCount(data.count)).catch(() => {}); };
     const reviewed = () => { updateCount(); void load(); };
@@ -186,7 +204,7 @@ export default function ShopManagementPage({ canManage }: { canManage: boolean }
         <button type="button" aria-current={view === "shops" ? "page" : undefined} onClick={() => setView("shops")} className={`rounded-lg px-4 py-2 text-sm font-semibold ${view === "shops" ? "bg-emerald-800 text-white" : "text-slate-700 hover:bg-slate-100"}`}>ร้านค้าทั้งหมด</button>
         <button type="button" aria-current={view === "requests" ? "page" : undefined} onClick={() => { setRequestRestaurant(null); setView("requests"); }} className={`rounded-lg px-4 py-2 text-sm font-semibold ${view === "requests" ? "bg-emerald-800 text-white" : "text-slate-700 hover:bg-slate-100"}`}>ตรวจสอบการชำระ {pendingCount > 0 && <span className="ml-1 rounded-full bg-red-600 px-2 py-0.5 text-xs text-white">{pendingCount}</span>}</button>
       </nav>
-      {view === "requests" ? <ProRequestsPage key={requestRestaurant?.id || "all"} canManage={canManage} restaurantId={requestRestaurant?.id} restaurantName={requestRestaurant?.name} onClearRestaurant={() => setRequestRestaurant(null)} /> : <>
+      {view === "requests" ? <ProRequestsPage key={`${requestRestaurant?.id || "all"}-${requestRestaurant?.orderFeeStatus || "pro"}`} canManage={canManage} restaurantId={requestRestaurant?.id} restaurantName={requestRestaurant?.name} orderFeeStatus={requestRestaurant?.orderFeeStatus} onClearRestaurant={() => setRequestRestaurant(null)} /> : <>
       <section className="flex flex-wrap items-end gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
         <form className="flex min-w-56 flex-1 flex-wrap items-end gap-2" onSubmit={(event) => { event.preventDefault(); setOffset(0); setSearch(searchInput.trim()); }}>
           <label className="grid min-w-56 flex-1 gap-1 text-xs text-slate-500">ค้นหาด้วยชื่อร้าน เบอร์โทร หรืออีเมลเจ้าของ<input className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900" value={searchInput} onChange={(event) => setSearchInput(event.target.value)} /></label>
@@ -199,13 +217,17 @@ export default function ShopManagementPage({ canManage }: { canManage: boolean }
       {loading ? <PageState /> : restaurants.length === 0 ? <PageState error="ไม่พบร้านค้าที่ตรงกับเงื่อนไข" /> : (
         <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
           <div className="overflow-x-auto overscroll-x-contain">
-            <table className="w-full min-w-[1180px] table-fixed text-left text-sm">
-              <colgroup><col className="w-[23%]" /><col className="w-[13%]" /><col className="w-[7%]" /><col className="w-[8%]" /><col className="w-[6%]" /><col className="w-[10%]" /><col className="w-[8%]" /><col className="w-[18%]" /><col className="w-[7%]" /></colgroup>
+            <table className="w-full min-w-[1450px] table-fixed text-left text-sm">
+              <colgroup><col className="w-[19%]" /><col className="w-[12%]" /><col className="w-[6%]" /><col className="w-[7%]" /><col className="w-[6%]" /><col className="w-[9%]" /><col className="w-[7%]" /><col className="w-[14%]" /><col className="w-[9%]" /><col className="w-[11%]" /></colgroup>
               <thead className="bg-slate-50 text-xs text-slate-500"><tr>
-                <th className="px-3 py-3 font-medium">ร้านค้า</th><th className="px-3 py-3 font-medium">วันที่สมัคร</th><th className="px-3 py-3 text-center font-medium">สมาชิก</th><th className="px-3 py-3 text-center font-medium">เมนู / โต๊ะ</th><th className="px-3 py-3 text-center font-medium">ออเดอร์</th><th className="px-3 py-3 text-right font-medium">ยอดขายวันนี้</th><th className="px-3 py-3 text-center font-medium">สถานะ</th><th className="px-3 py-3 font-medium">เวลาคงเหลือ</th><th className="px-3 py-3 text-right font-medium">จัดการ</th>
+                <th className="px-3 py-3 font-medium">ร้านค้า</th><th className="px-3 py-3 font-medium">วันที่สมัคร</th><th className="px-3 py-3 text-center font-medium">สมาชิก</th><th className="px-3 py-3 text-center font-medium">เมนู / โต๊ะ</th><th className="px-3 py-3 text-center font-medium">ออเดอร์</th><th className="px-3 py-3 text-right font-medium">ยอดขายวันนี้</th><th className="px-3 py-3 text-center font-medium">สถานะ</th><th className="px-3 py-3 font-medium">เวลาคงเหลือ</th><th className="px-3 py-3 text-center font-medium">แพ็กเกจออเดอร์</th><th className="px-3 py-3 text-right font-medium">จัดการ</th>
               </tr></thead>
               <tbody className="divide-y divide-slate-100">{restaurants.map((restaurant) => {
                 const remaining = proRemainingMs(restaurant, clockNow);
+                const paidPackageActive = Boolean(restaurant.paid_pro_expires_at && Date.parse(restaurant.paid_pro_expires_at) > clockNow + (restaurant.clockOffsetMs || 0));
+                const orderFeeOutstanding = Number(restaurant.order_fee_due_lak || 0) > 0;
+                const shopNow = clockNow + (restaurant.clockOffsetMs || 0);
+                const orderFeeCycle = orderFeeCycleStatus(restaurant.order_fee_first_bill_at, shopNow);
                 return <tr className="align-middle" key={restaurant.id}>
                   <td className="px-3 py-2.5"><button className="max-w-full truncate text-left font-semibold text-emerald-900 hover:underline" type="button" title={restaurant.name} onClick={() => void openDetail(restaurant.id)}>{restaurant.name}</button><span className="block truncate text-xs text-slate-500" title={restaurant.owner_email || "ไม่ระบุอีเมลเจ้าของ"}>{restaurant.owner_email || "ไม่ระบุอีเมลเจ้าของ"}</span><span className="block truncate text-xs text-slate-500">{restaurant.owner_phone || "ไม่มีเบอร์โทร"}</span><span className="block truncate font-mono text-[10px] text-slate-400" title={restaurant.id}>{restaurant.id}</span></td>
                   <td className="whitespace-nowrap px-3 py-2.5 text-xs text-slate-600">{formatSignupDate(restaurant.created_at)}</td>
@@ -214,8 +236,9 @@ export default function ShopManagementPage({ canManage }: { canManage: boolean }
                   <td className="px-3 py-2.5 text-center tabular-nums">{restaurant.order_count.toLocaleString("th-TH")}</td>
                   <td className="whitespace-nowrap px-3 py-2.5 text-right font-semibold tabular-nums text-emerald-900">{formatCurrency(Number(restaurant.today_revenue), restaurant.currency_code)}</td>
                   <td className="px-3 py-2.5 text-center"><span className={`inline-flex whitespace-nowrap rounded-full px-2 py-1 text-xs ${restaurant.suspended_at ? "bg-red-50 text-red-700" : "bg-emerald-50 text-emerald-800"}`}>{restaurant.suspended_at ? "ถูกระงับ" : "ใช้งาน"}</span></td>
-                  <td className="px-3 py-2.5 text-xs" title={restaurant.pro_expires_at ? formatSignupDate(restaurant.pro_expires_at) : undefined}>{restaurant.pro_request_pending ? <button type="button" className="font-semibold text-amber-700 underline" onClick={() => { setRequestRestaurant({id:restaurant.id,name:restaurant.name}); setView("requests"); }}>รอตรวจสอบการชำระ</button> : remaining !== null && remaining > 0 ? <span className={`${proCountdownClass(restaurant, clockNow)} whitespace-nowrap`}>{formatProCountdown(restaurant, clockNow)}</span> : <div className="flex flex-col items-start gap-1"><span className="whitespace-nowrap font-semibold text-red-700">หมดอายุแล้ว</span>{canManage && <button className="whitespace-nowrap rounded-lg bg-emerald-800 px-2.5 py-1.5 text-[11px] font-semibold text-white hover:bg-emerald-900" type="button" onClick={() => void openProPurchase(restaurant)}>เลือกแพ็กเกจโปร</button>}</div>}</td>
-                  <td className="px-3 py-2.5 text-right">{canManage && <button className="whitespace-nowrap rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs hover:bg-slate-50" type="button" onClick={() => void changeStatus(restaurant)}>{restaurant.suspended_at ? "คืนสถานะ" : "ระงับ"}</button>}</td>
+                  <td className="px-3 py-2.5 text-xs" title={restaurant.pro_expires_at ? formatSignupDate(restaurant.pro_expires_at) : undefined}>{restaurant.pro_request_pending ? <button type="button" className="font-semibold text-amber-700 underline" onClick={() => { setRequestRestaurant({id:restaurant.id,name:restaurant.name}); setView("requests"); }}>รอตรวจสอบการชำระ</button> : remaining !== null && remaining > 0 ? <span className={`${proCountdownClass(restaurant, clockNow)} whitespace-nowrap`}>{formatProCountdown(restaurant, clockNow)}</span> : <div className="flex flex-col items-start gap-1"><span className="whitespace-nowrap font-semibold text-red-700">หมดอายุแล้ว</span>{canManage && <button className="whitespace-nowrap rounded-lg bg-emerald-800 px-2.5 py-1.5 text-[11px] font-semibold text-white hover:bg-emerald-900 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600 disabled:hover:bg-slate-300" type="button" disabled={orderFeeOutstanding} title={orderFeeOutstanding ? "ร้านนี้มียอดค่าบริการออเดอร์ค้างชำระ" : undefined} onClick={() => void openProPurchase(restaurant)}>เลือกแพ็กเกจโปร</button>}</div>}</td>
+                  <td className="px-3 py-2.5 text-center text-xs"><div className="flex flex-col items-center gap-1"><button type="button" disabled={paidPackageActive} title={paidPackageActive?"ร้านนี้มีแพ็กเกจรายเดือนที่ยังไม่หมดอายุ":!orderFeeCycle?"เริ่มนับรอบเมื่อมีบิลชำระสำเร็จใบแรก":!orderFeeCycle.ready?"รอบยังไม่ถึงกำหนดชำระ สามารถเปิดดูสรุปได้":""} onClick={()=>setOrderPaymentTarget(restaurant)} className="inline-flex rounded-lg bg-emerald-800 px-3 py-1.5 font-semibold text-white hover:bg-emerald-900 disabled:cursor-not-allowed disabled:bg-emerald-800 disabled:text-white disabled:opacity-100 disabled:hover:bg-emerald-800" style={orderFeeCycle&&!orderFeeCycle.ready?{backgroundColor:"#cbd5e1",color:"#111827"}:undefined} aria-label={`ชำระยอดค่าบริการออเดอร์ร้าน ${restaurant.name}`}>{orderFeeCycle&&!orderFeeCycle.ready?formatOrderFeeCountdown(orderFeeCycle.cutoff,shopNow):"ชำระยอด"}</button><span className="whitespace-nowrap font-semibold tabular-nums text-slate-700">{restaurant.currency_code === "LAK" && orderFeeExchangeRate ? (Number(restaurant.order_fee_due_lak || 0) / (orderFeeExchangeRate.rate + 287)).toLocaleString("en-US", { style: "currency", currency: "USD" }) : "—"}</span></div>{restaurant.order_fee_status && <button type="button" className="mt-1 block w-full text-[10px] text-slate-500 underline" onClick={()=>{setRequestRestaurant({id:restaurant.id,name:restaurant.name,orderFeeStatus:restaurant.order_fee_status || "all"});setView("requests");}}>{({pending:"รอตรวจสอบ",approved:"อนุมัติแล้ว",rejected:"ไม่อนุมัติ",reversed:"ย้อนอนุมัติ"})[restaurant.order_fee_status]}{restaurant.order_fee_is_test ? " (ทดลอง)" : ""}</button>}</td>
+                  <td className="px-3 py-2.5 text-right">{canManage && <div className="flex justify-end gap-2"><button className="whitespace-nowrap rounded-lg border border-amber-400 px-2.5 py-1.5 text-xs text-amber-900 hover:bg-amber-50" type="button" onClick={()=>setCancelTarget(restaurant)}>ยกเลิกโปร</button><button className="whitespace-nowrap rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs hover:bg-slate-50" type="button" onClick={() => void changeStatus(restaurant)}>{restaurant.suspended_at ? "คืนสถานะ" : "ระงับ"}</button></div>}</td>
                 </tr>;
               })}</tbody>
             </table>
@@ -225,6 +248,8 @@ export default function ShopManagementPage({ canManage }: { canManage: boolean }
       )}
       </>}
       {selected && <RestaurantDetailDialog detail={selected} onClose={() => setSelected(null)} />}
+      {cancelTarget && <ProCancelDialog restaurant={cancelTarget} onClose={()=>setCancelTarget(null)} onCancelled={()=>{setNotice(`ยกเลิกแพ็กเกจโปรของร้าน ${cancelTarget.name} แล้ว`);void load();}} />}
+      {orderPaymentTarget && <OrderFeePaymentDialog restaurant={orderPaymentTarget} canManage={canManage} onClose={()=>setOrderPaymentTarget(null)} onSubmitted={()=>void load()} />}
       {purchaseTarget && <ProPurchaseDialog
         restaurant={purchaseTarget}
         pricing={purchasePricing}
@@ -340,6 +365,30 @@ function formatProCountdown(restaurant: Restaurant, now: number) {
   const minutes = totalMinutes % 60;
   const prefix = restaurant.trial_active ? "ทดลองใช้ฟรี" : "Pro";
   return prefix + " · เหลือ " + days + " วัน " + hours + " ชม. " + minutes + " นาที";
+}
+
+function orderFeeCycleStatus(firstBillAt: string | null | undefined, now: number) {
+  if (!firstBillAt) return null;
+  const anchor = Date.parse(firstBillAt);
+  if (!Number.isFinite(anchor)) return null;
+  const cycleMs = 30 * 24 * 60 * 60 * 1000;
+  const elapsed = Math.max(0, now - anchor);
+  const dueIndex = Math.floor(elapsed / cycleMs) - 1;
+  const boundaryIndex = Math.max(0, dueIndex) + 1;
+  const cycleEnd = anchor + boundaryIndex * cycleMs;
+  const laos = new Date(cycleEnd + 7 * 60 * 60 * 1000);
+  const hour = laos.getUTCHours();
+  const dayOffset = hour <= 6 ? 0 : 1;
+  const cutoff = Date.UTC(laos.getUTCFullYear(), laos.getUTCMonth(), laos.getUTCDate() + dayOffset, 6) - 7 * 60 * 60 * 1000;
+  return { cutoff, ready: dueIndex >= 0 && now >= cutoff };
+}
+
+function formatOrderFeeCountdown(cutoff: number, now: number) {
+  const remaining = Math.max(0, cutoff - now);
+  const days = Math.floor(remaining / 86400000);
+  const hours = Math.floor((remaining % 86400000) / 3600000);
+  const minutes = Math.floor((remaining % 3600000) / 60000);
+  return `อีก ${days} วัน ${hours} ชม. ${minutes} นาที`;
 }
 
 function proCountdownClass(restaurant: Restaurant, now: number) {

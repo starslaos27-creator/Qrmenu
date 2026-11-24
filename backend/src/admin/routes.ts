@@ -16,6 +16,8 @@ export async function registerAdminRoutes(app, env) {
   app.get("/api/admin/restaurants/:restaurantId", controller.get_api_admin_restaurants_restaurantId);
   app.get("/api/admin/users", controller.get_api_admin_users);
   app.get("/api/admin/users/:userId", controller.get_api_admin_users_userId);
+  app.patch("/api/admin/users/:userId", controller.patch_api_admin_users_userId);
+  app.patch("/api/admin/users/:userId/memberships/:membershipId", controller.patch_api_admin_users_userId_membership);
   app.patch("/api/admin/restaurants/:restaurantId/status", controller.patch_api_admin_restaurants_restaurantId_status);
   app.patch("/api/admin/users/:userId/status", controller.patch_api_admin_users_userId_status);
   app.post("/api/admin/users/:userId/password-reset-link", controller.post_api_admin_users_userId_password_reset_link);

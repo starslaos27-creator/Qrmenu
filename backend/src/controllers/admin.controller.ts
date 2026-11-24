@@ -1,5 +1,5 @@
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
-import { createRefreshSession, hashPassword, normalizeEmail, setRefreshCookie, signAccessToken, validatePassword, verifyPassword, } from "../security/auth.js";
+import { createRefreshSession, hashPassword, normalizeEmail, normalizePhone, setRefreshCookie, signAccessToken, validatePassword, verifyPassword, } from "../security/auth.js";
 import { clearLoginFailures, recordLoginFailure } from "../security/login-failures.js";
 import { requirePlatformAdmin, } from "../admin/authorization.js";
 
@@ -360,12 +360,14 @@ export function createAdminController(app, env) {
         if (!admin)
             return;
         const search = request.query.search?.trim() ?? "";
+        const phoneSearch = search.replace(/\D/g, "");
         const status = request.query.status ?? "all";
         if (!["all", "active", "suspended", "migration_pending"].includes(status)) {
             return reply.status(400).send({ ok: false, error: "INVALID_FILTER" });
         }
         const limit = clampInteger(request.query.limit, 50, 1, 100);
         const offset = clampInteger(request.query.offset, 0, 0, 100_000);
+        const orderFeeTestMode = env.nodeEnv !== "production" && process.env.ORDER_FEE_TEST_MODE === "true" && (() => { try { return ["127.0.0.1", "localhost", "::1", "[::1]"].includes(new URL(env.databaseUrl).hostname); } catch { return false; } })();
         let result;
         try {
           result = await app.db.query(`with clock as (
@@ -375,11 +377,15 @@ export function createAdminController(app, env) {
               r.suspension_reason, r.created_at, r.currency_code,
               clock.server_now,
               greatest(paid.expires_at, trial.expires_at) as pro_expires_at,
+              paid.expires_at as paid_pro_expires_at,
               coalesce(trial.expires_at > clock.server_now and
                 (paid.expires_at is null or trial.expires_at >= paid.expires_at), false) as trial_active,
               exists(select 1 from pro_requests pending
                 where pending.restaurant_id = r.id and pending.status = 'pending') as pro_request_pending,
-              owner.email as owner_email,
+              order_fee.status as order_fee_status, order_fee.is_test as order_fee_is_test,
+              coalesce(order_fee_due.total_fee, 0)::text as order_fee_due_lak,
+              order_fee_due.first_bill_at as order_fee_first_bill_at,
+              owner.email as owner_email, owner.phone as owner_phone,
               (select count(*) from restaurant_members m
                 where m.restaurant_id = r.id)::int as member_count,
               (select count(*) from restaurant_members m
@@ -402,11 +408,27 @@ export function createAdminController(app, env) {
        left join app_users owner on owner.id = r.user_id
        left join lateral (
          select max(p.reviewed_at + (p.paid_months + p.free_months) * interval '30 days') as expires_at
-         from pro_requests p where p.restaurant_id = r.id and p.status = 'approved'
+         from pro_requests p where p.restaurant_id = r.id and p.status = 'approved' and p.cancelled_at is null
        ) paid on true
        left join restaurant_pro_trials trial on trial.restaurant_id = r.id
+       left join lateral (select f.status,f.is_test from order_fee_requests f where f.restaurant_id=r.id order by f.created_at desc,f.id desc limit 1) order_fee on true
+       left join lateral (
+         select min(b.paid_at) as first_bill_at,
+           sum(case when b.bill_total < 50000 then 0 when b.bill_total < 100000 then 200
+           when b.bill_total < 250000 then 300 when b.bill_total < 400000 then 400
+           when b.bill_total < 1000000 then 500 when b.bill_total < 1500000 then 1000
+           when b.bill_total < 2500000 then 1250 else 1450 end) as total_fee
+         from bill_payment_details b
+         where b.restaurant_id = r.id and b.reopened_at is null
+           and b.paid_at <= clock.server_now
+           and not exists (select 1 from order_fee_request_bills link join order_fee_requests paid on paid.id = link.request_id
+             where link.bill_id = b.id and paid.status = 'approved'
+               and paid.is_test = $6)
+       ) order_fee_due on true
        where ($1 = '' or r.name ilike '%' || $1 || '%'
-              or owner.email ilike '%' || $1 || '%')
+              or owner.email ilike '%' || $1 || '%'
+              or owner.phone ilike '%' || $1 || '%'
+              or (length($5) >= 4 and owner.phone_normalized like '%' || $5 || '%'))
          and ($2 = 'all'
            or ($2 = 'active' and r.suspended_at is null)
            or ($2 = 'suspended' and r.suspended_at is not null)
@@ -416,7 +438,7 @@ export function createAdminController(app, env) {
              where pm.restaurant_id = r.id and pu.password_hash is null
            )))
        order by r.created_at desc
-       limit $3 offset $4`, [search, status, limit, offset]);
+       limit $3 offset $4`, [search, status, limit, offset, phoneSearch, orderFeeTestMode]);
         } catch (error) {
           // Keep shop management usable on databases that have not applied
           // migration 0040 yet. Trial expiry data becomes available once it is applied.
@@ -431,10 +453,14 @@ export function createAdminController(app, env) {
               r.suspension_reason, r.created_at, r.currency_code,
               clock.server_now,
               paid.expires_at as pro_expires_at,
+              paid.expires_at as paid_pro_expires_at,
               false as trial_active,
               exists(select 1 from pro_requests pending
                 where pending.restaurant_id = r.id and pending.status = 'pending') as pro_request_pending,
-              owner.email as owner_email,
+              order_fee.status as order_fee_status, order_fee.is_test as order_fee_is_test,
+              coalesce(order_fee_due.total_fee, 0)::text as order_fee_due_lak,
+              order_fee_due.first_bill_at as order_fee_first_bill_at,
+              owner.email as owner_email, owner.phone as owner_phone,
               (select count(*) from restaurant_members m
                 where m.restaurant_id = r.id)::int as member_count,
               (select count(*) from restaurant_members m
@@ -457,10 +483,26 @@ export function createAdminController(app, env) {
        left join app_users owner on owner.id = r.user_id
        left join lateral (
          select max(p.reviewed_at + (p.paid_months + p.free_months) * interval '30 days') as expires_at
-         from pro_requests p where p.restaurant_id = r.id and p.status = 'approved'
+         from pro_requests p where p.restaurant_id = r.id and p.status = 'approved' and p.cancelled_at is null
        ) paid on true
+       left join lateral (select f.status,f.is_test from order_fee_requests f where f.restaurant_id=r.id order by f.created_at desc,f.id desc limit 1) order_fee on true
+       left join lateral (
+         select min(b.paid_at) as first_bill_at,
+           sum(case when b.bill_total < 50000 then 0 when b.bill_total < 100000 then 200
+           when b.bill_total < 250000 then 300 when b.bill_total < 400000 then 400
+           when b.bill_total < 1000000 then 500 when b.bill_total < 1500000 then 1000
+           when b.bill_total < 2500000 then 1250 else 1450 end) as total_fee
+         from bill_payment_details b
+         where b.restaurant_id = r.id and b.reopened_at is null
+           and b.paid_at <= clock.server_now
+           and not exists (select 1 from order_fee_request_bills link join order_fee_requests paid on paid.id = link.request_id
+             where link.bill_id = b.id and paid.status = 'approved'
+               and paid.is_test = $6)
+       ) order_fee_due on true
        where ($1 = '' or r.name ilike '%' || $1 || '%'
-              or owner.email ilike '%' || $1 || '%')
+              or owner.email ilike '%' || $1 || '%'
+              or owner.phone ilike '%' || $1 || '%'
+              or (length($5) >= 4 and owner.phone_normalized like '%' || $5 || '%'))
          and ($2 = 'all'
            or ($2 = 'active' and r.suspended_at is null)
            or ($2 = 'suspended' and r.suspended_at is not null)
@@ -470,7 +512,7 @@ export function createAdminController(app, env) {
              where pm.restaurant_id = r.id and pu.password_hash is null
            )))
        order by r.created_at desc
-       limit $3 offset $4`, [search, status, limit, offset]);
+       limit $3 offset $4`, [search, status, limit, offset, phoneSearch, orderFeeTestMode]);
         }
         return reply.send({ ok: true, restaurants: result.rows });
     };
@@ -622,6 +664,7 @@ export function createAdminController(app, env) {
             return reply.status(400).send({ ok: false, error: "INVALID_FILTER" });
         }
         const search = request.query.search?.trim() ?? "";
+        const phoneSearch = search.replace(/\D/g, "");
         const limit = clampInteger(request.query.limit, 100, 1, 200);
         const offset = clampInteger(request.query.offset, 0, 0, 100_000);
         const result = await app.db.query(`select u.id, u.email, u.phone, u.display_name, u.disabled_at,
@@ -632,21 +675,31 @@ export function createAdminController(app, env) {
               coalesce((select f.failed_count from app_login_failures f
                 where f.identifier_hash = '__unknown_username__'), 0)::bigint
                 as unmatched_login_attempts,
-              u.created_at, m.restaurant_id, r.name as restaurant_name,
-              m.role as restaurant_role,
+              u.created_at, memberships.restaurant_name,
+              memberships.restaurant_role,
               exists(select 1 from app_admins a
                 where a.user_id = u.id and a.active = true) as is_admin
        from app_users u
-       left join restaurant_members m on m.user_id = u.id
-       left join restaurants r on r.id = m.restaurant_id
-       where ($1::uuid is null or m.restaurant_id = $1)
+       left join lateral (
+         select string_agg(distinct r.name, ', ' order by r.name) as restaurant_name,
+                string_agg(distinct m.role::text, ', ' order by m.role::text) as restaurant_role
+         from restaurant_members m
+         join restaurants r on r.id = m.restaurant_id
+         where m.user_id = u.id and ($1::uuid is null or m.restaurant_id = $1)
+       ) memberships on true
+       where ($1::uuid is null or exists (
+           select 1 from restaurant_members filter_membership
+           where filter_membership.user_id = u.id and filter_membership.restaurant_id = $1
+         ))
          and ($2 = '' or u.email ilike '%' || $2 || '%'
-              or coalesce(u.phone, '') ilike '%' || $2 || '%')
+              or coalesce(u.display_name, '') ilike '%' || $2 || '%'
+              or coalesce(u.phone, '') ilike '%' || $2 || '%'
+              or (length($6) >= 4 and u.phone_normalized like '%' || $6 || '%'))
          and ($3 = 'all'
            or ($3 = 'complete' and u.password_hash is not null)
            or ($3 = 'pending' and u.password_hash is null))
        order by u.created_at desc
-       limit $4 offset $5`, [restaurantId, search, migration, limit, offset]);
+       limit $4 offset $5`, [restaurantId, search, migration, limit, offset, phoneSearch]);
         return reply.send({ ok: true, users: result.rows });
     };
   const get_api_admin_users_userId = async (request, reply) => {
@@ -728,6 +781,141 @@ export function createAdminController(app, env) {
             passwordResets: resetsResult.rows,
             recentActivity: activityResult.rows,
         });
+    };
+  const patch_api_admin_users_userId = async (request, reply) => {
+        if (!isUuid(request.params.userId)) {
+            return reply.status(400).send({ ok: false, error: "INVALID_ID" });
+        }
+        const admin = await requirePlatformAdmin(request, reply, env, ["super_admin", "support"]);
+        if (!admin) return;
+
+        const body = request.body ?? {};
+        const email = normalizeEmail(typeof body.email === "string" ? body.email : "");
+        const displayName = typeof body.displayName === "string" ? body.displayName.trim() : "";
+        const phone = typeof body.phone === "string" ? body.phone.trim() : "";
+        const phoneNormalized = normalizePhone(phone);
+        const reason = typeof body.reason === "string" ? body.reason.trim() : "";
+        if (!isValidEmail(email) || displayName.length > 120 || phone.length > 50 ||
+            (phone && (!phoneNormalized || phoneNormalized.length < 7 || phoneNormalized.length > 20)) ||
+            reason.length < 3 || reason.length > 500) {
+            return reply.status(400).send({ ok: false, error: "INVALID_USER_PROFILE" });
+        }
+
+        const client = await app.db.connect();
+        try {
+            await client.query("begin");
+            const existing = await client.query(`select id, email, phone, display_name
+         from app_users where id = $1 for update`, [request.params.userId]);
+            if (!existing.rows[0]) {
+                await client.query("rollback");
+                return reply.status(404).send({ ok: false, error: "NOT_FOUND" });
+            }
+            const emailOwner = await client.query(`select id from app_users
+         where lower(email) = $1 and id <> $2 limit 1`, [email, request.params.userId]);
+            if (emailOwner.rows[0]) {
+                await client.query("rollback");
+                return reply.status(409).send({ ok: false, error: "EMAIL_ALREADY_IN_USE" });
+            }
+            if (phoneNormalized) {
+                const phoneOwner = await client.query(`select id from app_users
+           where phone_normalized = $1 and id <> $2 limit 1`, [phoneNormalized, request.params.userId]);
+                if (phoneOwner.rows[0]) {
+                    await client.query("rollback");
+                    return reply.status(409).send({ ok: false, error: "PHONE_ALREADY_IN_USE" });
+                }
+            }
+
+            const previous = existing.rows[0];
+            const emailChanged = normalizeEmail(previous.email) !== email;
+            const changedFields = [
+                ...(emailChanged ? ["email"] : []),
+                ...(previous.display_name !== (displayName || null) ? ["display_name"] : []),
+                ...(previous.phone !== (phone || null) ? ["phone"] : []),
+            ];
+            const updated = await client.query(`update app_users set
+           email = $2, display_name = $3, phone = $4, phone_normalized = $5,
+           email_verified_at = case when $6 then null else email_verified_at end,
+           updated_at = now()
+         where id = $1
+         returning id, email, phone, display_name, email_verified_at, disabled_at, disabled_reason, updated_at`,
+            [request.params.userId, email, displayName || null, phone || null, phoneNormalized, emailChanged]);
+
+            if (emailChanged) {
+                await client.query(`update auth_refresh_sessions set revoked_at = coalesce(revoked_at, now())
+           where user_id = $1 and revoked_at is null`, [request.params.userId]);
+                await client.query(`update password_reset_tokens set used_at = coalesce(used_at, now())
+           where user_id = $1 and used_at is null`, [request.params.userId]);
+            }
+            await writeAdminAudit(client, request.ip, {
+                admin,
+                action: "user.profile.update",
+                targetType: "user",
+                targetId: request.params.userId,
+                reason,
+                details: { changed_fields: changedFields, email_changed: emailChanged },
+            });
+            await client.query("commit");
+            return reply.send({ ok: true, user: updated.rows[0], sessionsRevoked: emailChanged });
+        }
+        catch (error) {
+            await client.query("rollback");
+            const databaseError = error as { code?: string; constraint?: string };
+            if (databaseError.code === "23505" && databaseError.constraint === "app_users_email_unique_idx") {
+                return reply.status(409).send({ ok: false, error: "EMAIL_ALREADY_IN_USE" });
+            }
+            if (databaseError.code === "23505" && databaseError.constraint === "app_users_phone_unique_idx") {
+                return reply.status(409).send({ ok: false, error: "PHONE_ALREADY_IN_USE" });
+            }
+            throw error;
+        }
+        finally {
+            client.release();
+        }
+    };
+  const patch_api_admin_users_userId_membership = async (request, reply) => {
+        if (!isUuid(request.params.userId) || !isUuid(request.params.membershipId)) {
+            return reply.status(400).send({ ok: false, error: "INVALID_ID" });
+        }
+        const admin = await requirePlatformAdmin(request, reply, env, ["super_admin", "support"]);
+        if (!admin) return;
+        const role = request.body?.role;
+        const reason = typeof request.body?.reason === "string" ? request.body.reason.trim() : "";
+        if (!["staff", "cook", "waiter"].includes(role) || reason.length < 3 || reason.length > 500) {
+            return reply.status(400).send({ ok: false, error: "INVALID_MEMBERSHIP_UPDATE" });
+        }
+        const client = await app.db.connect();
+        try {
+            await client.query("begin");
+            const membership = await client.query(`select m.id, m.role::text as role, r.id as restaurant_id
+         from restaurant_members m join restaurants r on r.id = m.restaurant_id
+         where m.id = $1 and m.user_id = $2 for update of m`, [request.params.membershipId, request.params.userId]);
+            if (!membership.rows[0]) {
+                await client.query("rollback");
+                return reply.status(404).send({ ok: false, error: "MEMBERSHIP_NOT_FOUND" });
+            }
+            const previousRole = membership.rows[0].role;
+            const updated = await client.query(`update restaurant_members set role = $3
+         where id = $1 and user_id = $2
+         returning id, role::text as role`, [request.params.membershipId, request.params.userId, role]);
+            await writeAdminAudit(client, request.ip, {
+                admin,
+                action: "user.membership.role.update",
+                targetType: "user",
+                targetId: request.params.userId,
+                restaurantId: membership.rows[0].restaurant_id,
+                reason,
+                details: { membership_id: request.params.membershipId, from_role: previousRole, to_role: role },
+            });
+            await client.query("commit");
+            return reply.send({ ok: true, membership: updated.rows[0] });
+        }
+        catch (error) {
+            await client.query("rollback");
+            throw error;
+        }
+        finally {
+            client.release();
+        }
     };
   const patch_api_admin_restaurants_restaurantId_status = async (request, reply) => {
         if (!isUuid(request.params.restaurantId)) {
@@ -984,7 +1172,7 @@ export function createAdminController(app, env) {
        limit $7 offset $8`, [...filters, limit, offset]);
         return reply.send({ ok: true, logs: result.rows, total: countResult.rows[0].total, limit, offset });
     };
-  return { get_api_admin_bootstrap_status, post_api_admin_bootstrap, post_api_admin_auth_login, post_api_admin_auth_forgot_password, get_api_admin_auth_password_reset_token, post_api_admin_auth_reset_password, get_api_admin_me, get_api_admin_summary, get_api_admin_restaurants, get_api_admin_restaurants_restaurantId, get_api_admin_users, get_api_admin_users_userId, patch_api_admin_restaurants_restaurantId_status, patch_api_admin_users_userId_status, post_api_admin_users_userId_password_reset_link, post_api_admin_users_userId_set_password, get_api_admin_audit_logs };
+  return { get_api_admin_bootstrap_status, post_api_admin_bootstrap, post_api_admin_auth_login, post_api_admin_auth_forgot_password, get_api_admin_auth_password_reset_token, post_api_admin_auth_reset_password, get_api_admin_me, get_api_admin_summary, get_api_admin_restaurants, get_api_admin_restaurants_restaurantId, get_api_admin_users, get_api_admin_users_userId, patch_api_admin_users_userId, patch_api_admin_users_userId_membership, patch_api_admin_restaurants_restaurantId_status, patch_api_admin_users_userId_status, post_api_admin_users_userId_password_reset_link, post_api_admin_users_userId_set_password, get_api_admin_audit_logs };
 }
 
 async function writeAdminAudit(client, ipAddress, input) {

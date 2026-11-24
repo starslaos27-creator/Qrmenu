@@ -1,6 +1,7 @@
 import { useState } from "react";
 import useProPricing from "./useProPricing";
 import useProPurchaseStatus from "./useProPurchaseStatus";
+import OrderBillSummary from "./OrderBillSummary";
 
 export const proPackages = [
   { paid: 1, free: 0 },
@@ -18,9 +19,20 @@ const packageColors = [
   "border-t-[#c46974] bg-[#fff1f2]",
 ];
 
+const orderFees = [
+  [50000, 200],
+  [100000, 300],
+  [250000, 400],
+  [400000, 500],
+  [1000000, 1000],
+  [1500000, 1250],
+  [2500000, 1450],
+];
+
 export default function UpgradePage() {
   const {price,loading,error} = useProPricing();
   const purchase = useProPurchaseStatus();
+  const [packageType, setPackageType] = useState<"orders" | "monthly">(() => new URLSearchParams(window.location.search).get("package") === "orders" ? "orders" : "monthly");
   const [selected, setSelected] = useState(4);
   const monthly = Number(price);
   const hasPrice = price.trim() !== "" && Number.isFinite(monthly) && monthly > 0;
@@ -42,6 +54,14 @@ export default function UpgradePage() {
         <h1 className="mb-3 mt-5 text-3xl font-bold sm:text-4xl">เลือกแพ็กเกจที่เหมาะกับร้านคุณ</h1>
         <p className="text-[#756247]">ร้านใหม่ทดลองโปรฟรี 3 เดือนทันทีหลังสมัคร · เลือกดูแพ็กเกจอื่นเพื่อเปรียบเทียบราคา</p>
       </header>
+      <nav aria-label="ประเภทแพ็กเกจ" className="mb-7 flex flex-wrap justify-center gap-2">
+        <button type="button" aria-pressed={packageType === "orders"} onClick={() => setPackageType("orders")} className={`rounded-xl border border-[#174a34] px-5 py-2.5 text-sm font-bold transition ${packageType === "orders" ? "bg-[#174a34] text-white" : "bg-white text-[#174a34] hover:bg-emerald-50"}`}>แพ็กเกจออเดอร์</button>
+        <button type="button" aria-pressed={packageType === "monthly"} onClick={() => setPackageType("monthly")} className={`rounded-xl border border-[#174a34] px-5 py-2.5 text-sm font-bold transition ${packageType === "monthly" ? "bg-[#174a34] text-white" : "bg-white text-[#174a34] hover:bg-emerald-50"}`}>แพ็กเกจรายเดือน</button>
+      </nav>
+      {packageType === "orders" ? <><section className="mx-auto max-w-2xl overflow-hidden rounded-2xl border border-[#dfcfb2] bg-[#fffaf1] shadow-sm" aria-labelledby="order-fees-title">
+        <div className="p-6"><h2 id="order-fees-title" className="text-xl font-bold">คิดค่าบริการตามออเดอร์</h2><p className="mt-1 text-sm text-[#756247]">เฉลี่ยต่อออเดอร์</p></div>
+        <div className="overflow-x-auto"><table className="w-full text-sm"><thead className="bg-[#f2e8d8] text-left"><tr><th scope="col" className="px-6 py-3">ยอดซื้อ</th><th scope="col" className="px-6 py-3 text-right">ค่าเก็บต่อบิล</th></tr></thead><tbody className="divide-y divide-[#eadfcf]"><tr className="bg-emerald-50"><td className="px-6 py-3 font-semibold">เปิดร้านใหม่ ทดลองใช้โปร</td><td className="px-6 py-3 text-right font-semibold">ฟรี 3 เดือน</td></tr>{orderFees.map(([amount,fee])=><tr key={amount}><td className="px-6 py-3 tabular-nums">₭{amount.toLocaleString("en-US")}</td><td className="px-6 py-3 text-right font-semibold tabular-nums">₭{fee.toLocaleString("en-US")}</td></tr>)}</tbody></table></div><p className="border-t border-[#eadfcf] px-6 py-3 text-xs text-[#756247]">สิทธิ์ทดลองใช้โปรสำหรับร้านใหม่ไม่ได้ยกเว้นค่าบริการต่อบิล</p>
+      </section><OrderBillSummary /></> : <>
       <section className="mb-7 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-[#dfcfb2] bg-[#fffaf1] p-5" aria-label="คำนวณราคาแพ็กเกจ">
         <div><h2 className="font-bold">ราคาปกติรายเดือน</h2><p className="mt-1 text-sm text-[#756247]">ราคาที่กำหนดโดยแอดมิน · ดอลลาร์สหรัฐ (USD)</p></div>
         <strong>{loading ? "กำลังโหลดราคา…" : hasPrice ? money(1) : "ยังไม่กำหนดราคา"}</strong>
@@ -83,6 +103,7 @@ export default function UpgradePage() {
         <p className="mt-3 text-sm text-emerald-100">กดเลือกแพ็กเกจเพื่อไปหน้าชำระเงินและตรวจสอบรายละเอียดก่อนชำระ</p>
       </section>
       <p className="mt-5 text-center text-xs leading-6 text-[#756247]">ส่วนลด = เดือนแถม ÷ เดือนที่ได้รับทั้งหมด × 100 · ราคาเฉลี่ย = ยอดรวม ÷ เดือนที่ได้รับทั้งหมด<br />ราคาทุกแพ็กเกจคำนวณจากราคาปกติรายเดือนที่แอดมินกำหนด</p>
+      </>}
     </div>
   </main>;
 }

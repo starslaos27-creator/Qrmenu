@@ -1,6 +1,8 @@
 import { createOrderController } from "../controllers/orders.controller.js";
 export async function registerOrderRoutes(app, env) {
     const controller = createOrderController(app, env);
+    app.get("/api/restaurants/:restaurantId/hidden-bills", controller.get_hidden_bills);
+    app.delete("/api/restaurants/:restaurantId/bills/:receiptNumber", controller.delete_bill);
     app.get("/api/restaurants/:restaurantId/orders", controller.get_api_restaurants_restaurantId_orders);
     app.patch("/api/restaurants/:restaurantId/orders/:orderId/accept", controller.patch_api_restaurants_restaurantId_orders_orderId_accept);
     app.patch("/api/restaurants/:restaurantId/orders/:orderId/status", controller.patch_api_restaurants_restaurantId_orders_orderId_status);

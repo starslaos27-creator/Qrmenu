@@ -104,6 +104,11 @@ export interface AdminUser {
   phone?: string | null;
   disabled_at?: string | null;
   disabled_reason?: string | null;
+  email_verified_at?: string | null;
+  updated_at?: string | null;
+  last_activity_at?: string | null;
+  admin_role?: string | null;
+  admin_active?: boolean | null;
   password_migrated_at?: string | null;
   last_login_at?: string | null;
   failed_login_attempts?: number;

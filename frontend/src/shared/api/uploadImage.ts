@@ -14,7 +14,7 @@ export async function uploadRestaurantImage({
   maxBytes?: number;
 }): Promise<string> {
   if (file.size > maxBytes) throw new Error("IMAGE_TOO_LARGE");
-  const allowed = new Set(["image/jpeg", "image/png", "image/webp", "image/gif", "image/svg+xml"]);
+  const allowed = new Set(["image/jpeg", "image/png", "image/webp"]);
   if (!allowed.has(file.type)) throw new Error("UNSUPPORTED_IMAGE_TYPE");
 
   const extension = file.name.toLowerCase().split(".").pop();

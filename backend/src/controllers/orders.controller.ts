@@ -13,6 +13,25 @@ interface MenuPriceRow {
 
 export function createOrderController(app, env) {
   registerKitchenItemRoutes(app, env, {applyOrderStock, insertAudit});
+  const get_hidden_bills = async (request, reply) => {
+    const access = await requireValidAccess(app, request, reply, env); if (!access) return;
+    const result = await app.db.query("select receipt_number from hidden_bills where restaurant_id=$1",[access.restaurantId]);
+    reply.header("Cache-Control","no-store"); return {receipts:result.rows.map(row=>row.receipt_number)};
+  };
+  const delete_bill = async (request, reply) => {
+    const receipt = String(request.params.receiptNumber || "").trim();
+    if (!receipt || receipt.length > 100 || !/^[A-Za-z0-9_-]+$/.test(receipt)) return invalidBody(reply);
+    const access = await requireRestaurantAccess(request,reply,env,request.params.restaurantId,["owner"]); if (!access) return;
+    const client = await app.db.connect();
+    try {
+      await client.query("begin");
+      const order = (await client.query("select id,table_id from orders where restaurant_id=$1 and receipt_number=$2 and paid=true limit 1 for update",[access.restaurantId,receipt])).rows[0];
+      if (!order) { await client.query("rollback"); return reply.code(404).send({error:"PAID_BILL_NOT_FOUND"}); }
+      await client.query("insert into hidden_bills(restaurant_id,receipt_number,hidden_by) values($1,$2,$3) on conflict do nothing",[access.restaurantId,receipt,access.user.id]);
+      await insertAudit(client,access.restaurantId,access.user.id,{action:"bill.hide",targetId:order.table_id,details:{receipt_number:receipt}});
+      await client.query("commit"); return {ok:true};
+    } catch (error) { await client.query("rollback"); throw error; } finally { client.release(); }
+  };
   const get_api_restaurants_restaurantId_orders = async (request, reply) => {
         const access = await requireValidAccess(app, request, reply, env);
         if (!access)
@@ -539,7 +558,7 @@ export function createOrderController(app, env) {
             return notFound(reply);
         return reply.send({ ok: true, request: result.rows[0] });
     };
-  return { get_api_restaurants_restaurantId_orders, patch_api_restaurants_restaurantId_orders_orderId_accept, patch_api_restaurants_restaurantId_orders_orderId_status, patch_api_restaurants_restaurantId_orders_orderId_items, post_api_restaurants_restaurantId_tables_tableId_request_check, post_api_restaurants_restaurantId_tables_tableId_settle, post_api_restaurants_restaurantId_bills_receiptNumber_reopen, post_api_restaurants_restaurantId_tables_tableId_transfer, get_api_restaurants_restaurantId_call_staff, patch_api_restaurants_restaurantId_call_staff_requestId_ack };
+  return { get_hidden_bills, delete_bill, get_api_restaurants_restaurantId_orders, patch_api_restaurants_restaurantId_orders_orderId_accept, patch_api_restaurants_restaurantId_orders_orderId_status, patch_api_restaurants_restaurantId_orders_orderId_items, post_api_restaurants_restaurantId_tables_tableId_request_check, post_api_restaurants_restaurantId_tables_tableId_settle, post_api_restaurants_restaurantId_bills_receiptNumber_reopen, post_api_restaurants_restaurantId_tables_tableId_transfer, get_api_restaurants_restaurantId_call_staff, patch_api_restaurants_restaurantId_call_staff_requestId_ack };
 }
 
 async function applyOrderStock(client, orderId, restaurantId, actorUserId) {

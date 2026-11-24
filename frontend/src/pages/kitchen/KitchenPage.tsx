@@ -197,6 +197,10 @@ function printOrder(order: KitchenOrder, tableNumber: string | number, zoneName:
   if (!printWindow) return;
   const document = printWindow.document;
   document.title = "ใบงานครัว";
+  const fonts = document.createElement("link");
+  fonts.rel = "stylesheet";
+  fonts.href = new URL("/lao-font.css?v=20261120-v1", window.location.origin).href;
+  document.head.append(fonts);
   const style = document.createElement("style");
   style.textContent = `@page{size:${width}mm auto;margin:4mm}body{font:14px/1.4 sans-serif;color:#111;max-width:${width - 8}mm}h1{font-size:20px;margin:0 0 8px}p{margin:4px 0}ul{padding:0;list-style:none}li{border-bottom:1px dashed #aaa;padding:7px 0}.qty{float:right;font-weight:bold}.note{font-size:12px;color:#555}.meta{font-size:12px;color:#555}.rule{border-top:1px dashed #222;margin:10px 0}`;
   document.head.append(style);
@@ -208,5 +212,6 @@ function printOrder(order: KitchenOrder, tableNumber: string | number, zoneName:
   document.body.append(list);
   document.close();
   printWindow.addEventListener("afterprint", () => printWindow.close(), { once: true });
-  window.setTimeout(() => { printWindow.focus(); printWindow.print(); }, 250);
+  fonts.addEventListener("load", () => { void document.fonts.ready.then(() => { printWindow.focus(); printWindow.print(); }); }, { once: true });
+  fonts.addEventListener("error", () => { printWindow.focus(); printWindow.print(); }, { once: true });
 }

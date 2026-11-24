@@ -5,6 +5,7 @@ import { registerMenuStockAdjustment } from "../routes/menu-stock-adjustment.js"
 import { registerMenuStockTransfer } from "../routes/menu-stock-transfer.js";
 import { registerMenuStockHistory } from "../routes/menu-stock-history.js";
 import { registerMenuStockOutgoing } from "../routes/menu-stock-outgoing.js";
+import { checkImageUrl, checkTextContent, sendModerationFailure } from "../security/content-moderation.js";
 
 export function createManagementController(app, env) {
   const get_api_restaurants_restaurantId = async (request, reply) => {
@@ -41,6 +42,10 @@ export function createManagementController(app, env) {
         if (body.kitchen_print_width !== undefined &&
             ![58, 76, 80].includes(body.kitchen_print_width)) {
             return invalidBody(reply);
+        }
+        if ("payment_qr_url" in body) {
+            const moderation = await checkImageUrl(env, body.payment_qr_url);
+            if (sendModerationFailure(reply, moderation)) return;
         }
         const result = await app.db.query(`update restaurants set
          name = coalesce($2, name),
@@ -251,6 +256,12 @@ function registerPromotionRoutes(app, env) {
             (startAt && endAt && endAt <= startAt)) {
             return invalidBody(reply);
         }
+        const [imageModeration, textModeration] = await Promise.all([
+            checkImageUrl(env, body.image_url),
+            checkTextContent(env, [title, body.description]),
+        ]);
+        if (sendModerationFailure(reply, imageModeration)) return;
+        if (sendModerationFailure(reply, textModeration)) return;
         const result = await app.db.query(`insert into promotions
         (restaurant_id, title, description, image_url, active, sort_order,
          start_at, end_at)
@@ -279,6 +290,12 @@ function registerPromotionRoutes(app, env) {
             ("end_at" in body && parseOptionalDate(body.end_at) === undefined)) {
             return invalidBody(reply);
         }
+        const [imageModeration, textModeration] = await Promise.all([
+            "image_url" in body ? checkImageUrl(env, body.image_url) : Promise.resolve({ allowed: true }),
+            checkTextContent(env, [body.title, body.description]),
+        ]);
+        if (sendModerationFailure(reply, imageModeration)) return;
+        if (sendModerationFailure(reply, textModeration)) return;
         const result = await app.db.query(`update promotions set
          title = coalesce($3, title),
          description = case when $4::boolean then $5 else description end,
@@ -442,6 +459,12 @@ function registerMenuRoutes(app, env) {
             !(await categoryBelongsToRestaurant(app, body.category_id, access.restaurantId))) {
             return reply.status(400).send({ ok: false, error: "INVALID_CATEGORY" });
         }
+        const [imageModeration, textModeration] = await Promise.all([
+            checkImageUrl(env, body.image_url),
+            checkTextContent(env, [name, body.name_lo, body.name_en, body.description]),
+        ]);
+        if (sendModerationFailure(reply, imageModeration)) return;
+        if (sendModerationFailure(reply, textModeration)) return;
         const result = await app.db.query(`insert into menus
         (restaurant_id, category_id, name, name_lo, name_en, price, cost_price,
          description, track_stock, stock_quantity, stock_barcode, low_alert_limit, image_url, available, bundles, unit)
@@ -485,6 +508,12 @@ function registerMenuRoutes(app, env) {
             !(await categoryBelongsToRestaurant(app, body.category_id, access.restaurantId))) {
             return reply.status(400).send({ ok: false, error: "INVALID_CATEGORY" });
         }
+        const [imageModeration, textModeration] = await Promise.all([
+            "image_url" in body ? checkImageUrl(env, body.image_url) : Promise.resolve({ allowed: true }),
+            checkTextContent(env, [body.name, body.name_lo, body.name_en, body.description]),
+        ]);
+        if (sendModerationFailure(reply, imageModeration)) return;
+        if (sendModerationFailure(reply, textModeration)) return;
         const result = await app.db.query(`update menus set
          category_id = case when $3::boolean then $4 else category_id end,
          name = coalesce($5, name),

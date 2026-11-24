@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { apiRequest } from "../../shared/api/client";
 import type { BillOrder, BillRestaurant, BillTable, BillZone, StaffCall } from "./types";
 
-export function useBillsData(restaurantId: string | null) {
+export function useBillsData(restaurantId: string | null, loadFailedMessage = "Could not load bills") {
   const [restaurant, setRestaurant] = useState<BillRestaurant | null>(null);
   const [unpaidOrders, setUnpaidOrders] = useState<BillOrder[]>([]);
   const [settledOrders, setSettledOrders] = useState<BillOrder[]>([]);
@@ -28,9 +28,9 @@ export function useBillsData(restaurantId: string | null) {
       setUnpaidOrders(unpaidResult.orders.filter((order) => order.status !== "cancelled"));
       setSettledOrders(settledResult.orders); setTables(tableResult.tables); setZones(zoneResult.zones); setCalls(callResult.requests);
       setError("");
-    } catch { setError("โหลดบิลไม่สำเร็จ กรุณาลองใหม่"); }
+    } catch { setError(loadFailedMessage); }
     finally { setLoading(false); }
-  }, [restaurantId]);
+  }, [restaurantId, loadFailedMessage]);
   useEffect(() => {
     void refresh(); const timer = window.setInterval(() => void refresh(), 5000);
     return () => window.clearInterval(timer);

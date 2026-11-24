@@ -16,6 +16,7 @@ import { registerFinanceRoutes } from "./routes/finance.js";
 import { registerFinanceWorkspaceRoutes } from "./routes/finance-workspace.js";
 import { registerMiscRoutes } from "./routes/misc.js";
 import { registerChatRoutes } from "./routes/chat.js";
+import { registerContactRoutes } from "./routes/contact.js";
 import { registerAdminRoutes } from "./admin/routes.js";
 import { registerProRequestRoutes } from "./routes/pro-requests.js";
 import { registerWeeklyHoursRoutes } from "./routes/weekly-hours.js";
@@ -57,6 +58,7 @@ export async function createApp(env) {
     await app.register(registerFinanceWorkspaceRoutes, env);
     await app.register(registerMiscRoutes, env);
     await app.register(registerChatRoutes, env);
+    await app.register(registerContactRoutes, env);
     await app.register(registerAdminRoutes, env);
     await app.register(registerProRequestRoutes, env);
     await app.register(registerWeeklyHoursRoutes, env);

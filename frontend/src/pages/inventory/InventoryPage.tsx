@@ -159,5 +159,5 @@ function Notice({ children, tone = "info" }: { children: ReactNode; tone?: "info
 function isLowStock(item: InventoryItem) { return item.active && item.track_stock && Number(item.quantity) <= Number(item.minimum_stock); }
 function readTab(): InventoryTab { const view = new URLSearchParams(window.location.search).get("view"); return view === "recipes" || view === "low" || view === "history" || view === "movements" ? view === "history" ? "movements" : view : "items"; }
 function formatNumber(value: string | number) { return Number(value).toLocaleString(undefined, { maximumFractionDigits: 3 }); }
-function messageFor(cause: unknown) { return cause instanceof ApiError && cause.code === "SKU_OR_BARCODE_EXISTS" ? "SKU หรือบาร์โค้ดนี้ถูกใช้งานแล้ว" : "บันทึกไม่สำเร็จ กรุณาตรวจสอบข้อมูลแล้วลองใหม่"; }
+function messageFor(cause: unknown) { return cause instanceof ApiError && cause.code === "SKU_OR_BARCODE_EXISTS" ? "SKU หรือบาร์โค้ดนี้ถูกใช้งานแล้ว" : cause instanceof ApiError && cause.code === "IMAGE_CONTENT_NOT_ALLOWED" ? "ระบบ AI ตรวจพบภาพที่ไม่อนุญาต จึงไม่สามารถใช้ภาพนี้ได้" : cause instanceof ApiError && cause.code === "CONTENT_MODERATION_UNAVAILABLE" ? "ระบบตรวจสอบภาพยังไม่พร้อม กรุณาลองใหม่ภายหลัง" : "บันทึกไม่สำเร็จ กรุณาตรวจสอบข้อมูลแล้วลองใหม่"; }
 const jsonHeaders = { "Content-Type": "application/json" };

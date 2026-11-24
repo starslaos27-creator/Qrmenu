@@ -42,6 +42,11 @@
     // Images and optional styles must not block the restaurant application.
     if (target && target !== window) {
       if (target.tagName !== 'SCRIPT' || target.defer) return;
+      // Browser privacy tools may block analytics scripts injected by external
+      // services. They are not required to render the application.
+      try {
+        if (target.src && new URL(target.src, window.location.href).origin !== window.location.origin) return;
+      } catch { return; }
       console.error('ShopQR script failed:', target.src);
       if (retryOnce()) return;
       showRecovery('โหลดหน้าเว็บไม่สำเร็จ กรุณาตรวจสอบการเชื่อมต่อแล้วลองอีกครั้ง');

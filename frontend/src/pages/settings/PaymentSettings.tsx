@@ -27,7 +27,7 @@ export default function PaymentSettings({ restaurant, canManage, onUpdated }: {
       onUpdated(result.restaurant);
       setNotice("บันทึกรูป QR รับชำระเงินแล้ว");
     } catch (cause) {
-      setError(cause instanceof ApiError ? `อัปโหลดไม่สำเร็จ (${cause.code})` : cause instanceof Error && cause.message === "IMAGE_TOO_LARGE" ? "รูปภาพต้องมีขนาดไม่เกิน 5 MB" : cause instanceof Error && cause.message === "UNSUPPORTED_IMAGE_TYPE" ? "รองรับไฟล์ JPEG, PNG, WebP, GIF และ SVG" : "อัปโหลดไม่สำเร็จ กรุณาลองอีกครั้ง");
+      setError(cause instanceof ApiError && cause.code === "IMAGE_CONTENT_NOT_ALLOWED" ? "ระบบ AI ตรวจพบภาพที่ไม่อนุญาต จึงไม่สามารถใช้ภาพนี้ได้" : cause instanceof ApiError && cause.code === "CONTENT_MODERATION_UNAVAILABLE" ? "ระบบตรวจสอบภาพยังไม่พร้อม กรุณาลองใหม่ภายหลัง" : cause instanceof ApiError ? `อัปโหลดไม่สำเร็จ (${cause.code})` : cause instanceof Error && cause.message === "IMAGE_TOO_LARGE" ? "รูปภาพต้องมีขนาดไม่เกิน 5 MB" : cause instanceof Error && cause.message === "UNSUPPORTED_IMAGE_TYPE" ? "รองรับไฟล์ JPEG, PNG และ WebP" : "อัปโหลดไม่สำเร็จ กรุณาลองอีกครั้ง");
     } finally {
       setUploading(false);
     }

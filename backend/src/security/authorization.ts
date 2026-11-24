@@ -1,4 +1,5 @@
 import { requireAuth } from "./auth.js";
+import { getOrderFeeBillingState, isOrderFeeRestrictedPath } from "./order-fee-billing.js";
 export async function requireRestaurantAccess(request, reply, env, restaurantId, allowedRoles = undefined) {
     const user = await requireAuth(request, reply, env);
     if (!user)
@@ -20,6 +21,24 @@ export async function requireRestaurantAccess(request, reply, env, restaurantId,
         (allowedRoles && !allowedRoles.includes(membership.role))) {
         await reply.status(403).send({ ok: false, error: "FORBIDDEN" });
         return null;
+    }
+    const changesData = !["GET", "HEAD", "OPTIONS"].includes(request.method.toUpperCase());
+    if (changesData && isOrderFeeRestrictedPath(request.url)) {
+        try {
+            const testMode = env.nodeEnv !== "production" && process.env.ORDER_FEE_TEST_MODE === "true" && (() => {
+                try { return ["127.0.0.1", "localhost", "::1", "[::1]"].includes(new URL(env.databaseUrl).hostname); }
+                catch { return false; }
+            })();
+            const billing = await getOrderFeeBillingState(request.server.db, restaurantId, testMode);
+            if (billing.restricted) {
+                await reply.status(402).send({ ok: false, error: "ORDER_FEE_OVERDUE", payBy: billing.payableCycle?.payBy });
+                return null;
+            }
+        } catch (error) {
+            request.log.error({ err: error, restaurantId }, "Could not verify order-fee access deadline");
+            await reply.status(503).send({ ok: false, error: "ORDER_FEE_STATUS_UNAVAILABLE" });
+            return null;
+        }
     }
     // Treat authenticated restaurant API activity as presence as well. This
     // keeps status accurate even when a browser has cached the dashboard's
