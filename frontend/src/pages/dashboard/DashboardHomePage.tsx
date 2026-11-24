@@ -163,7 +163,6 @@ export default function DashboardHomePage({ onLogin }: DashboardHomePageProps) {
         <div><div className="text-[11px] font-bold uppercase tracking-[.18em] text-slate-500">RESTAURANT OVERVIEW</div><h1 className="mt-1 text-xl font-semibold tracking-tight sm:text-2xl">ภาพรวมร้านอาหาร <span aria-hidden="true">👋</span></h1><p className="mt-1 text-sm text-slate-600">ยินดีต้อนรับกลับมา! มาดูความเคลื่อนไหวของ{membership.restaurant_name || "ร้าน"}วันนี้กัน</p></div>
         <div className="flex items-center gap-3 text-sm text-slate-600">
           <ProUpgradeButton restaurantId={restaurantId} />
-          <time>{new Date().toLocaleDateString("th-TH-u-ca-gregory", { day: "2-digit", month: "2-digit", year: "numeric" })}</time>
           {owner && <button className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-medium hover:bg-slate-100" type="button" onClick={() => exportSummary(summary)}>↥ ส่งออกรายงาน</button>}
           <div className="relative">
             <button type="button" className={`grid h-11 w-11 place-items-center overflow-hidden rounded-full border-2 border-white bg-emerald-800 text-lg font-semibold text-white shadow ${isOnline ? "ring-2 ring-emerald-500" : "ring-2 ring-slate-300"}`} title={isOnline ? "Online" : `Offline · Last seen ${lastOnlineLabel}`} aria-label={`${profileName} · ${isOnline ? "Online" : `Offline, last seen ${lastOnlineLabel}`} · เปิดเมนูโปรไฟล์`} aria-haspopup="menu" aria-expanded={profileOpen} onClick={() => setProfileOpen((open) => !open)}>
