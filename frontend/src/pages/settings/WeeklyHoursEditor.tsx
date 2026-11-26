@@ -21,6 +21,7 @@ export default function WeeklyHoursEditor({restaurantId}:{restaurantId?:string})
   const [busy,setBusy]=useState(false);
   const [error,setError]=useState("");
   const [notice,setNotice]=useState("");
+  const [expanded,setExpanded]=useState(false);
   useEffect(()=>{
     let active=true;
     (async()=>{
@@ -46,12 +47,17 @@ export default function WeeklyHoursEditor({restaurantId}:{restaurantId?:string})
   const disabled=!canManage||busy||loading;
   return <div className="weekly-hours-editor">
     <link rel="stylesheet" href="/weekly-hours.css?v=20261024" />
+    <button type="button" aria-expanded={expanded} onClick={()=>setExpanded(value=>!value)} className="flex w-full items-center justify-between border-0 bg-transparent px-4 py-3 text-left text-sm font-semibold text-[#174a34]">
+      <span>{expanded?"ซ่อนตารางเวลา":"ใช้ตารางอัตโนมัติเท่านั้น"}</span><span aria-hidden="true">{expanded?"−":"+"}</span>
+    </button>
+    {expanded && <>
     <div className="wh-heading"><div><h3>เวลาเปิด–ปิดรายสัปดาห์</h3><p>7 วัน · วันละ 4 ช่วงเวลา · เวลาไทย/ลาว (UTC+7)</p></div><label className="wh-master"><input type="checkbox" role="switch" checked={schedule.enabled} disabled={disabled} onChange={event=>{setSchedule(old=>({...old,enabled:event.target.checked}));setNotice("");}} />ใช้ตารางอัตโนมัติ</label></div>
     {loading?<p role="status">กำลังโหลดตารางเวลา…</p>:<>
       <p className="wh-help">{schedule.enabled?"รับออเดอร์เฉพาะช่วงที่เปิดไว้ หากปิดสวิตช์รับออเดอร์หลัก ร้านจะหยุดรับทันที":"ตารางอัตโนมัติปิดอยู่ ร้านใช้สวิตช์รับออเดอร์หลักตามเดิม"}</p>
       <div className="wh-scroll"><table><thead><tr><th scope="col">วัน / เปิดใช้งาน</th>{[1,2,3,4].map(value=><th key={value} scope="col">ช่วงที่ {value}</th>)}</tr></thead><tbody>{schedule.days.map((row,day)=><tr key={day} className={row.enabled?"":"wh-day-off"}><th scope="row"><label className="wh-day"><input type="checkbox" role="switch" checked={row.enabled} disabled={disabled} onChange={event=>update(day,null,{enabled:event.target.checked})} />{days[day]}</label><small>{row.enabled&&row.slots.some(slot=>slot.enabled)?"ตั้งช่วงเวลาได้":"หยุดรับออเดอร์"}</small></th>{row.slots.map((slot,index)=><td key={index}><label className="wh-slot-toggle"><input type="checkbox" role="switch" checked={slot.enabled} disabled={disabled||!row.enabled} aria-label={`${days[day]} ช่วงที่ ${index+1} เปิดใช้งาน`} onChange={event=>update(day,index,{enabled:event.target.checked})} />{slot.enabled?"เปิดช่วงนี้":"ปิดช่วงนี้"}</label><div className="wh-times"><input type="time" value={slot.start} disabled={disabled||!row.enabled||!slot.enabled} aria-label={`${days[day]} เวลาเปิดช่วงที่ ${index+1}`} onChange={event=>update(day,index,{start:event.target.value})} /><span>–</span><input type="time" value={slot.end} disabled={disabled||!row.enabled||!slot.enabled} aria-label={`${days[day]} เวลาปิดช่วงที่ ${index+1}`} onChange={event=>update(day,index,{end:event.target.value})} /></div>{slot.enabled&&slot.end<slot.start&&<small className="wh-next-day">ปิดวันถัดไป</small>}</td>)}</tr>)}</tbody></table></div>
-      <div className="wh-footer"><p>เวลาปิดก่อนเวลาเปิด = ข้ามเที่ยงคืน · ห้ามช่วงเวลาซ้อนกัน<br />เปิด/ปิดสวิตช์แล้วกดบันทึกตารางเวลา</p><button type="button" onClick={()=>void save()} disabled={disabled}>{busy?"กำลังบันทึก…":"บันทึกตารางเวลา"}</button></div>
+      <div className="wh-footer"><p>เวลาปิดก่อนเวลาเปิด = ข้ามเที่ยงคืน · ห้ามช่วงเวลาซ้อนกัน<br />เปิด/ปิดสวิตช์แล้วกดบันทึกตารางเวลา</p><button type="button" className="settings-save-button" onClick={()=>void save()} disabled={disabled}>{busy?"กำลังบันทึก…":"บันทึกตารางเวลา"}</button></div>
       {!canManage&&!error&&<p className="wh-help">แก้ไขตารางเวลาได้เฉพาะเจ้าของร้าน</p>}
+    </>}
     </>}
     {error&&<p role="alert" className="wh-error">{error}</p>}{notice&&<p role="status" className="wh-success">{notice}</p>}
   </div>;

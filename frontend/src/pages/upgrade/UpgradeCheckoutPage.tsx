@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { proPackages } from "./UpgradePage";
-import { proPaymentAccount } from "./proPaymentAccount";
+import { useProPaymentAccount } from "./proPaymentAccount";
 import { loadRestaurantSession } from "../../features/auth/session";
 import { ApiError, apiRequest } from "../../shared/api/client";
 import ProRequestHistory, { type ProRequest } from "./ProRequestHistory";
@@ -8,6 +8,7 @@ import useProPricing from "./useProPricing";
 import useProPurchaseStatus from "./useProPurchaseStatus";
 
 export default function UpgradeCheckoutPage() {
+  const proPaymentAccount = useProPaymentAccount();
   const months = new URLSearchParams(window.location.search).get("months");
   const chosen = proPackages.find(p => String(p.paid) === months);
   const {monthly,loading:pricingLoading,error:pricingError} = useProPricing();
@@ -85,14 +86,14 @@ export default function UpgradeCheckoutPage() {
             <div className="flex justify-between gap-4 border-t border-[#dfcfb2] pt-5 text-lg"><dt className="font-bold">ยอดรวม</dt><dd className="font-bold">{validPrice ? usd(monthly * chosen.paid) : "—"}</dd></div>
           </dl>
           <p className="mt-5 text-xs leading-6 text-[#756247]">สแกน QR เพื่อชำระเงิน แล้วแนบสลิปส่งให้แอดมินตรวจสอบก่อนเปิดแพ็กเกจ</p>
-          <section aria-label="บัญชีรับเงินค่าแพ็กเกจรายเดือน" className="mt-5 rounded-xl border border-[#dfcfb2] bg-white/60 p-4 sm:p-5">
+          {proPaymentAccount && <section aria-label="บัญชีรับเงินค่าแพ็กเกจรายเดือน" className="mt-5 rounded-xl border border-[#dfcfb2] bg-white/60 p-4 sm:p-5">
             <h3 className="font-bold">บัญชีรับเงินค่าแพ็กเกจรายเดือน</h3>
             <dl className="mt-4 space-y-3 text-sm">
               <div className="flex flex-wrap justify-between gap-2"><dt className="text-[#756247]">ธนาคาร</dt><dd className="font-semibold">{proPaymentAccount.bank || "รอระบุธนาคาร"}</dd></div>
               <div className="flex flex-wrap justify-between gap-2"><dt className="text-[#756247]">เลขบัญชี</dt><dd className="break-all font-bold tracking-wide">{proPaymentAccount.accountNumber || "รอระบุเลขบัญชี"}</dd></div>
               <div className="flex flex-wrap justify-between gap-2"><dt className="text-[#756247]">ชื่อบัญชี</dt><dd className="break-words font-semibold">{proPaymentAccount.accountName || "รอระบุชื่อบัญชีผู้รับเงิน"}</dd></div>
             </dl>
-          </section>
+          </section>}
           <section className="mt-5 rounded-xl border border-[#dfcfb2] bg-white/60 p-5">
             <h3 className="font-bold">QR สำหรับชำระแพ็กเกจ</h3>
             {qrUrl ? <img src={qrUrl} alt="QR สำหรับชำระแพ็กเกจ" className="mx-auto mt-4 max-h-72 max-w-full rounded-lg object-contain" /> : <p className="mt-3 text-sm text-amber-800">ยังไม่มี QR ชำระเงิน กรุณาติดต่อผู้ดูแลระบบ</p>}

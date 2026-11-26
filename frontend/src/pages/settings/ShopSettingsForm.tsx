@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { ApiError, apiRequest } from "../../shared/api/client";
 import WeeklyHoursEditor from "./WeeklyHoursEditor";
 
@@ -13,10 +13,12 @@ export interface ShopSettings {
   payment_qr_url: string | null;
 }
 
-export default function ShopSettingsForm({ restaurant, canManage, onUpdated }: {
+export default function ShopSettingsForm({ restaurant, canManage, onUpdated, embedded = false, children }: {
   restaurant: ShopSettings;
   canManage: boolean;
   onUpdated: (restaurant: ShopSettings) => void;
+  embedded?: boolean;
+  children?: ReactNode;
 }) {
   const [name, setName] = useState(restaurant.name);
   const [acceptingOrders, setAcceptingOrders] = useState(restaurant.accepting_orders);
@@ -103,17 +105,18 @@ export default function ShopSettingsForm({ restaurant, canManage, onUpdated }: {
     }
   }
 
-  return <form onSubmit={(event) => void submit(event)} className="space-y-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+  return <form onSubmit={(event) => void submit(event)} className={embedded ? "space-y-5" : "space-y-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"}>
     <header><h2 className="text-lg font-semibold">ข้อมูลร้าน</h2><p className="mt-1 text-sm text-slate-500">ตั้งชื่อร้าน เวลาเปิด–ปิด และอัตราค่าบริการ</p></header>
     {!canManage && <p className="rounded-lg bg-amber-50 p-3 text-sm text-amber-900">แก้ไขการตั้งค่านี้ได้เฉพาะเจ้าของร้าน</p>}
     <label className="grid gap-1.5 text-sm font-medium">ชื่อร้าน<input value={name} onChange={(event) => { setName(event.target.value); scheduleNameSave(event.target.value); }} onBlur={() => scheduleNameSave(name, 0)} disabled={!canManage} required maxLength={100} className={inputClass} /></label>
     {nameSaveState && <p role="status" className="text-xs text-slate-500">{nameSaveState}</p>}
+    {children}
     <label className="flex items-center justify-between gap-4 rounded-xl border border-slate-200 bg-slate-50 p-4"><span><strong className="block text-sm font-medium">รับออเดอร์</strong><small className="text-xs text-slate-500">ปิดแล้วลูกค้าจะสั่งอาหารไม่ได้</small></span><input type="checkbox" checked={acceptingOrders} onChange={(event) => setAcceptingOrders(event.target.checked)} disabled={!canManage} className="h-5 w-5 accent-emerald-700" /></label>
     <WeeklyHoursEditor restaurantId={restaurant.id} />
     <section className="space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-4"><div><h3 className="m-0 text-sm font-medium">ค่าบริการและภาษี</h3><p className="mt-1 text-xs text-slate-500">คิดเป็นเปอร์เซ็นต์จากยอดอาหาร</p></div><div className="grid gap-3 sm:grid-cols-2"><PercentField label="ค่าบริการ" value={serviceCharge} disabled={!canManage} onChange={setServiceCharge} /><PercentField label="VAT" value={vat} disabled={!canManage} onChange={setVat} /></div></section>
     {error && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-800" role="alert">{error}</p>}
     {notice && <p className="rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800" role="status">{notice}</p>}
-    {canManage && <button disabled={saving} className="w-full rounded-xl bg-emerald-800 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-900 disabled:opacity-50">{saving ? "กำลังบันทึก…" : "บันทึกการตั้งค่า"}</button>}
+    {canManage && <button disabled={saving} className="settings-save-button ml-auto block rounded-xl px-4 py-2.5 text-sm font-semibold disabled:opacity-50">{saving ? "กำลังบันทึก…" : "บันทึกการตั้งค่า"}</button>}
   </form>;
 }
 

@@ -3,10 +3,11 @@ import { ApiError, apiRequest } from "../../shared/api/client";
 import { uploadRestaurantImage } from "../../shared/api/uploadImage";
 import type { ShopSettings } from "./ShopSettingsForm";
 
-export default function PaymentSettings({ restaurant, canManage, onUpdated }: {
+export default function PaymentSettings({ restaurant, canManage, onUpdated, embedded = false }: {
   restaurant: ShopSettings;
   canManage: boolean;
   onUpdated: (restaurant: ShopSettings) => void;
+  embedded?: boolean;
 }) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
@@ -53,7 +54,7 @@ export default function PaymentSettings({ restaurant, canManage, onUpdated }: {
     }
   }
 
-  return <section className="space-y-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+  return <section className={embedded ? "space-y-4 border-t border-slate-200 pt-5" : "space-y-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"}>
     <header><h2 className="text-lg font-semibold">QR รับชำระเงิน</h2><p className="mt-1 text-sm text-slate-500">รูปนี้จะแสดงให้ลูกค้าตรวจสอบตอนชำระเงิน</p></header>
     {!canManage && <p className="rounded-lg bg-amber-50 p-3 text-sm text-amber-900">แก้ไขได้เฉพาะเจ้าของร้าน</p>}
     <div className="flex min-h-56 flex-col items-center justify-center gap-4 rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 p-5">

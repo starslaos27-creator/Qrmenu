@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { adminRequest, AdminApiError, type AdminUser } from "../../shared/adminApi";
 import { PageState } from "../dashboard/PlatformOverviewPage";
+import { ADMIN_SECTIONS, type AdminSection } from "../../app/adminSections";
+
+const sectionLabels: Record<AdminSection, string> = {
+  overview: "ภาพรวม", shops: "จัดการร้านค้า", users: "จัดการผู้ใช้", audit: "Audit Log", monitor: "ติดตามระบบ",
+  "contact-messages": "ข้อความติดต่อ", "pro-pricing": "ตั้งราคาแพ็กเกจ", "finance-income": "รายรับ", "finance-expense": "รายจ่าย", settings: "ตั้งค่า",
+};
 
 interface UserDetail {
   user: AdminUser;
@@ -11,7 +17,7 @@ interface UserDetail {
   recentActivity: Array<{ id: string; action: string; actor_email: string | null; restaurant_name: string | null; created_at: string }>;
 }
 
-export default function UserManagementPage({ canManage, currentAdminId }: { canManage: boolean; currentAdminId: string }) {
+export default function UserManagementPage({ canManage, canManageAdminAccess, canDeleteUsers, currentAdminId }: { canManage: boolean; canManageAdminAccess: boolean; canDeleteUsers: boolean; currentAdminId: string }) {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [search, setSearch] = useState("");
   const [migration, setMigration] = useState("all");
@@ -22,6 +28,8 @@ export default function UserManagementPage({ canManage, currentAdminId }: { canM
   const [notice, setNotice] = useState("");
   const [selected, setSelected] = useState<UserDetail | null>(null);
   const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
+  const [accessUser, setAccessUser] = useState<AdminUser | null>(null);
+  const [deleteUser, setDeleteUser] = useState<AdminUser | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -91,6 +99,21 @@ export default function UserManagementPage({ canManage, currentAdminId }: { canM
     } catch (cause) { setError(cause instanceof AdminApiError ? `ตั้งรหัสผ่านไม่สำเร็จ (${cause.code})` : "ตั้งรหัสผ่านไม่สำเร็จ"); }
   }
 
+  async function saveAdminAccess(user: AdminUser, active: boolean, permissions: Partial<Record<AdminSection, "view" | "edit">>, reason: string) {
+    await adminRequest(`/api/admin/users/${user.id}/admin-access`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ active, permissions, reason }) });
+    setNotice(active ? `กำหนดสิทธิ์แอดมินให้ ${user.email} แล้ว` : `ปิดสิทธิ์แอดมินของ ${user.email} แล้ว`);
+    setAccessUser(null);
+    await load();
+  }
+
+  async function deleteAccount(user: AdminUser, reason: string) {
+    await adminRequest(`/api/admin/users/${user.id}`, { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ reason }) });
+    setDeleteUser(null);
+    setNotice(`ลบบัญชี ${user.email} ออกจากระบบแล้ว`);
+    if (selected?.user.id === user.id) setSelected(null);
+    await load();
+  }
+
   return (
     <div className="mx-auto max-w-7xl space-y-5">
       <header><p className="text-xs font-bold uppercase tracking-[.18em] text-emerald-800">USER ACCOUNTS</p><h1 className="mt-1 text-2xl font-semibold">ควบคุมผู้ใช้งาน</h1><p className="mt-1 text-sm text-slate-500">ตรวจสอบสถานะบัญชี การย้ายรหัสผ่าน และประวัติ session</p></header>
@@ -107,12 +130,90 @@ export default function UserManagementPage({ canManage, currentAdminId }: { canM
         <td className="px-3 py-3">{user.password_migrated_at ? <span className="rounded-full bg-emerald-50 px-2 py-1 text-xs text-emerald-800">ย้ายแล้ว</span> : <span className="rounded-full bg-amber-50 px-2 py-1 text-xs text-amber-800">รอดำเนินการ</span>}</td>
         <td className="px-3 py-3 text-center tabular-nums text-amber-800">{Number(user.failed_login_attempts || 0).toLocaleString("th-TH")}</td>
         <td className="px-3 py-3">{user.disabled_at ? <span className="text-red-700">ปิดใช้งาน</span> : <span className="text-emerald-800">ใช้งาน</span>}</td>
-        <td className="space-x-1 whitespace-nowrap px-3 py-3 text-right">{canManage && <><button className="rounded-lg border border-emerald-700 px-2 py-1 text-xs text-emerald-800" type="button" onClick={() => setEditingUser(user)}>แก้ข้อมูล</button>{!user.is_admin && <><button className="rounded-lg border border-slate-300 px-2 py-1 text-xs" type="button" onClick={() => void createResetLink(user)}>ลิงก์รีเซ็ต</button><button className="rounded-lg border border-slate-300 px-2 py-1 text-xs" type="button" onClick={() => void setPassword(user)}>ตั้งรหัสผ่าน</button><button className="rounded-lg border border-slate-300 px-2 py-1 text-xs" type="button" disabled={user.disabled_at != null && user.id === currentAdminId} onClick={() => void toggleStatus(user)}>{user.disabled_at ? "เปิดบัญชี" : "ระงับ"}</button></>}</>}</td>
+        <td className="space-x-1 whitespace-nowrap px-3 py-3 text-right">{canManage && <><button className="rounded-lg border border-emerald-700 px-2 py-1 text-xs text-emerald-800" type="button" onClick={() => setEditingUser(user)}>แก้ข้อมูล</button>{!user.is_admin && <><button className="rounded-lg border border-slate-300 px-2 py-1 text-xs" type="button" onClick={() => void createResetLink(user)}>ลิงก์รีเซ็ต</button><button className="rounded-lg border border-slate-300 px-2 py-1 text-xs" type="button" onClick={() => void setPassword(user)}>ตั้งรหัสผ่าน</button><button className="rounded-lg border border-slate-300 px-2 py-1 text-xs" type="button" disabled={user.disabled_at != null && user.id === currentAdminId} onClick={() => void toggleStatus(user)}>{user.disabled_at ? "เปิดบัญชี" : "ระงับ"}</button></>}</>}{canManageAdminAccess && user.id !== currentAdminId && user.admin_role !== "super_admin" && <button className="rounded-lg border border-emerald-700 px-2 py-1 text-xs font-medium text-emerald-800" type="button" onClick={() => setAccessUser(user)}>{user.is_admin ? "สิทธิ์เมนู" : "เพิ่มเป็นแอดมิน"}</button>}{canDeleteUsers && user.id !== currentAdminId && user.admin_role !== "super_admin" && <button className="rounded-lg border border-red-300 px-2 py-1 text-xs font-medium text-red-700 hover:bg-red-50" type="button" onClick={() => setDeleteUser(user)}>ลบ</button>}</td>
       </tr>)}</tbody></table></div><div className="flex justify-end gap-2 border-t border-slate-100 p-3"><button className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs disabled:opacity-40" type="button" disabled={!offset} onClick={() => setOffset((value) => Math.max(0, value - 100))}>ก่อนหน้า</button><button className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs disabled:opacity-40" type="button" disabled={users.length < 100} onClick={() => setOffset((value) => value + 100)}>ถัดไป</button></div></section>}
       {selected && <UserDetailDialog detail={selected} canManage={canManage} onClose={() => setSelected(null)} onSaveProfile={saveProfile} onSaveMembership={saveMembership} />}
       {editingUser && <EditUserDialog user={editingUser} onClose={() => setEditingUser(null)} onSave={saveProfile} />}
+      {accessUser && <AdminAccessDialog user={accessUser} onClose={() => setAccessUser(null)} onSave={saveAdminAccess} />}
+      {deleteUser && <DeleteUserDialog user={deleteUser} onClose={() => setDeleteUser(null)} onDelete={deleteAccount} />}
     </div>
   );
+}
+
+function DeleteUserDialog({ user, onClose, onDelete }: {
+  user: AdminUser;
+  onClose: () => void;
+  onDelete: (user: AdminUser, reason: string) => Promise<void>;
+}) {
+  const [reason, setReason] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setBusy(true); setError("");
+    try { await onDelete(user, reason.trim()); }
+    catch (cause) {
+      setError(cause instanceof AdminApiError
+        ? cause.code === "CANNOT_DELETE_SUPER_ADMIN" ? "ไม่สามารถลบบัญชีผู้ดูแลสูงสุดได้" : `ลบบัญชีไม่สำเร็จ (${cause.code})`
+        : "ลบบัญชีไม่สำเร็จ กรุณาลองอีกครั้ง");
+    } finally { setBusy(false); }
+  }
+  return <div className="fixed inset-0 z-[80] grid place-items-center bg-slate-950/50 p-3" onClick={onClose}>
+    <section className="w-full max-w-lg rounded-2xl bg-white p-5 shadow-xl" role="dialog" aria-modal="true" aria-labelledby="delete-user-title" onClick={(event) => event.stopPropagation()}>
+      <header className="flex items-start justify-between gap-3"><div><h2 id="delete-user-title" className="text-xl font-semibold text-red-800">ลบบัญชีผู้ใช้</h2><p className="mt-1 text-sm text-slate-600">{user.display_name || user.email} · {user.email}</p></div><button className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm" type="button" disabled={busy} onClick={onClose}>ปิด</button></header>
+      <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm leading-6 text-red-900">
+        <p className="m-0 font-semibold">บัญชีนี้จะเข้าสู่ระบบไม่ได้และจะถูกซ่อนจากรายการผู้ใช้</p>
+        <p className="mb-0 mt-1">ระบบจะยกเลิก session และสิทธิ์แอดมินของบัญชีนี้ ข้อมูลร้านและประวัติเดิมจะยังคงอยู่</p>
+      </div>
+      <form className="mt-4 grid gap-3" onSubmit={(event) => void submit(event)}>
+        <label className="grid gap-1 text-sm font-medium">เหตุผลในการลบบัญชี<textarea required minLength={3} maxLength={500} value={reason} onChange={(event) => setReason(event.target.value)} rows={3} className="rounded-lg border border-slate-300 px-3 py-2 font-normal" placeholder="ระบุเหตุผลเพื่อเก็บไว้ในประวัติแอดมิน" /></label>
+        {error && <p className="m-0 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800" role="alert">{error}</p>}
+        <div className="flex justify-end gap-2"><button className="rounded-lg border border-slate-300 px-4 py-2 text-sm" type="button" disabled={busy} onClick={onClose}>ยกเลิก</button><button className="rounded-lg bg-red-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50" type="submit" disabled={busy}>{busy ? "กำลังลบ…" : "ยืนยันลบบัญชี"}</button></div>
+      </form>
+    </section>
+  </div>;
+}
+
+function AdminAccessDialog({ user, onClose, onSave }: {
+  user: AdminUser;
+  onClose: () => void;
+  onSave: (user: AdminUser, active: boolean, permissions: Partial<Record<AdminSection, "view" | "edit">>, reason: string) => Promise<void>;
+}) {
+  const [active, setActive] = useState(user.admin_active === true);
+  const [permissions, setPermissions] = useState<Partial<Record<AdminSection, "view" | "edit">>>(() => {
+    if (user.admin_section_permissions) return { ...user.admin_section_permissions };
+    if (!user.is_admin) return {};
+    return Object.fromEntries(ADMIN_SECTIONS.map((section) => [section, user.admin_role === "viewer" ? "view" : "edit"])) as Partial<Record<AdminSection, "view" | "edit">>;
+  });
+  const [reason, setReason] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (active && !Object.keys(permissions).length) { setError("เลือกอย่างน้อยหนึ่งเมนูให้ผู้ใช้นี้"); return; }
+    setSaving(true); setError("");
+    try { await onSave(user, active, permissions, reason); }
+    catch (cause) { setError(cause instanceof AdminApiError ? `บันทึกสิทธิ์ไม่สำเร็จ (${cause.code})` : "บันทึกสิทธิ์ไม่สำเร็จ กรุณาลองอีกครั้ง"); }
+    finally { setSaving(false); }
+  }
+  return <div className="fixed inset-0 z-[70] grid place-items-center bg-slate-950/40 p-3" onClick={onClose}>
+    <section className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-5 shadow-xl" role="dialog" aria-modal="true" aria-labelledby="admin-access-title" onClick={(event) => event.stopPropagation()}>
+      <header className="flex items-start justify-between gap-3"><div><h2 id="admin-access-title" className="text-xl font-semibold">กำหนดสิทธิ์ผู้ดูแล</h2><p className="mt-1 text-sm text-slate-500">{user.display_name || user.email} · {user.email}</p></div><button className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm" type="button" onClick={onClose}>ปิด</button></header>
+      <form className="mt-4 grid gap-4" onSubmit={(event) => void submit(event)}>
+        <label className="flex items-center gap-2 rounded-xl bg-slate-50 p-3 text-sm"><input type="checkbox" checked={active} onChange={(event) => setActive(event.target.checked)} />เปิดสิทธิ์ให้เข้าสู่ระบบผู้ดูแลแพลตฟอร์ม</label>
+        <div className="grid gap-2 sm:grid-cols-2">{ADMIN_SECTIONS.map((section) => <label key={section} className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 px-3 py-2 text-sm"><span>{sectionLabels[section]}</span><select aria-label={`สิทธิ์เมนู ${sectionLabels[section]}`} value={permissions[section] || "none"} disabled={!active} onChange={(event) => setPermissions((current) => {
+          const next = { ...current };
+          if (event.target.value === "none") delete next[section];
+          else next[section] = event.target.value as "view" | "edit";
+          return next;
+        })} className="rounded-lg border border-slate-300 bg-white px-2 py-1.5"><option value="none">ไม่มีสิทธิ์</option><option value="view">ดูได้</option><option value="edit">แก้ไขได้</option></select></label>)}</div>
+        <p className="m-0 text-xs leading-5 text-slate-500">เพิ่มสิทธิ์ได้เฉพาะบัญชีที่ลงทะเบียนในระบบแล้ว ผู้ใช้จะเข้าสู่ระบบด้วยอีเมลและรหัสผ่านของบัญชีนั้น</p>
+        <label className="grid gap-1 text-sm">เหตุผลที่เปลี่ยนสิทธิ์<textarea required minLength={3} maxLength={500} value={reason} onChange={(event) => setReason(event.target.value)} rows={2} className="rounded-lg border border-slate-300 px-3 py-2" /></label>
+        {error && <p className="m-0 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800" role="alert">{error}</p>}
+        <div className="flex justify-end gap-2"><button className="rounded-lg border border-slate-300 px-4 py-2 text-sm" type="button" onClick={onClose}>ยกเลิก</button><button className="rounded-lg bg-emerald-800 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50" type="submit" disabled={saving}>{saving ? "กำลังบันทึก…" : "บันทึกสิทธิ์"}</button></div>
+      </form>
+    </section>
+  </div>;
 }
 
 type ProfileInput = { email: string; displayName: string; phone: string; reason: string };

@@ -1,4 +1,3 @@
-const dishArt = `<svg viewBox="0 0 76 45" width="76" height="45" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="38" cy="22" r="18"/><circle cx="38" cy="22" r="13"/><path d="M29 25c4-7 10-9 17-5-3 6-10 9-17 5ZM33 24l9-4M8 4v37M5 4v11c0 3 6 3 6 0V4M67 4v37M63 4c-3 7-3 13 4 15"/></svg>`;
 const chefArt = `<svg viewBox="0 0 32 32" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 20c-5 0-6-7-1-9 1-5 7-6 9-2 4-3 9 0 8 4 4 3 2 7-2 7v6H9v-6ZM10 22h12M12 17v3M16 17v3M20 17v3"/></svg>`;
 const printWords = {
   th: ["ใบเสร็จรับเงิน", "ใบแจ้งยอด", "เลขที่บิล", "วันที่", "โต๊ะ", "รายการ", "จำนวน", "ราคา", "รวม", "รวมรายการ", "ยอดสุทธิ", "ชำระโดย", "สแกนเพื่อชำระเงิน", "ขอบคุณที่ใช้บริการ"],
@@ -35,6 +34,15 @@ export function applyPrintDesign(html, kind) {
   const doc = new DOMParser().parseFromString(html, "text/html");
   const language = (doc.documentElement.lang || "th").split("-")[0];
   const words = printWords[language] || printWords.th;
+  const metaWordsByLanguage = {
+    th: ["\u0e42\u0e0b\u0e19", "\u0e40\u0e1a\u0e2d\u0e23\u0e4c\u0e42\u0e15\u0e4a\u0e30", "\u0e1c\u0e39\u0e49\u0e40\u0e0a\u0e47\u0e04"],
+    lo: ["\u0ec2\u0e8a\u0e99", "\u0ec0\u0e9a\u0eb5\u0ec2\u0e95\u0eb0", "\u0e9c\u0eb9\u0ec9\u0ec0\u0e8a\u0eb1\u0e81"],
+    en: ["Zone", "Table no.", "Checked by"],
+    ko: ["\uad6c\uc5ed", "\ud14c\uc774\ube14 \ubc88\ud638", "\uacc4\uc0b0 \ub2f4\ub2f9"],
+    vi: ["Khu v\u1ef1c", "S\u1ed1 b\u00e0n", "Ng\u01b0\u1eddi thanh to\u00e1n"],
+    zh: ["\u533a\u57df", "\u684c\u53f7", "\u6536\u94f6\u5458"],
+  };
+  const metaWords = metaWordsByLanguage[language] || metaWordsByLanguage.th;
   if (kind === "receipt") {
     const header = doc.querySelector(".receipt-header");
     const location = header?.querySelector(".receipt-location");
@@ -65,13 +73,29 @@ export function applyPrintDesign(html, kind) {
       const dateValue = issued.querySelector(".receipt-date-value");
       if (numberLabel) numberLabel.textContent = words[2];
       if (dateLabel) dateLabel.textContent = words[3];
-      const tableLabel = [...location.children].find(node => node.querySelector("strong") && /โต๊ะ|ໂຕະ|Table/i.test(node.textContent || ""));
-      if (tableLabel && tableLabel.firstChild?.nodeType === Node.TEXT_NODE) tableLabel.firstChild.nodeValue = words[4] + " ";
-      for (const [left, right] of [[numberLabel, numberValue], [dateLabel, dateValue]]) {
-        if (left && right) { const row = doc.createElement("div"); row.className = "print-meta-row"; row.append(left, right); fields.append(row); }
+      const zoneText = location.children[0]?.textContent.trim() || "\u2014";
+      const tableText = location.children[1]?.querySelector("strong")?.textContent.trim() || "\u2014";
+      const cashierValue = grid?.querySelector(".receipt-cashier-value");
+      const addRow = (left, right) => {
+        if (!left || !right) return;
+        const row = doc.createElement("div");
+        row.className = "print-meta-row";
+        row.append(left, right);
+        fields.append(row);
+      };
+      addRow(numberLabel, numberValue);
+      addRow(dateLabel, dateValue);
+      const zoneLabel = doc.createElement("span"); zoneLabel.textContent = metaWords[0];
+      const zoneValue = doc.createElement("span"); zoneValue.textContent = zoneText;
+      addRow(zoneLabel, zoneValue);
+      const tableLabel = doc.createElement("span"); tableLabel.textContent = metaWords[1];
+      const tableValue = doc.createElement("span"); tableValue.textContent = tableText;
+      addRow(tableLabel, tableValue);
+      if (cashierValue) {
+        cashierValue.hidden = false;
+        const cashierLabel = doc.createElement("span"); cashierLabel.textContent = metaWords[2];
+        addRow(cashierLabel, cashierValue);
       }
-      const tableRows = [...location.children].filter(node => !node.matches(".receipt-tagline"));
-      for (const row of tableRows) { row.className = "print-meta-row print-location"; fields.append(row); }
       grid?.replaceWith(fields);
     }
     const headings = doc.querySelectorAll(".receipt-items thead th");
@@ -98,7 +122,7 @@ export function applyPrintDesign(html, kind) {
     const qrLabel = doc.querySelector(".qr-label");
     if (qrLabel) qrLabel.textContent = words[12];
     const footer = doc.querySelector(".footer");
-    if (footer) { footer.textContent = words[13]; const art = doc.createElement("div"); art.className = "print-dish-art"; art.innerHTML = dishArt; footer.append(art); }
+    if (footer) footer.textContent = words[13];
   } else if (kind === "kitchen") {
     const header = doc.querySelector(".header");
     const location = header?.querySelector(".location");
@@ -106,7 +130,15 @@ export function applyPrintDesign(html, kind) {
     const issued = header?.querySelector(".issued");
     if (header && location && brand && issued) {
       const top = doc.createElement("div"); top.className = "print-kitchen-top";
-      const icon = doc.createElement("span"); icon.className = "print-chef-art"; icon.innerHTML = chefArt;
+      const logo = brand.querySelector("img");
+      const icon = doc.createElement("span");
+      if (logo) {
+        icon.className = "print-kitchen-logo";
+        icon.append(logo);
+      } else {
+        icon.className = "print-chef-art";
+        icon.innerHTML = chefArt;
+      }
       const label = doc.createElement("strong");
       const names = { th: "รายการส่งครัว", lo: "ລາຍການສົ່ງຄົວ", en: "Kitchen order", ko: "주방 주문", vi: "Phiếu bếp", zh: "厨房订单" };
       label.textContent = names[doc.documentElement.lang] || names.th;
@@ -117,10 +149,10 @@ export function applyPrintDesign(html, kind) {
   }
   const style = doc.createElement("style");
   style.textContent = kind === "receipt" ? `
-    .receipt-header{border:0!important;padding:0!important;text-align:center!important}.receipt-header h1{text-align:center!important;margin:0 0 4px!important}.receipt-address{text-align:center!important}.receipt-header>.receipt-label{display:block!important;font-size:15px!important;font-weight:800!important;letter-spacing:0!important;margin:14px 0 8px!important}.print-meta{border-top:1px dashed #555;border-bottom:1px dashed #555;padding:8px 0;margin:8px 0;font-size:11px}.print-meta-row{display:flex;justify-content:space-between;gap:8px;text-align:left;line-height:1.5}.print-location{display:block}.receipt-items th{background:none!important;border-top:0!important;border-bottom:1px solid #333!important}.receipt-items td{border-bottom:1px solid #ddd!important}.totals{width:100%!important;margin:0!important}.grand{border-top:1px solid #222!important;border-bottom:0!important}.qr-section{break-inside:avoid;text-align:center!important}.qr-section img{width:32mm!important;height:auto!important;max-width:100%!important}.footer{border-top:1px dashed #777!important;text-align:center!important}.print-dish-art{width:90px;height:53px;border:1px solid #999;display:flex;align-items:center;justify-content:center;margin:8px auto 0;color:#222}.print-dish-art svg{display:block}
+    .receipt-header{border:0!important;padding:0!important;text-align:center!important}.receipt-header h1{text-align:center!important;margin:0 0 4px!important}.receipt-address{text-align:center!important}.receipt-header>.receipt-label{display:block!important;font-size:15px!important;font-weight:800!important;letter-spacing:0!important;margin:14px 0 8px!important}.print-meta{border-top:1px dashed #555;border-bottom:1px dashed #555;padding:8px 0;margin:8px 0;font-size:11px}.print-meta-row{display:flex;justify-content:space-between;gap:8px;text-align:left;line-height:1.5}.print-location{display:block}.receipt-items th{background:none!important;border-top:0!important;border-bottom:1px solid #333!important}.receipt-items td{border-bottom:1px solid #ddd!important}.totals{width:100%!important;margin:0!important}.grand{border-top:1px solid #222!important;border-bottom:0!important}.qr-section{break-inside:avoid;text-align:center!important}.qr-section img{width:32mm!important;height:auto!important;max-width:100%!important}.footer{border-top:1px dashed #777!important;text-align:center!important}
     @media print { .receipt-header { padding-top: 8mm !important; } }
   ` : `
-    .header{display:block!important}.print-kitchen-top{display:flex;align-items:center;gap:10px;border-bottom:2px solid #222;padding-bottom:9px}.print-chef-art{display:flex;align-items:center;justify-content:center;border:1px solid #888;width:42px;height:42px;flex:none}.print-kitchen-top strong{font-size:15px}.shop-brand{display:block!important;text-align:left!important}.shop-brand img{display:none!important}.shop-brand .shop-name{text-align:left!important;font-size:11px!important}.print-kitchen-table{text-align:center!important;padding:12px 0}.print-kitchen-table h1{font-size:24px!important;font-weight:800!important;margin:0!important}.print-kitchen-meta{text-align:left!important;display:flex;justify-content:space-between;flex-wrap:wrap;gap:3px 10px}.item-row{font-size:16px!important;font-weight:700!important}.item-qty{font-size:20px!important;font-weight:800!important}.item-note{font-size:11px!important}.summary{font-weight:700!important}
+    .header{display:block!important}.print-kitchen-top{display:flex;align-items:center;gap:10px;border-bottom:2px solid #222;padding-bottom:9px}.print-chef-art,.print-kitchen-logo{display:flex;align-items:center;justify-content:center;width:42px;height:42px;flex:none}.print-chef-art{border:1px solid #888}.print-kitchen-logo img{display:block!important;width:38px!important;height:38px!important;object-fit:contain!important;border-radius:4px}.print-kitchen-top strong{font-size:15px}.shop-brand{display:block!important;text-align:left!important}.shop-brand .shop-name{text-align:left!important;font-size:11px!important}.print-kitchen-table{text-align:center!important;padding:12px 0}.print-kitchen-table h1{font-size:24px!important;font-weight:800!important;margin:0!important}.print-kitchen-meta{text-align:left!important;display:flex;justify-content:space-between;flex-wrap:wrap;gap:3px 10px}.item-row{font-size:16px!important;font-weight:700!important}.item-qty{font-size:20px!important;font-weight:800!important}.item-note{font-size:11px!important}.summary{font-weight:700!important}
   `;
   doc.head.append(style);
   const fontStyle = doc.createElement("style");

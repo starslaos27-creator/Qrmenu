@@ -10,6 +10,7 @@ export interface RestaurantMembership {
   restaurant_name: string;
   currency_code: "LAK" | "THB" | "USD";
   role: string;
+  page_permissions?: Record<string, boolean | "view" | "admin"> | null;
 }
 
 export interface RestaurantSession {

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { adminLogout, adminRequest, saveAccessToken, type AdminUser } from "../shared/adminApi";
 
-export type AdminSession = { user: AdminUser; adminRole: string };
+export type AdminSession = { user: AdminUser; adminRole: string; adminPermissions: Record<string, "view" | "edit"> | null };
 export type AdminAuthState =
   | { status: "loading" }
   | { status: "login" }
@@ -30,8 +30,8 @@ export function useAdminSession() {
 
   const completeLogin = useCallback(async (adminRole: string) => {
     try {
-      const { user } = await adminRequest<{ user: AdminUser }>("/api/admin/me");
-      setAuth({ status: "ready", session: { user, adminRole } });
+      const session = await adminRequest<AdminSession>("/api/admin/me");
+      setAuth({ status: "ready", session: { ...session, adminRole: session.adminRole || adminRole } });
     } catch {
       setAuth({ status: "login" });
     }

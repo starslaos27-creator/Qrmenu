@@ -3,6 +3,8 @@ export async function registerProRequestRoutes(app, env) {
     const controller = createProRequestController(app, env);
     app.get("/api/pro-payment-qr", controller.get_api_pro_payment_qr);
     app.put("/api/admin/pro-payment-qr", controller.put_api_admin_pro_payment_qr);
+    app.get("/api/pro-payment-bank-details", controller.get_api_pro_payment_bank_details);
+    app.put("/api/admin/pro-payment-bank-details", controller.put_api_admin_pro_payment_bank_details);
     app.get("/api/admin/pro-requests/count", controller.get_api_admin_pro_request_count);
     app.get("/api/admin/pro-requests/:id/slip", controller.get_api_admin_pro_request_slip);
     app.get("/api/pro-pricing", controller.get_api_pro_pricing);

@@ -1,4 +1,4 @@
-import { applyPrintDesign as shopqrApplyPrintDesign, getPrintLocale as shopqrGetPrintLocale } from "./receipt-design.js?v=20261120-receipt-top-margin-v1";
+import { applyPrintDesign as shopqrApplyPrintDesign, getPrintLocale as shopqrGetPrintLocale } from "./receipt-design.js?v=20261126-kitchen-restaurant-logo-v2";
 import {useKitchenFilters,KitchenFilters} from "./kitchen-filters.js";
 import {KitchenBoard} from "./kitchen-board.js";
 import {ItemConfirmation} from "./kitchen-item-confirmation.js";

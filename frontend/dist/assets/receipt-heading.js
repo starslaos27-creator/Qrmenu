@@ -19,6 +19,7 @@ export function receiptHeading(receipt) {
   const prefix=typeof settings.numberPrefix==='string'?settings.numberPrefix.trim():'';
   const number=numbers.map(number=>prefix?prefix+String(number).replace(/^BILL-/,''):number).join(', ')||'?';
   const calendar=['buddhist','gregory'].includes(settings.calendar)?settings.calendar:undefined;
+  const cashier = receipt.orders.find(order => order.receipt_user)?.receipt_user || '';
   const contact = {...receiptBusinessInfo[restaurantId],...settings};
   const rawZone = String(receipt.zoneName || '—').trim();
   const zoneParts = rawZone.split(/\s+/).filter(Boolean);
@@ -34,6 +35,7 @@ export function receiptHeading(receipt) {
     ${settings.showName===false?'':`<h1>${escape(receipt.restaurantName)}</h1>`}
     ${address}
     <div class="receipt-meta-grid">
+      ${cashier ? `<div class="receipt-cashier-value" hidden>${escape(cashier)}</div>` : ''}
       <div class="receipt-location"><div><strong>${escape(zoneName)}</strong></div><div>${labels[2]} <strong>${escape(receipt.tableNumber)}</strong></div>${settings.showNumber===false?'':`<div class="receipt-number-label">${labels[3]}</div>`}${settings.showDate===false?'':`<div class="receipt-date-label">${labels[4]}</div>`}<p class="receipt-tagline">${escape(settings.tagline??labels[6])}</p></div>
       <div class="receipt-issued"><div class="receipt-label">${labels[0]}</div>${settings.showNumber===false?'':`<div class="receipt-number-value"><strong>${escape(number)}</strong></div>`}${settings.showDate===false?'':`<div class="receipt-date-value">${valid ? escape(date.toLocaleDateString(locale,{timeZone:'Asia/Vientiane',calendar,year:'numeric',month:'2-digit',day:'2-digit'})) : '—'}${settings.showTime===false?'':` <span class="receipt-inline-time">${valid ? escape(date.toLocaleTimeString(locale,{timeZone:'Asia/Vientiane',hour:'2-digit',minute:'2-digit',hour12:false})) : '—'}</span>`}</div>`}</div>
     </div>

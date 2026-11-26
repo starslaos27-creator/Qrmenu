@@ -2,6 +2,7 @@ export interface BillOrder {
   id: string; table_id: string; items: Array<{ menu_id?: string; name?: string; qty?: number; price?: number }>;
   status: string; total: string | number; paid: boolean; paid_at: string | null;
   payment_method: string | null; receipt_number: string | null; created_at: string;
+  receipt_user?: string | null;
   settled_total?: string | number | null;
   bill_total?: string | number | null; cash_received?: string | number | null;
   transfer_amount?: string | number | null; change_due?: string | number | null;

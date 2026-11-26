@@ -52,9 +52,10 @@
       showRecovery('โหลดหน้าเว็บไม่สำเร็จ กรุณาตรวจสอบการเชื่อมต่อแล้วลองอีกครั้ง');
       return;
     }
+    const errorMessage = String(event.error?.stack || event.error?.message || event.message || 'Unknown application error').slice(0, 320);
     console.error('ShopQR page error:', event.error || event.message);
     if (retryOnce()) return;
-    showRecovery('หน้าเว็บเกิดข้อผิดพลาด กรุณาลองโหลดอีกครั้ง');
+    showRecovery(`หน้าเว็บเกิดข้อผิดพลาด: ${errorMessage}`);
   }, true);
 
   window.addEventListener('unhandledrejection', event => {
@@ -64,7 +65,7 @@
     const message = String(event.reason?.message || event.reason || '');
     if (/Failed to fetch dynamically imported module|Importing a module script failed|Unable to preload CSS/i.test(message)) {
     if (retryOnce()) return;
-      showRecovery('โหลดหน้าเว็บไม่สำเร็จ กรุณาตรวจสอบการเชื่อมต่อแล้วลองอีกครั้ง');
+      showRecovery(`โหลดหน้าเว็บไม่สำเร็จ: ${message.slice(0, 320)}`);
     }
   });
 

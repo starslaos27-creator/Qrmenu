@@ -7,6 +7,8 @@ import { registerMenuStockHistory } from "../routes/menu-stock-history.js";
 import { registerMenuStockOutgoing } from "../routes/menu-stock-outgoing.js";
 import { checkImageUrl, checkTextContent, sendModerationFailure } from "../security/content-moderation.js";
 
+const memberPageKeys = ["home", "backend", "menu", "categories", "inventory", "stock-deposits", "tables", "orders", "kitchen", "bills", "finance", "promotions", "stats", "close-shop", "audit", "feedback"];
+
 export function createManagementController(app, env) {
   const get_api_restaurants_restaurantId = async (request, reply) => {
         if (!isUuid(request.params.restaurantId))
@@ -169,12 +171,19 @@ function registerTeamRoutes(app, env) {
         const access = await accessAny(app, request, reply, env);
         if (!access)
             return;
-        const result = await app.db.query(`select m.id, m.user_id, m.role, m.invited_email, m.phone,
-                m.created_at, u.email
-         from restaurant_members m
-         join app_users u on u.id = m.user_id
-         where m.restaurant_id = $1
-         order by m.created_at`, [access.restaurantId]);
+        let result;
+        try {
+          result = await app.db.query(`select m.id, m.user_id, m.role, m.invited_email, m.phone,
+                  m.page_permissions, m.created_at, u.email, u.display_name, u.phone as account_phone
+           from restaurant_members m join app_users u on u.id = m.user_id
+           where m.restaurant_id = $1 order by m.created_at`, [access.restaurantId]);
+        } catch (error) {
+          if (!isUndefinedColumn(error)) throw error;
+          result = await app.db.query(`select m.id, m.user_id, m.role, m.invited_email, m.phone,
+                  null::jsonb as page_permissions, m.created_at, u.email, u.display_name, u.phone as account_phone
+           from restaurant_members m join app_users u on u.id = m.user_id
+           where m.restaurant_id = $1 order by m.created_at`, [access.restaurantId]);
+        }
         return reply.send({ ok: true, members: result.rows });
     });
     app.delete("/api/restaurants/:restaurantId/members/:memberId", async (request, reply) => {
@@ -190,6 +199,48 @@ function registerTeamRoutes(app, env) {
             return reply.status(409).send({ ok: false, error: "MEMBER_NOT_REMOVABLE" });
         }
         return reply.send({ ok: true });
+    });
+    app.patch("/api/restaurants/:restaurantId/members/:memberId", async (request, reply) => {
+        const access = await accessOwner(app, request, reply, env);
+        if (!access || !isUuid(request.params.memberId)) return access ? invalidId(reply) : undefined;
+        const body = request.body ?? {};
+        const role = body.role;
+        const displayName = typeof body.displayName === "string" ? body.displayName.trim() : "";
+        const phone = typeof body.phone === "string" ? body.phone.trim() : "";
+        const reason = typeof body.reason === "string" ? body.reason.trim() : "";
+        const pagePermissions = body.pagePermissions;
+        if (!["staff", "cook", "waiter"].includes(role) || !displayName || displayName.length > 100 || phone.length > 50 || reason.length < 3 || reason.length > 500 ||
+            !pagePermissions || typeof pagePermissions !== "object" || Array.isArray(pagePermissions)) return invalidBody(reply);
+        const entries = Object.entries(pagePermissions).filter(([key]) => key !== "__schema");
+        if (!entries.length || (pagePermissions.__schema !== undefined && pagePermissions.__schema !== "kitchen-orders-v1") || entries.some(([key, value]) => !memberPageKeys.includes(key) || (value !== true && value !== "view" && value !== "admin"))) return invalidBody(reply);
+        const client = await app.db.connect();
+        try {
+          await client.query("begin");
+          const existing = await client.query(`select id, user_id, role, phone, page_permissions
+            from restaurant_members where id=$1 and restaurant_id=$2 for update`, [request.params.memberId, access.restaurantId]);
+          if (!existing.rows[0] || existing.rows[0].role === "owner" || existing.rows[0].user_id === access.user.id) {
+            await client.query("rollback");
+            return reply.status(409).send({ ok: false, error: "MEMBER_NOT_EDITABLE" });
+          }
+          const updated = await client.query(`update restaurant_members set role=$3, phone=$4, page_permissions=$5::jsonb
+            where id=$1 and restaurant_id=$2
+            returning id, user_id, role, invited_email, phone, page_permissions, created_at`,
+            [request.params.memberId, access.restaurantId, role, phone || null, JSON.stringify(pagePermissions)]);
+          await client.query("update app_users set display_name=$2 where id=$1", [existing.rows[0].user_id, displayName]);
+          await client.query(`insert into audit_logs (restaurant_id, actor_user_id, action, target_id, details)
+            values ($1,$2,'member.permissions.update',$3,$4::jsonb)`, [access.restaurantId, access.user.id, existing.rows[0].user_id,
+            JSON.stringify({ reason, from_role: existing.rows[0].role, to_role: role, display_name: displayName, permissions: pagePermissions })]);
+          await client.query("commit");
+          const member = await app.db.query(`select m.id, m.user_id, m.role, m.invited_email, m.phone,
+              m.page_permissions, m.created_at, u.email, u.display_name, u.phone as account_phone
+            from restaurant_members m join app_users u on u.id=m.user_id where m.id=$1`, [updated.rows[0].id]);
+          return reply.send({ ok: true, member: member.rows[0] });
+        } catch (error) {
+          await client.query("rollback");
+          if (isUndefinedColumn(error)) return reply.status(503).send({ ok: false, error: "PAGE_PERMISSIONS_MIGRATION_REQUIRED" });
+          throw error;
+        }
+        finally { client.release(); }
     });
     app.get("/api/restaurants/:restaurantId/invites", async (request, reply) => {
         const access = await accessOwner(app, request, reply, env);
@@ -698,7 +749,7 @@ order by t.table_number`, [access.restaurantId]);
         if (!access)
             return;
         const body = request.body ?? {};
-        if (access.role !== "owner" &&
+        if (access.role !== "owner" && !access.pagePermission &&
             Object.keys(body).some((key) => key !== "is_open")) {
             return reply.status(403).send({ ok: false, error: "FORBIDDEN" });
         }
@@ -751,7 +802,9 @@ async function accessOwner(app, request, reply, env) {
     const access = await accessAny(app, request, reply, env);
     if (!access)
         return null;
-    if (access.role !== "owner") {
+    const changesData = !["GET", "HEAD", "OPTIONS"].includes(request.method.toUpperCase());
+    const allowedByPage = changesData ? access.pagePermission : access.pageViewPermission;
+    if (access.role !== "owner" && !allowedByPage) {
         void reply.status(403).send({ ok: false, error: "FORBIDDEN" });
         return null;
     }
@@ -796,4 +849,7 @@ function isForeignKeyViolation(error) {
         error !== null &&
         "code" in error &&
         error.code === "23503");
+}
+function isUndefinedColumn(error) {
+    return typeof error === "object" && error !== null && "code" in error && error.code === "42703";
 }

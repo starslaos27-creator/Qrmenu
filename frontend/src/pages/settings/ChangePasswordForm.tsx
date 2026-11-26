@@ -34,7 +34,7 @@ export default function ChangePasswordForm({ email, onLogin }: { email: string; 
     <label className="grid gap-1.5 text-sm font-medium">รหัสผ่านปัจจุบัน<input type="password" autoComplete="current-password" required value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} className={inputClass} /></label>
     <div className="grid gap-3"><label className="grid gap-1.5 text-sm font-medium">รหัสผ่านใหม่<input type="password" autoComplete="new-password" minLength={6} required value={newPassword} onChange={(event) => setNewPassword(event.target.value)} className={inputClass} /></label><label className="grid gap-1.5 text-sm font-medium">ยืนยันรหัสผ่านใหม่<input type="password" autoComplete="new-password" minLength={6} required value={confirmation} onChange={(event) => setConfirmation(event.target.value)} className={inputClass} /></label></div>
     {error && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-800">{error}</p>}
-    <button disabled={saving} className="rounded-xl bg-emerald-800 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-900 disabled:opacity-50">{saving ? "กำลังบันทึก…" : "เปลี่ยนรหัสผ่าน"}</button>
+    <button disabled={saving} className="settings-save-button ml-auto block rounded-xl px-4 py-2 text-sm font-semibold disabled:opacity-50">{saving ? "กำลังบันทึก…" : "เปลี่ยนรหัสผ่าน"}</button>
   </form>;
 }
 

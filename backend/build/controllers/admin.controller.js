@@ -3,6 +3,7 @@ import { createRefreshSession, hashPassword, normalizeEmail, normalizePhone, set
 import { clearLoginFailures, recordLoginFailure } from "../security/login-failures.js";
 import { requirePlatformAdmin, } from "../admin/authorization.js";
 export function createAdminController(app, env) {
+    const adminSections = ["overview", "shops", "users", "audit", "monitor", "contact-messages", "pro-pricing", "finance-income", "finance-expense", "settings"];
     const post_api_admin_auth_forgot_password = async (request, reply) => {
         if (!app.db)
             return reply.status(503).send({ ok: false, error: "DATABASE_NOT_CONFIGURED" });
@@ -209,7 +210,7 @@ export function createAdminController(app, env) {
         const email = normalizeEmail(request.body?.email ?? "");
         const password = request.body?.password ?? "";
         const result = await app.db.query(`select u.id, u.email, u.password_hash, u.disabled_at,
-                a.role, a.active
+         a.role, a.active, a.section_permissions
          from app_users u
          left join app_admins a on a.user_id = u.id
          where lower(u.email) = $1
@@ -246,6 +247,7 @@ export function createAdminController(app, env) {
                 accessToken,
                 user,
                 adminRole: row.role,
+                adminPermissions: row.section_permissions,
             });
         }
         catch (error) {
@@ -260,7 +262,7 @@ export function createAdminController(app, env) {
         const admin = await requirePlatformAdmin(request, reply, env);
         if (!admin)
             return;
-        return reply.send({ ok: true, user: admin.user, adminRole: admin.role });
+        return reply.send({ ok: true, user: admin.user, adminRole: admin.role, adminPermissions: admin.sectionPermissions });
     };
     const get_api_admin_summary = async (request, reply) => {
         const admin = await requirePlatformAdmin(request, reply, env);
@@ -704,9 +706,10 @@ export function createAdminController(app, env) {
                 as unmatched_login_attempts,
               u.created_at, memberships.restaurant_name,
               memberships.restaurant_role,
-              exists(select 1 from app_admins a
-                where a.user_id = u.id and a.active = true) as is_admin
+              a.role as admin_role, a.active as admin_active, a.section_permissions as admin_section_permissions,
+              (a.user_id is not null and a.active) as is_admin
        from app_users u
+       left join app_admins a on a.user_id = u.id
        left join lateral (
          select string_agg(distinct r.name, ', ' order by r.name) as restaurant_name,
                 string_agg(distinct m.role::text, ', ' order by m.role::text) as restaurant_role
@@ -725,9 +728,118 @@ export function createAdminController(app, env) {
          and ($3 = 'all'
            or ($3 = 'complete' and u.password_hash is not null)
            or ($3 = 'pending' and u.password_hash is null))
+         and u.deleted_at is null
        order by u.created_at desc
        limit $4 offset $5`, [restaurantId, search, migration, limit, offset, phoneSearch]);
         return reply.send({ ok: true, users: result.rows });
+    };
+    const put_api_admin_users_userId_admin_access = async (request, reply) => {
+        if (!isUuid(request.params.userId))
+            return reply.status(400).send({ ok: false, error: "INVALID_ID" });
+        const admin = await requirePlatformAdmin(request, reply, env);
+        if (!admin)
+            return;
+        if (!["super_admin", "support"].includes(admin.role))
+            return reply.status(403).send({ ok: false, error: "ADMIN_FORBIDDEN" });
+        const userId = request.params.userId;
+        const active = request.body?.active === true;
+        const permissions = request.body?.permissions;
+        const reason = typeof request.body?.reason === "string" ? request.body.reason.trim() : "";
+        if (userId === admin.user.id)
+            return reply.status(400).send({ ok: false, error: "CANNOT_CHANGE_OWN_ADMIN_ACCESS" });
+        if (typeof request.body?.active !== "boolean" || !permissions || typeof permissions !== "object" || Array.isArray(permissions) || reason.length < 3 || reason.length > 500) {
+            return reply.status(400).send({ ok: false, error: "INVALID_ADMIN_ACCESS" });
+        }
+        const entries = Object.entries(permissions);
+        if (entries.some(([section, permission]) => !adminSections.includes(section) || (permission !== "view" && permission !== "edit")) || (active && entries.length === 0)) {
+            return reply.status(400).send({ ok: false, error: "INVALID_ADMIN_PERMISSIONS" });
+        }
+        const client = await app.db.connect();
+        try {
+            await client.query("begin");
+            const target = await client.query(`select u.id, u.email, u.disabled_at, a.role, a.active as admin_active
+            from app_users u left join app_admins a on a.user_id=u.id where u.id=$1 for update of u`, [userId]);
+            if (!target.rows[0]) {
+                await client.query("rollback");
+                return reply.status(404).send({ ok: false, error: "NOT_FOUND" });
+            }
+            if (target.rows[0].disabled_at) {
+                await client.query("rollback");
+                return reply.status(400).send({ ok: false, error: "USER_ACCOUNT_DISABLED" });
+            }
+            if (target.rows[0].role === "super_admin") {
+                await client.query("rollback");
+                return reply.status(403).send({ ok: false, error: "CANNOT_CHANGE_SUPER_ADMIN_ACCESS" });
+            }
+            const saved = await client.query(`insert into app_admins (user_id, role, active, section_permissions)
+            values ($1, 'viewer', $2, $3::jsonb)
+            on conflict (user_id) do update set role='viewer', active=excluded.active, section_permissions=excluded.section_permissions
+            returning role, active, section_permissions`, [userId, active, JSON.stringify(permissions)]);
+            await writeAdminAudit(client, request.ip, {
+                admin, action: active ? "admin.access.updated" : "admin.access.disabled", targetType: "admin", targetId: userId,
+                reason, details: { email: target.rows[0].email, permissions, active },
+            });
+            await client.query("commit");
+            return reply.send({ ok: true, admin: saved.rows[0] });
+        }
+        catch (error) {
+            await client.query("rollback");
+            throw error;
+        }
+        finally {
+            client.release();
+        }
+    };
+    const delete_api_admin_users_userId = async (request, reply) => {
+        if (!isUuid(request.params.userId))
+            return reply.status(400).send({ ok: false, error: "INVALID_ID" });
+        const admin = await requirePlatformAdmin(request, reply, env);
+        if (!admin)
+            return;
+        if (admin.role !== "super_admin")
+            return reply.status(403).send({ ok: false, error: "ADMIN_FORBIDDEN" });
+        const userId = request.params.userId;
+        const reason = typeof request.body?.reason === "string" ? request.body.reason.trim() : "";
+        if (userId === admin.user.id)
+            return reply.status(400).send({ ok: false, error: "CANNOT_DELETE_SELF" });
+        if (reason.length < 3 || reason.length > 500)
+            return reply.status(400).send({ ok: false, error: "INVALID_DELETE_REASON" });
+        const client = await app.db.connect();
+        try {
+            await client.query("begin");
+            const target = await client.query(`select u.id, u.email, u.deleted_at, a.role
+            from app_users u left join app_admins a on a.user_id=u.id where u.id=$1 for update of u`, [userId]);
+            if (!target.rows[0]) {
+                await client.query("rollback");
+                return reply.status(404).send({ ok: false, error: "NOT_FOUND" });
+            }
+            if (target.rows[0].role === "super_admin") {
+                await client.query("rollback");
+                return reply.status(403).send({ ok: false, error: "CANNOT_DELETE_SUPER_ADMIN" });
+            }
+            if (target.rows[0].deleted_at) {
+                await client.query("rollback");
+                return reply.status(409).send({ ok: false, error: "USER_ALREADY_DELETED" });
+            }
+            await client.query(`update app_users set deleted_at=now(), deletion_reason=$2,
+            disabled_at=coalesce(disabled_at, now()), disabled_reason=$2, updated_at=now() where id=$1`, [userId, reason]);
+            await client.query(`update app_admins set active=false, section_permissions='{}'::jsonb where user_id=$1`, [userId]);
+            await client.query(`update auth_refresh_sessions set revoked_at=coalesce(revoked_at,now())
+            where user_id=$1 and revoked_at is null`, [userId]);
+            await writeAdminAudit(client, request.ip, {
+                admin, action: "user.deleted", targetType: "user", targetId: userId,
+                reason, details: { email: target.rows[0].email, retainedAccountData: true },
+            });
+            await client.query("commit");
+            return reply.send({ ok: true, deleted: true });
+        }
+        catch (error) {
+            await client.query("rollback");
+            throw error;
+        }
+        finally {
+            client.release();
+        }
     };
     const get_api_admin_users_userId = async (request, reply) => {
         if (!isUuid(request.params.userId)) {
@@ -740,7 +852,7 @@ export function createAdminController(app, env) {
         const userResult = await app.db.query(`select u.id, u.email, u.phone, u.phone_normalized, u.display_name,
               u.email_verified_at, u.password_migrated_at, u.last_login_at, u.last_activity_at,
               u.disabled_at, u.disabled_reason, u.created_at, u.updated_at,
-              a.role as admin_role, a.active as admin_active
+              a.role as admin_role, a.active as admin_active, a.section_permissions as admin_section_permissions
        from app_users u
        left join app_admins a on a.user_id = u.id
        where u.id = $1`, [userId]);
@@ -1012,7 +1124,7 @@ export function createAdminController(app, env) {
            disabled_at = case when $2 then now() else null end,
            disabled_reason = case when $2 then $3 else null end,
            last_activity_at = case when $2 then last_activity_at else now() end
-         where id = $1 returning id, email, disabled_at, disabled_reason`, [request.params.userId, disabled, reason || null]);
+         where id = $1 and deleted_at is null returning id, email, disabled_at, disabled_reason`, [request.params.userId, disabled, reason || null]);
             if (!result.rows[0]) {
                 await client.query("rollback");
                 return reply.status(404).send({ ok: false, error: "NOT_FOUND" });
@@ -1196,7 +1308,7 @@ export function createAdminController(app, env) {
        limit $7 offset $8`, [...filters, limit, offset]);
         return reply.send({ ok: true, logs: result.rows, total: countResult.rows[0].total, limit, offset });
     };
-    return { get_api_admin_bootstrap_status, post_api_admin_bootstrap, post_api_admin_auth_login, post_api_admin_auth_forgot_password, get_api_admin_auth_password_reset_token, post_api_admin_auth_reset_password, get_api_admin_me, get_api_admin_summary, get_api_admin_restaurants, get_api_admin_restaurants_restaurantId, get_api_admin_users, get_api_admin_users_userId, patch_api_admin_users_userId, patch_api_admin_users_userId_membership, patch_api_admin_restaurants_restaurantId_status, patch_api_admin_users_userId_status, post_api_admin_users_userId_password_reset_link, post_api_admin_users_userId_set_password, get_api_admin_audit_logs };
+    return { get_api_admin_bootstrap_status, post_api_admin_bootstrap, post_api_admin_auth_login, post_api_admin_auth_forgot_password, get_api_admin_auth_password_reset_token, post_api_admin_auth_reset_password, get_api_admin_me, get_api_admin_summary, get_api_admin_restaurants, get_api_admin_restaurants_restaurantId, get_api_admin_users, get_api_admin_users_userId, put_api_admin_users_userId_admin_access, delete_api_admin_users_userId, patch_api_admin_users_userId, patch_api_admin_users_userId_membership, patch_api_admin_restaurants_restaurantId_status, patch_api_admin_users_userId_status, post_api_admin_users_userId_password_reset_link, post_api_admin_users_userId_set_password, get_api_admin_audit_logs };
 }
 async function writeAdminAudit(client, ipAddress, input) {
     await client.query(`insert into platform_admin_audit_logs

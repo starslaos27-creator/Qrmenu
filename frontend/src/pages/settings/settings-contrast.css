@@ -1,0 +1,27 @@
+/* Keep secondary copy on the settings page readable against white and pale backgrounds. */
+.settings-page .text-slate-400,
+.settings-page .text-slate-500,
+.settings-page .text-slate-600,
+.settings-page .text-slate-700,
+.settings-page .text-slate-800,
+.settings-page .text-slate-900,
+.settings-page .disabled\:text-slate-500:disabled {
+  color: #174a34;
+}
+
+.settings-page .weekly-hours-editor :is(.wh-heading p, .wh-help, .wh-footer p, small, .wh-slot-toggle) {
+  color: #174a34;
+}
+
+.settings-page .settings-save-button {
+  margin-left: auto;
+  display: block;
+  border: 1px solid #174a34;
+  background-color: #174a34;
+  color: #fff;
+}
+
+.settings-page .settings-save-button:hover:not(:disabled) {
+  background-color: #0d3828;
+}
+

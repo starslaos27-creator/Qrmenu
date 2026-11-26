@@ -58,12 +58,10 @@ export default function PlatformFinancePage({ kind, canManage }: { kind: Finance
     const otherKind: FinanceKind = kind === "income" ? "expense" : "income";
     const otherQuery = new URLSearchParams({ kind: otherKind, from, to, currency, page: "1" });
     try {
-      const [current, other] = await Promise.all([
-        adminRequest<FinanceResponse>(`/api/admin/finance?${query}`),
-        adminRequest<FinanceResponse>(`/api/admin/finance?${otherQuery}`),
-      ]);
+      const current = await adminRequest<FinanceResponse>(`/api/admin/finance?${query}`);
+      const other = await adminRequest<FinanceResponse>(`/api/admin/finance?${otherQuery}`).catch(() => null);
       setData(current);
-      setOtherSummary(other.summary);
+      setOtherSummary(other?.summary || []);
     } catch (cause) {
       setError(cause instanceof AdminApiError ? `โหลดข้อมูลการเงินไม่สำเร็จ (${cause.code})` : "โหลดข้อมูลการเงินไม่สำเร็จ");
     } finally {
@@ -149,7 +147,7 @@ export default function PlatformFinancePage({ kind, canManage }: { kind: Finance
     setBusy(true);
     setError("");
     try {
-      await adminRequest(`/api/admin/finance/${voiding.id}/void`, {
+      await adminRequest(`/api/admin/finance/${voiding.id}/void?kind=${kind}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ reason: voidReason.trim() }),

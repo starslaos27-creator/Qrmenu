@@ -109,6 +109,7 @@ export interface AdminUser {
   last_activity_at?: string | null;
   admin_role?: string | null;
   admin_active?: boolean | null;
+  admin_section_permissions?: Record<string, "view" | "edit"> | null;
   password_migrated_at?: string | null;
   last_login_at?: string | null;
   failed_login_attempts?: number;

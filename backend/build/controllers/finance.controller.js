@@ -14,7 +14,7 @@ export async function access(request, reply, env) {
         return null;
     }
     const auth = await requireRestaurantAccess(request, reply, env, request.params.restaurantId);
-    if (!auth || auth.role === 'owner')
+    if (!auth || auth.role === 'owner' || auth.pagePermission || auth.pageViewPermission)
         return auth;
     const config = (await request.server.db.query('select config from finance_settings where restaurant_id=$1', [auth.restaurantId])).rows[0]?.config || {};
     const allowed = request.method === 'GET' ? [...(config.viewRoles || []), ...(config.editRoles || [])] : config.editRoles || [];

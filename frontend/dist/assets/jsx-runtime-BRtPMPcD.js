@@ -1,0 +1,1 @@
+import{r as g}from"./index-BVKZFYvx.js";const R=g();function x(t,p,k){const q=p==null?{}:{...p};if(k!==void 0)q.key=k;return R.createElement(t,q)}const j={Fragment:R.Fragment,jsx:x,jsxs:x,jsxDEV:x};export{j};

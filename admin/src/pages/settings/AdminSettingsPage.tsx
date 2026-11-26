@@ -1,11 +1,13 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { adminRequest, AdminApiError, changeAdminPassword, saveAccessToken, type AdminUser } from "../../shared/adminApi";
+import AdminPaymentBankSettings from "./AdminPaymentBankSettings";
 
 type SettingsTab = "account" | "password";
 
-export default function AdminSettingsPage({ user, adminRole, onRequireLogin, onSignOut }: {
+export default function AdminSettingsPage({ user, adminRole, canManage, onRequireLogin, onSignOut }: {
   user: AdminUser;
   adminRole: string;
+  canManage: boolean;
   onRequireLogin: () => void;
   onSignOut: () => void;
 }) {
@@ -69,10 +71,15 @@ export default function AdminSettingsPage({ user, adminRole, onRequireLogin, onS
     </header>
 
     <section className="mb-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="text-lg font-semibold">QR รับชำระแพ็กเกจรายเดือน</h2><p className="mt-1 text-sm text-slate-500">QR นี้จะแสดงให้ร้านค้าในหน้าชำระแพ็กเกจ</p>
-      {qr && <img src={qr} alt="QR รับชำระแพ็กเกจรายเดือน" className="mt-4 max-h-56 max-w-full rounded-lg border object-contain" />}
-      {adminRole !== "viewer" && <label className="mt-4 block text-sm font-medium">{qrBusy ? "กำลังอัปโหลด…" : "เลือกรูป QR (JPG, PNG, WebP ไม่เกิน 5 MB)"}<input disabled={qrBusy} className="mt-2 block" type="file" accept="image/jpeg,image/png,image/webp" onChange={event => { void uploadQr(event.target.files?.[0]); event.target.value=""; }} /></label>}
-      {qrMessage && <p role="status" className="mt-3 text-sm">{qrMessage}</p>}
+      <div className="grid items-start gap-5 lg:grid-cols-2">
+        <div className="rounded-xl border border-[#dfcfb2] bg-white/60 p-5">
+          <h2 className="text-lg font-semibold">QR รับชำระ</h2><p className="mt-1 text-sm text-slate-500">QR นี้จะแสดงให้ร้านค้าในหน้าชำระแพ็กเกจ</p>
+          {qr ? <img src={qr} alt="QR รับชำระ" className="mx-auto mt-4 max-h-64 max-w-full rounded-lg border object-contain" /> : <p className="mt-4 grid min-h-48 place-items-center rounded-lg border border-dashed border-[#dfcfb2] text-sm text-slate-500">ยังไม่มีรูป QR</p>}
+          {canManage && <label className="mt-4 block text-sm font-medium">{qrBusy ? "กำลังอัปโหลด…" : "เลือกรูป QR (JPG, PNG, WebP ไม่เกิน 5 MB)"}<input disabled={qrBusy} className="mt-2 block" type="file" accept="image/jpeg,image/png,image/webp" onChange={event => { void uploadQr(event.target.files?.[0]); event.target.value=""; }} /></label>}
+          {qrMessage && <p role="status" className="mt-3 text-sm">{qrMessage}</p>}
+        </div>
+        <AdminPaymentBankSettings canManage={canManage} />
+      </div>
     </section>
 
     <div className="grid gap-5 md:grid-cols-[220px_minmax(0,1fr)]">

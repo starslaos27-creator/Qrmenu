@@ -12,7 +12,7 @@ export const timeRange=query=>{
 export async function access(request,reply,env){
  if(!uuid(request.params.restaurantId)){bad(reply);return null;}
  const auth=await requireRestaurantAccess(request,reply,env,request.params.restaurantId);
- if(!auth||auth.role==='owner')return auth;
+ if(!auth||auth.role==='owner'||auth.pagePermission||auth.pageViewPermission)return auth;
  const config=(await request.server.db.query('select config from finance_settings where restaurant_id=$1',[auth.restaurantId])).rows[0]?.config||{};
  const allowed=request.method==='GET'?[...(config.viewRoles||[]),...(config.editRoles||[])]:config.editRoles||[];
  if(!allowed.includes(auth.role)){reply.code(403).send({ok:false,error:'FORBIDDEN'});return null;}

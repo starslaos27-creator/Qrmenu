@@ -54,6 +54,27 @@ export function createProRequestController(app, env) {
         await app.db.query(`insert into pro_payment_settings(id,qr_url,updated_by) values(true,$1,$2) on conflict(id) do update set qr_url=excluded.qr_url,updated_by=excluded.updated_by,updated_at=now()`, [qrUrl, admin.user.id]);
         return { qrUrl };
     };
+    const get_api_pro_payment_bank_details = async (_request, reply) => {
+        const row = (await app.db.query('select bank_name as bank, account_number as "accountNumber", account_name as "accountName" from pro_payment_bank_details where id=true')).rows[0];
+        reply.header("Cache-Control", "no-store");
+        return { bankDetails: row || null };
+    };
+    const put_api_admin_pro_payment_bank_details = async (request, reply) => {
+        const admin = await requirePlatformAdmin(request, reply, env, ["super_admin", "support"]);
+        if (!admin)
+            return;
+        const body = request.body || {};
+        const bank = typeof body.bank === "string" ? body.bank.trim() : "";
+        const accountNumber = typeof body.accountNumber === "string" ? body.accountNumber.trim() : "";
+        const accountName = typeof body.accountName === "string" ? body.accountName.trim() : "";
+        if (!bank || !accountNumber || !accountName || bank.length > 120 || accountNumber.length > 80 || accountName.length > 160)
+            return reply.code(400).send({ error: "INVALID_BANK_DETAILS" });
+        const row = (await app.db.query(`insert into pro_payment_bank_details(id,bank_name,account_number,account_name,updated_by)
+      values(true,$1,$2,$3,$4) on conflict(id) do update set bank_name=excluded.bank_name,account_number=excluded.account_number,
+      account_name=excluded.account_name,updated_by=excluded.updated_by,updated_at=now()
+      returning bank_name as bank,account_number as "accountNumber",account_name as "accountName"`, [bank, accountNumber, accountName, admin.user.id])).rows[0];
+        return { bankDetails: row };
+    };
     const get_api_admin_pro_request_slip = async (request, reply) => {
         if (!await requirePlatformAdmin(request, reply, env))
             return;
@@ -730,5 +751,5 @@ export function createProRequestController(app, env) {
         reply.header("Cache-Control", "private, no-store");
         return { packages: result.rows };
     };
-    return { get_api_pro_payment_qr, put_api_admin_pro_payment_qr, get_api_admin_pro_request_slip, get_api_admin_pro_request_count, get_api_pro_pricing, get_api_admin_pro_pricing, put_api_admin_pro_pricing, get_api_restaurants_restaurantId_pro_countdown, get_api_restaurants_restaurantId_pro_exchange_rate, get_admin_pro_exchange_rate, get_api_restaurants_restaurantId_pro_order_bills, get_admin_order_bills_summary, get_order_fee_requests, get_order_fee_billing_status, post_order_fee_request, post_admin_order_fee_request, get_admin_order_fee_requests, get_admin_order_fee_slip, post_admin_order_fee_review, post_admin_order_fee_reverse, get_api_restaurants_restaurantId_pro_requests, post_api_restaurants_restaurantId_pro_requests, get_api_admin_pro_requests, post_api_admin_restaurants_restaurantId_pro_purchases, post_api_admin_pro_requests_id_review, post_admin_pro_cancel, get_admin_active_pro_packages };
+    return { get_api_pro_payment_qr, put_api_admin_pro_payment_qr, get_api_pro_payment_bank_details, put_api_admin_pro_payment_bank_details, get_api_admin_pro_request_slip, get_api_admin_pro_request_count, get_api_pro_pricing, get_api_admin_pro_pricing, put_api_admin_pro_pricing, get_api_restaurants_restaurantId_pro_countdown, get_api_restaurants_restaurantId_pro_exchange_rate, get_admin_pro_exchange_rate, get_api_restaurants_restaurantId_pro_order_bills, get_admin_order_bills_summary, get_order_fee_requests, get_order_fee_billing_status, post_order_fee_request, post_admin_order_fee_request, get_admin_order_fee_requests, get_admin_order_fee_slip, post_admin_order_fee_review, post_admin_order_fee_reverse, get_api_restaurants_restaurantId_pro_requests, post_api_restaurants_restaurantId_pro_requests, get_api_admin_pro_requests, post_api_admin_restaurants_restaurantId_pro_purchases, post_api_admin_pro_requests_id_review, post_admin_pro_cancel, get_admin_active_pro_packages };
 }

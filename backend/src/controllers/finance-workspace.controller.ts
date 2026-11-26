@@ -54,7 +54,7 @@ export function createFinanceWorkspaceController(app, env) {
   if(!uuid(req.params.restaurantId))return bad(reply);
   const a=await requireRestaurantAccess(req,reply,env,req.params.restaurantId);if(!a)return;
   const c=normalizeConfig((await app.db.query('select config from finance_settings where restaurant_id=$1',[a.restaurantId])).rows[0]?.config);
-  return {ok:true,view:a.role==='owner'||c.viewRoles.includes(a.role)||c.editRoles.includes(a.role),edit:a.role==='owner'||c.editRoles.includes(a.role),owner:a.role==='owner'};
+  return {ok:true,view:a.role==='owner'||a.pagePermission||a.pageViewPermission||c.viewRoles.includes(a.role)||c.editRoles.includes(a.role),edit:a.role==='owner'||a.pagePermission||c.editRoles.includes(a.role),owner:a.role==='owner'};
  };
   const handler2 = async(req,reply)=>{
   const a=await access(req,reply,env);if(!a)return;if(!range(req.query)||!timeRange(req.query))return bad(reply);
@@ -97,7 +97,7 @@ export function createFinanceWorkspaceController(app, env) {
    const closings=(await db.query(`select c.id,c.close_date::text,c.snapshot,c.actual,c.note,c.created_at,coalesce(u.display_name,u.email) operator from finance_closings c left join app_users u on u.id=c.created_by where c.restaurant_id=$1 order by close_date desc,created_at desc limit 60`,[r])).rows;
    const transfers=(await db.query(`select t.*,coalesce(u.display_name,u.email) operator from finance_transfers t left join app_users u on u.id=t.created_by where t.restaurant_id=$1 and t.entry_date between $2 and $3 and (t.entry_date>$2::date or (t.created_at at time zone 'Asia/Vientiane')::time >= $4::time) and (t.entry_date<$3::date or date_trunc('minute',t.created_at at time zone 'Asia/Vientiane')::time <= $5::time) order by t.created_at desc limit 100`,[r,from,to,fromTime,toTime])).rows;
    await db.query('commit');
-   return {ok:true,today:current,month,bills,payments,selected,menus,staff,costs,ingredients,config,restaurant,currencyEditable:restaurant.currency_editable,accounts:balances,closings,transfers,day,canEdit:a.role==='owner'||config.editRoles.includes(a.role),isOwner:a.role==='owner'};
+   return {ok:true,today:current,month,bills,payments,selected,menus,staff,costs,ingredients,config,restaurant,currencyEditable:restaurant.currency_editable,accounts:balances,closings,transfers,day,canEdit:a.role==='owner'||a.pagePermission||config.editRoles.includes(a.role),isOwner:a.role==='owner'};
   }catch(e){await db.query('rollback');throw e;}finally{db.release();}
  };
   const handler3 = async(req,reply)=>{

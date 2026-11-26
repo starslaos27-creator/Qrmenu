@@ -1,0 +1,1 @@
+import{g as i,r as e}from"./vendor-react-DCUvmuBu.js";function a(){return e}export{i as g,a as r};

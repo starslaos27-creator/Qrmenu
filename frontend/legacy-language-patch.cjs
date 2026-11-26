@@ -11,7 +11,7 @@ function patchLegacyModuleImports(source) {
     source = source.replace('initialCalls:a.calls,canAct:m,canManageSettings:r==="owner"', 'initialCalls:a.calls,canAct:m,userRole:r,canManageSettings:r==="owner"');
     source = source.replace('children:[p.length>0&&e.jsxs("section",{className:"mb-4 rounded-2xl border border-amber-200 bg-amber-50/70 p-4"', 'children:[shopqrUserRole!=="cook"&&p.length>0&&e.jsxs("section",{className:"mb-4 rounded-2xl border border-amber-200 bg-amber-50/70 p-4"');
   }
-  const designImport = 'import { applyPrintDesign as shopqrApplyPrintDesign, getPrintLocale as shopqrGetPrintLocale } from "./receipt-design.js?v=20261120-receipt-top-margin-v1";\n';
+  const designImport = 'import { applyPrintDesign as shopqrApplyPrintDesign, getPrintLocale as shopqrGetPrintLocale } from "./receipt-design.js?v=20261126-kitchen-restaurant-logo-v2";\n';
   if (source.includes('function Ce(t)') && source.includes('A.open(),A.write($),A.close()') && !source.includes('shopqrApplyPrintDesign')) {
     source = designImport + source.replace('function de(t){var r;', 'function de(t){t={...t,locale:shopqrGetPrintLocale(t.locale)};var r;').replace('A.open(),A.write($),A.close()', 'A.open(),A.write(shopqrApplyPrintDesign($,"receipt")),A.close()');
   }
@@ -38,11 +38,36 @@ module.exports = function patchLegacyLanguageBundle(source) {
   const routeKeyedBoundary = 'children:e.jsxs(s.Suspense,{key:window.location.pathname+window.location.search,fallback:e.jsx(Z,{}),children:[';
   const stableRouteBoundary = 'children:e.jsxs(s.Suspense,{fallback:e.jsx(Z,{}),children:[';
   source = source.replace(routeKeyedBoundary, stableRouteBoundary);
+  const oldPageGuard = 'function kt(t,a){if(a==="finance"&&["owner","cook","waiter","staff"].includes(t))return true;return t==="owner"?!0:t==="cook"?["home","kitchen","bills","tables","inventory","stock-deposits"].includes(a):t==="waiter"||t==="staff"?["home","bills","tables","kitchen","inventory","stock-deposits"].includes(a):a==="home"}';
+  const newPageGuard = 'function kt(t,a){const p=window.__shopqr_page_permissions;if(p&&typeof p==="object")return t==="owner"||p[a]===true||p[a]==="view"||p[a]==="admin";if(a==="finance"&&["owner","cook","waiter","staff"].includes(t))return true;return t==="owner"?!0:t==="cook"?["home","kitchen","bills","tables","inventory","stock-deposits"].includes(a):t==="waiter"||t==="staff"?["home","bills","tables","kitchen","inventory","stock-deposits"].includes(a):a==="home"}';
+  if (!source.includes(newPageGuard)) {
+    if (!source.includes(oldPageGuard)) throw new Error("Legacy restaurant page guard was not found");
+    source = source.replace(oldPageGuard, newPageGuard);
+  }
+  const oldSettingsChunk = 'bt=s.lazy(()=>w(()=>import("./SettingsPage-BxuQXgL0.js?v=20261120-isolated-profile-v1"),__vite__mapDeps([21,1,2,13,19,12,3])).then(t=>({default:t.SettingsPage})))';
+  const newSettingsChunk = 'bt=s.lazy(()=>import("./legacy-settings-live.js?v=20261126-orders-kitchen-split-v1").then(t=>({default:t.SettingsPage})))';
+  if (!source.includes(newSettingsChunk)) {
+    if (!source.includes(oldSettingsChunk)) throw new Error("Legacy settings module was not found");
+    source = source.replace(oldSettingsChunk, newSettingsChunk);
+  }
+  for (const [before, after] of [
+    ['n==="backend"?e.jsx(RestaurantBackoffice,{restaurant:r.restaurant,role:r.role})', 'n==="backend"?e.jsx(RestaurantBackoffice,{restaurant:r.restaurant,role:(window.__shopqr_page_permissions?.backend===true||window.__shopqr_page_permissions?.backend==="admin")?"owner":r.role})'],
+    ['n==="menu"?e.jsx(ht,{restaurantId:r.restaurant.id,canAct:r.role==="owner"})', 'n==="menu"?e.jsx(ht,{restaurantId:r.restaurant.id,canAct:r.role==="owner"||window.__shopqr_page_permissions?.menu===true||window.__shopqr_page_permissions?.menu==="admin"})'],
+    ['n==="inventory"?e.jsx(pt,{restaurantId:r.restaurant.id,role:r.role})', 'n==="inventory"?e.jsx(pt,{restaurantId:r.restaurant.id,role:(window.__shopqr_page_permissions?.inventory===true||window.__shopqr_page_permissions?.inventory==="admin")?"owner":r.role})'],
+    ['n==="tables"?e.jsx(_t,{restaurantId:r.restaurant.id,role:r.role})', 'n==="tables"?e.jsx(_t,{restaurantId:r.restaurant.id,role:(window.__shopqr_page_permissions?.tables===true||window.__shopqr_page_permissions?.tables==="admin")?"owner":r.role})'],
+    ['n==="kitchen"||n==="orders"?e.jsx(ut,{restaurantId:r.restaurant.id,role:(window.__shopqr_page_permissions?.[n]===true||window.__shopqr_page_permissions?.[n]==="admin")?"owner":r.role})', 'n==="kitchen"||n==="orders"?e.jsx(ut,{restaurantId:r.restaurant.id,role:(window.__shopqr_page_permissions?.[n]===true||window.__shopqr_page_permissions?.[n]==="admin")?"owner":r.role})'],
+    ['n==="bills"?e.jsx(lt,{restaurantId:r.restaurant.id,role:r.role})', 'n==="bills"?e.jsx(lt,{restaurantId:r.restaurant.id,role:(window.__shopqr_page_permissions?.bills===true||window.__shopqr_page_permissions?.bills==="admin")?"owner":r.role})'],
+  ]) {
+    if (!source.includes(after)) {
+      if (!source.includes(before)) throw new Error("Legacy member page controls changed; custom page permissions patch did not apply");
+      source = source.replace(before, after);
+    }
+  }
   source = source.replace(
     '../stock-deposits.js?v=20261101-expiry-stock-decision-v1',
     '../stock-deposits.js?v=20261101-distinct-stock-deposits-page-v2',
   );
-  const currentManagerNavigation = './manager-navigation.js?v=20261104-remove-stock-deposits-menu-v10';
+  const currentManagerNavigation = './manager-navigation.js?v=20261126-orders-kitchen-split-v1';
   source = source.replace(
     /(["'])\.\/manager-navigation\.js(?:\?[^"']*)?\1/g,
     (_match, quote) => `${quote}${currentManagerNavigation}${quote}`,

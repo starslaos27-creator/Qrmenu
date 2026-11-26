@@ -5,9 +5,11 @@ import BankAccountSettings from "./BankAccountSettings";
 import ChangePasswordForm from "./ChangePasswordForm";
 import KioskPrintingSettings from "./KioskPrintingSettings";
 import PaymentSettings from "./PaymentSettings";
+import ReceiptContactSettings from "./ReceiptContactSettings";
 import ReceiptHeaderSettings from "./ReceiptHeaderSettings";
 import ShopSettingsForm, { type ShopSettings } from "./ShopSettingsForm";
 import TeamManagementPanel from "./TeamManagementPanel";
+import "./settings-contrast.css";
 
 interface Member {
   id: string;
@@ -16,6 +18,9 @@ interface Member {
   invited_email: string | null;
   email?: string;
   phone: string | null;
+  account_phone?: string | null;
+  display_name?: string | null;
+  page_permissions?: Record<string, boolean | "view" | "admin"> | null;
   created_at: string;
 }
 
@@ -63,14 +68,20 @@ export default function SettingsPage({ onLogin }: { onLogin: () => void }) {
   if (loading) return <main className="grid min-h-64 place-items-center p-6 text-sm text-slate-500">กำลังโหลดการตั้งค่า…</main>;
   if (!restaurant) return <main className="p-4 sm:p-6"><section className="mx-auto mt-12 max-w-lg rounded-2xl border border-red-200 bg-white p-6 text-center"><p role="alert" className="m-0 text-sm text-red-800">{error || "ไม่พบข้อมูลร้าน"}</p></section></main>;
 
-  return <main className="min-h-full bg-slate-50 p-4 text-slate-800 sm:p-6">
+  return <main className="settings-page min-h-full bg-slate-50 p-4 text-[#174a34] sm:p-6">
     <div className="mx-auto max-w-5xl space-y-5">
       <header><p className="text-xs font-bold uppercase tracking-[.16em] text-emerald-800">SETTINGS</p><h1 className="mt-1 text-2xl font-semibold">ตั้งค่าร้าน</h1><p className="mt-1 text-sm text-slate-500">จัดการข้อมูลร้าน การชำระเงิน ทีมงาน และบัญชีของคุณ</p></header>
       {error && <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-800">{error}</p>}
-      <ShopSettingsForm restaurant={restaurant} canManage={canManage} onUpdated={setRestaurant} />
-      <ReceiptHeaderSettings restaurantId={restaurant.id} />
-      <PaymentSettings restaurant={restaurant} canManage={canManage} onUpdated={setRestaurant} />
-      <BankAccountSettings restaurantId={restaurant.id} />
+      <section className="space-y-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <ShopSettingsForm restaurant={restaurant} canManage={canManage} onUpdated={setRestaurant} embedded>
+          <BankAccountSettings restaurantId={restaurant.id} embedded />
+          <PaymentSettings restaurant={restaurant} canManage={canManage} onUpdated={setRestaurant} embedded />
+          <ReceiptContactSettings restaurantId={restaurant.id} />
+        </ShopSettingsForm>
+        <div className="border-t border-slate-200 pt-5">
+          <ReceiptHeaderSettings restaurantId={restaurant.id} embedded />
+        </div>
+      </section>
       <KioskPrintingSettings />
       <TeamManagementPanel restaurantId={restaurant.id} currentUserId={currentUserId} initialMembers={members} canManage={canManage} />
       <ChangePasswordForm email={userEmail} onLogin={onLogin} />

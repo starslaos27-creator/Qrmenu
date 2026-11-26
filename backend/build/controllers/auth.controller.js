@@ -485,12 +485,14 @@ async function createInvitedMembership(client, user, token, phone) {
     };
 }
 async function loadPrimaryMembership(client, userId) {
-    const result = await client.query(`select m.restaurant_id, r.name as restaurant_name, r.currency_code, m.role
-     from restaurant_members m
-     join restaurants r on r.id = m.restaurant_id
-     where m.user_id = $1
-     order by m.created_at
-     limit 1`, [userId]);
+    const schema = await client.query(`select exists (
+        select 1 from information_schema.columns
+        where table_schema = current_schema() and table_name = 'restaurant_members' and column_name = 'page_permissions'
+     ) as has_page_permissions`);
+    const permissionColumn = schema.rows[0]?.has_page_permissions ? "m.page_permissions" : "null::jsonb as page_permissions";
+    const result = await client.query(`select m.restaurant_id, r.name as restaurant_name, r.currency_code, m.role, ${permissionColumn}
+     from restaurant_members m join restaurants r on r.id = m.restaurant_id
+     where m.user_id = $1 order by m.created_at limit 1`, [userId]);
     return result.rows[0] ?? null;
 }
 function isSelfHostedAuthReady(app, env, reply) {

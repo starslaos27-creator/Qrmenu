@@ -16,6 +16,8 @@ export async function registerAdminRoutes(app, env) {
     app.get("/api/admin/users", controller.get_api_admin_users);
     app.get("/api/admin/users/:userId", controller.get_api_admin_users_userId);
     app.patch("/api/admin/users/:userId", controller.patch_api_admin_users_userId);
+    app.put("/api/admin/users/:userId/admin-access", controller.put_api_admin_users_userId_admin_access);
+    app.delete("/api/admin/users/:userId", controller.delete_api_admin_users_userId);
     app.patch("/api/admin/users/:userId/memberships/:membershipId", controller.patch_api_admin_users_userId_membership);
     app.patch("/api/admin/restaurants/:restaurantId/status", controller.patch_api_admin_restaurants_restaurantId_status);
     app.patch("/api/admin/users/:userId/status", controller.patch_api_admin_users_userId_status);

@@ -130,6 +130,7 @@ function legacyUi(): Plugin {
     closeBundle() {
       copyFileSync(resolve(sidebarRoot, "manager-navigation.js"), resolve(legacyRoot, "assets/manager-navigation.js"));
       copyFileSync(resolve(sidebarRoot, "manager-navigation.css"), resolve(legacyRoot, "assets/manager-navigation.css"));
+      patchSharedReactRuntime(legacyRoot);
       const legacyBundle = resolve(legacyRoot, "assets/index-BjXGGWCT.js");
       if (!existsSync(legacyBundle)) throw new Error("Legacy dashboard bundle is missing from dist");
       writeFileSync(legacyBundle, patchLegacyLanguageBundle(readFileSync(legacyBundle, "utf8")));
@@ -146,6 +147,35 @@ function legacyUi(): Plugin {
       writeFileSync(output, injectRouteBridge(readFileSync(resolve("legacy-app.html"), "utf8")));
     },
   };
+}
+
+function patchSharedReactRuntime(outputRoot: string) {
+  const assets = resolve(outputRoot, "assets");
+  const vendorReact = resolve(assets, "vendor-react-DCUvmuBu.js");
+  if (!existsSync(vendorReact)) throw new Error("Legacy dashboard React runtime is missing");
+  const files = readdirSync(assets, { withFileTypes: true }).filter(entry => entry.isFile() && entry.name.endsWith(".js"));
+  const candidate = files.map(entry => ({ name: entry.name, path: resolve(assets, entry.name), source: readFileSync(resolve(assets, entry.name), "utf8") }))
+    .find(item => item.name.startsWith("index-") && item.source.includes("react.production.min.js") && /export\{[^}]+ as r\};?\s*$/.test(item.source));
+  if (!candidate) throw new Error("Vite React runtime entry was not found for the legacy dashboard bridge");
+  const exportStart = candidate.source.lastIndexOf("export{");
+  const exportEnd = candidate.source.indexOf("};", exportStart);
+  const exportBlock = exportStart >= 0 && exportEnd >= 0 ? candidate.source.slice(exportStart + 7, exportEnd) : "";
+  const exportNames = exportBlock.split(",").map(item => item.trim().match(/\bas\s+(\w+)$/)?.[1]).filter((name): name is string => Boolean(name));
+  if (!exportNames.includes("r")) throw new Error("Vite React runtime exports changed unexpectedly");
+  const exports = [
+    ...(exportNames.includes("R") ? ["d as R"] : []),
+    ...(exportNames.includes("a") ? ["a as a"] : []),
+    "i as g",
+    "e as r",
+  ].join(",");
+  writeFileSync(candidate.path, `import{g as i,r as e}from"./vendor-react-DCUvmuBu.js";function a(){return e}export{${exports.replace("e as r", "a as r")}};`);
+
+  // The legacy dashboard uses React 19 while this source package builds with
+  // React 18. Reuse the legacy React runtime for JSX too, so React 18's JSX
+  // runtime does not read internals that were removed in React 19.
+  const jsxRuntime = files.find(item => item.name.startsWith("jsx-runtime-"));
+  if (!jsxRuntime) throw new Error("Vite JSX runtime was not found for the legacy dashboard bridge");
+  writeFileSync(resolve(assets, jsxRuntime.name), `import{r as g}from"./${candidate.name}";const R=g();function x(t,p,k){const q=p==null?{}:{...p};if(k!==void 0)q.key=k;return R.createElement(t,q)}const j={Fragment:R.Fragment,jsx:x,jsxs:x,jsxDEV:x};export{j};`);
 }
 
 function injectRouteBridge(html: string, withViteClient = false): string {
@@ -166,7 +196,12 @@ export default defineConfig({
     proxy: { "/api": process.env.BACKEND_URL || "http://127.0.0.1:4000" },
   },
   build: { outDir: "dist", emptyOutDir: false, rollupOptions: {
-    input: { main: resolve("index.html"), weeklyHours: resolve("src/pages/settings/weekly-hours-entry.tsx") },
-    output: { entryFileNames: chunk => chunk.name === "weeklyHours" ? "weekly-hours.js" : "assets/[name]-[hash].js" },
+    preserveEntrySignatures: "strict",
+    input: {
+      main: resolve("index.html"),
+      weeklyHours: resolve("src/pages/settings/weekly-hours-entry.tsx"),
+      legacySettings: resolve("src/legacy-settings-entry.tsx"),
+    },
+    output: { entryFileNames: chunk => { const id = chunk.facadeModuleId?.replace(/\\/g, "/"); return id?.endsWith("/src/pages/settings/weekly-hours-entry.tsx") ? "weekly-hours.js" : id?.endsWith("/src/legacy-settings-entry.tsx") ? "assets/legacy-settings-live.js" : "assets/[name]-[hash].js"; } },
   } },
 });
